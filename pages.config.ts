@@ -12,10 +12,24 @@ export default defineUniPages({
     navigationBarTitleText: 'Vitesse-Uni',
     navigationStyle: 'custom',
   },
-  // tabBar: {
-  //   backgroundColor: "@tabBgColor",
-  //   borderStyle: "@tabBorderStyle",
-  //   color: "@tabFontColor",
-  //   selectedColor: "@tabSelectedColor",
-  // },
+  tabBar: {
+    backgroundColor: '@tabBgColor',
+    borderStyle: '@tabBorderStyle',
+    color: '@tabFontColor',
+    selectedColor: '@tabSelectedColor',
+    list: [
+      {
+        pagePath: 'pages/main/index',
+        text: '首页',
+      },
+      {
+        pagePath: 'pages/exam/index',
+        text: '举办比赛',
+      },
+      {
+        pagePath: 'pages/my/index',
+        text: '我的',
+      },
+    ],
+  },
 })
