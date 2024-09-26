@@ -10,8 +10,22 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
-    AppLogos: typeof import('./components/AppLogos.vue')['default']
-    HiCounter: typeof import('./components/HiCounter.vue')['default']
-    InputEntry: typeof import('./components/InputEntry.vue')['default']
+    BottomDrawer: typeof import('./components/BottomDrawer.vue')['default']
+    ClickButton: typeof import('./components/ClickButton.vue')['default']
+    Confirm: typeof import('./components/Confirm.vue')['default']
+    HeadBar: typeof import('./components/HeadBar.vue')['default']
+    MainCard: typeof import('./components/main/Card.vue')['default']
+    MainExamCard: typeof import('./components/main/ExamCard.vue')['default']
+    MainExamTag: typeof import('./components/main/ExamTag.vue')['default']
+    MainHead: typeof import('./components/main/Head.vue')['default']
+    MainItem: typeof import('./components/main/Item.vue')['default']
+    MainQueryBar: typeof import('./components/main/QueryBar.vue')['default']
+    MainVisitItem: typeof import('./components/main/VisitItem.vue')['default']
+    MyHeadBar: typeof import('./components/my/HeadBar.vue')['default']
+    QrCode: typeof import('./components/QrCode.vue')['default']
+    SelectBar: typeof import('./components/SelectBar.vue')['default']
+    Toast: typeof import('./components/Toast.vue')['default']
+    VisitDetailHead: typeof import('./components/visitDetail/Head.vue')['default']
+    VisitResultHead: typeof import('./components/visitResult/Head.vue')['default']
   }
 }
