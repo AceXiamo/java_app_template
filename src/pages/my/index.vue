@@ -2,7 +2,7 @@
 
 <template>
   <view relative h-full flex flex-col overflow-y-auto>
-    <view absolute left-0 right-0 top-0 z-0 h-[400px] bg-white style="background-image: linear-gradient(to bottom, #f97316 70%, #F5F5F5)" />
+    <view absolute left-0 right-0 top-0 z-0 h-[400px] bg-white style="background-image: linear-gradient(to bottom, #1A89FA 70%, #F5F5F5)" />
     <MyHeadBar sticky top-0 z-[10] bg-color="transparent" />
     <view z-1 flex-none>
       <!-- <view relative mx-[20rpx] mt-[70rpx] rounded-md px-[20rpx] pb-[20rpx] pt-[90rpx] h-[200rpx]>
@@ -90,6 +90,6 @@
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
   {}
 </route>
