@@ -59,6 +59,12 @@ export default defineManifestConfig({
     usingComponents: true,
     darkmode: true,
     themeLocation: 'theme.json',
+    permission: {
+      'scope.userLocation': {
+        desc: '你的位置信息将用于小程序位置接口的效果展示',
+      },
+    },
+    requiredPrivateInfos: ['getLocation'],
   },
   'mp-alipay': {
     usingComponents: true,
