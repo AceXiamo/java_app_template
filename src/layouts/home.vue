@@ -1,9 +1,23 @@
+<script setup lang="ts">
+const toast = ref()
+const confirm = ref()
+
+function refInit() {
+  toastRef.value = toast.value
+  confirmRef.value = confirm.value
+}
+
+onMounted(refInit)
+
+onShow(refInit)
+</script>
+
 <template>
-  <view class="px-10 py-20 text-center">
-    <slot />
-    <app-footer />
-    <view class="mx-auto mt-5 text-center text-sm opacity-25">
-      [Home Layout]
+  <view class="h-screen flex flex-col bg-[#f5f5f5f5]">
+    <view class="h-0 w-full flex-auto">
+      <slot />
     </view>
+    <Toast ref="toast" />
+    <Confirm ref="confirm" />
   </view>
 </template>
