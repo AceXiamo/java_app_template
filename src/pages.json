@@ -1,13 +1,26 @@
 {
   "pages": [
     {
-      "path": "pages/index",
+      "path": "pages/main/index",
       "type": "home"
     },
     {
-      "path": "pages/hi",
+      "path": "pages/exam/index",
+      "type": "page"
+    },
+    {
+      "path": "pages/main/visitDetail",
       "type": "page",
       "layout": "home"
+    },
+    {
+      "path": "pages/main/visitResult",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/index",
+      "type": "page"
     }
   ],
   "globalStyle": {
@@ -19,6 +32,26 @@
     "navigationBarTextStyle": "@navTxtStyle",
     "navigationBarTitleText": "Vitesse-Uni",
     "navigationStyle": "custom"
+  },
+  "tabBar": {
+    "backgroundColor": "@tabBgColor",
+    "borderStyle": "@tabBorderStyle",
+    "color": "@tabFontColor",
+    "selectedColor": "@tabSelectedColor",
+    "list": [
+      {
+        "pagePath": "pages/main/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/exam/index",
+        "text": "举办比赛"
+      },
+      {
+        "pagePath": "pages/my/index",
+        "text": "我的"
+      }
+    ]
   },
   "subPackages": []
 }
