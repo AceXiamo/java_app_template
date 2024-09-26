@@ -38,35 +38,35 @@ function menuClick(key: ActiveMenu) {
   >
     <view flex flex-col items-center gap-[10rpx] @tap="menuClick('home')">
       <template v-if="active === 'home'">
-        <view i-heroicons:home-solid text-[40rpx] text-[#7ab6e0] />
+        <view i-heroicons:calendar-solid text-[40rpx] text-[#7ab6e0] />
       </template>
       <template v-else>
-        <view i-heroicons:home text-[40rpx] text-[#999] />
+        <view i-heroicons:calendar text-[40rpx] text-[#999] />
       </template>
       <text text-[24rpx]>
-        首页
+        日程
       </text>
     </view>
     <view flex flex-col items-center gap-[10rpx] @tap="menuClick('exam')">
       <template v-if="active === 'exam'">
-        <view i-heroicons:trophy-solid text-[40rpx] text-[#7ab6e0] />
+        <view i-heroicons:users-solid text-[40rpx] text-[#7ab6e0] />
       </template>
       <template v-else>
-        <view i-heroicons:trophy text-[40rpx] text-[#999] />
+        <view i-heroicons:users text-[40rpx] text-[#999] />
       </template>
       <text text-[24rpx]>
-        举办比赛
+        客户
       </text>
     </view>
     <view flex flex-col items-center gap-[10rpx] @tap="menuClick('my')">
       <template v-if="active === 'my'">
-        <view i-heroicons:star-solid text-[40rpx] text-[#7ab6e0] />
+        <view i-heroicons:rectangle-group-solid text-[40rpx] text-[#7ab6e0] />
       </template>
       <template v-else>
-        <view i-heroicons:star text-[40rpx] text-[#999] />
+        <view i-heroicons:rectangle-group text-[40rpx] text-[#999] />
       </template>
       <text text-[24rpx]>
-        我的
+        管理
       </text>
     </view>
   </view>
