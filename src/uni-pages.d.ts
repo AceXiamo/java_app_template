@@ -5,7 +5,7 @@
 
 export interface NavigateToOptions {
   url: "/pages/main/index" |
-       "/pages/exam/index" |
+       "/pages/customer/index" |
        "/pages/main/visitDetail" |
        "/pages/main/visitResult" |
        "/pages/my/index";

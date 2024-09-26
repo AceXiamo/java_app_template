@@ -5,7 +5,7 @@
       "type": "home"
     },
     {
-      "path": "pages/exam/index",
+      "path": "pages/customer/index",
       "type": "page"
     },
     {
@@ -44,12 +44,12 @@
         "text": "首页"
       },
       {
-        "pagePath": "pages/exam/index",
-        "text": "举办比赛"
+        "pagePath": "pages/customer/index",
+        "text": "客户"
       },
       {
         "pagePath": "pages/my/index",
-        "text": "我的"
+        "text": "管理"
       }
     ]
   },

@@ -15,9 +15,9 @@ function menuClick(key: ActiveMenu) {
         url: '/pages/main/index',
       })
       break
-    case 'exam':
+    case 'customer':
       uni.switchTab({
-        url: '/pages/exam/index',
+        url: '/pages/customer/index',
       })
       break
     case 'my':
@@ -47,7 +47,7 @@ function menuClick(key: ActiveMenu) {
         日程
       </text>
     </view>
-    <view flex flex-col items-center gap-[10rpx] @tap="menuClick('exam')">
+    <view flex flex-col items-center gap-[10rpx] @tap="menuClick('customer')">
       <template v-if="active === 'exam'">
         <view i-heroicons:users-solid text-[40rpx] text-[#7ab6e0] />
       </template>
