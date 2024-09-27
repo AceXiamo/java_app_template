@@ -1,46 +1,12 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import 'dayjs/locale/zh-cn'
 
-dayjs.locale('zh-cn')
-
-interface DayItem {
-  day: string
-  fullDay: string
-  isThisMonth: boolean
-}
-
-const week = ['一', '二', '三', '四', '五', '六', '日']
-const yearAndMonth = ref('')
-const month = ref<DayItem[]>([])
-const activeDay = ref(dayjs().format('YYYY-MM-DD'))
-const today = ref(dayjs().format('YYYY-MM-DD'))
-
-onMounted(() => {
-  const now = dayjs()
-  yearAndMonth.value = now.format('YYYY-MM')
-  const start = now.startOf('month')
-  const end = now.endOf('month')
-  const days = []
-  let beginOfWeek = start.startOf('week')
-  const endOfWeek = end.endOf('week')
-  while (beginOfWeek.isBefore(endOfWeek)) {
-    days.push({
-      day: beginOfWeek.format('DD'),
-      fullDay: beginOfWeek.format('YYYY-MM-DD'),
-      isThisMonth: beginOfWeek.isSame(now, 'month'),
-    })
-    beginOfWeek = beginOfWeek.add(1, 'day')
-  }
-  month.value = days
-})
 </script>
 
 <template>
   <view relative h-full flex flex-col overflow-y-auto>
     <view absolute left-0 right-0 top-0 z-0 h-[400px] bg-white style="background-image: linear-gradient(to bottom, #1A89FA 70%, #F5F5F5)" />
     <MainHead sticky top-0 z-[10] />
-    <view z-1 h-0 flex-auto>
+    <view z-1 h-0 flex-auto overflow-y-auto>
       <view mx-[20rpx] mt-[20rpx] flex gap-[20rpx]>
         <view flex items-center gap-[10rpx]>
           <view h-[40rpx] w-[40rpx] flex items-center justify-center rounded-full active:opacity-60>
