@@ -1,16 +1,8 @@
 <script lang="ts" setup>
-interface Marker {
-  id: number
-  latitude: number
-  longitude: number
-  iconPath?: string
-  width?: number
-  height?: number
-}
-
 const latitude = ref<number | string>('')
 const longitude = ref<number | string>('')
 const markers = ref<Marker[]>([])
+const photos = ref<string[]>([])
 
 function getLocation() {
   uni.getLocation({
@@ -56,7 +48,22 @@ function startVisit() {
 }
 
 function checkIn() {
-  toastRef.value?.success('签到成功')
+  uni.chooseImage({
+    count: 1,
+    success: (res) => {
+      photos.value.push(res.tempFilePaths[0])
+      toastRef.value?.success('签到成功')
+    },
+  })
+}
+
+// 长按删除图片
+function deletePhoto(index: number) {
+  uni.vibrateShort({
+    success: () => {
+      photos.value.splice(index, 1)
+    },
+  })
 }
 
 function toThisLocation(e: { detail: { markerId: number } }) {
@@ -97,6 +104,13 @@ onMounted(() => {
           </view>
         </view>
       </view>
+      <view
+        grid grid-cols-4 gap-[10rpx] transition-all duration-300 :style="{
+          height: photos.length > 0 ? '100rpx' : '0rpx',
+        }"
+      >
+        <image v-for="(photo, index) in photos" :key="photo" :src="photo" mode="aspectFill" h-[100rpx] w-full rounded-[10rpx] @longpress="deletePhoto(index)" />
+      </view>
       <view flex justify-end gap-[20rpx]>
         <ClickButton type="primary" drop-shadow-lg size="large" @click="checkIn">
           <view i-carbon:checkmark-outline mr-[10rpx] text-[22rpx] />
@@ -119,4 +133,4 @@ onMounted(() => {
   {
     "layout": "home"
   }
-  </route>
+</route>
