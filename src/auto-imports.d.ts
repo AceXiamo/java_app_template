@@ -8,15 +8,11 @@ declare global {
   const EffectScope: typeof import('vue')['EffectScope']
   const asyncComputed: typeof import('@vueuse/core')['asyncComputed']
   const autoResetRef: typeof import('@vueuse/core')['autoResetRef']
-  const clearAll: typeof import('./utils/user')['clearAll']
-  const clearToken: typeof import('./utils/user')['clearToken']
-  const components: typeof import('./utils/components')['default']
   const computed: typeof import('vue')['computed']
   const computedAsync: typeof import('@vueuse/core')['computedAsync']
   const computedEager: typeof import('@vueuse/core')['computedEager']
   const computedInject: typeof import('@vueuse/core')['computedInject']
   const computedWithControl: typeof import('@vueuse/core')['computedWithControl']
-  const confirm: typeof import('./utils/components')['confirm']
   const confirmRef: typeof import('./utils/components')['confirmRef']
   const controlledComputed: typeof import('@vueuse/core')['controlledComputed']
   const controlledRef: typeof import('@vueuse/core')['controlledRef']
@@ -43,24 +39,19 @@ declare global {
   const generateFileName: typeof import('./utils/tool')['generateFileName']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
-  const getLoginUser: typeof import('./utils/index')['getLoginUser']
-  const getOpenId: typeof import('./utils/user')['getOpenId']
-  const getSessionKey: typeof import('./utils/user')['getSessionKey']
-  const getToken: typeof import('./utils/user')['getToken']
   const getUploadConfig: typeof import('./utils/alioss')['getUploadConfig']
   const h: typeof import('vue')['h']
   const host: typeof import('./utils/request')['host']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
   const inject: typeof import('vue')['inject']
   const injectLocal: typeof import('@vueuse/core')['injectLocal']
+  const inputConfirmRef: typeof import('./utils/components')['inputConfirmRef']
   const isDefined: typeof import('@vueuse/core')['isDefined']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
   const logger: typeof import('./utils/logger')['default']
-  const loginHandle: typeof import('./utils/index')['loginHandle']
-  const loginVerify: typeof import('./utils/index')['loginVerify']
   const makeDestructurable: typeof import('@vueuse/core')['makeDestructurable']
   const markRaw: typeof import('vue')['markRaw']
   const navTo: typeof import('./utils/nav')['navTo']
@@ -106,7 +97,6 @@ declare global {
   const onUnload: typeof import('@dcloudio/uni-app')['onUnload']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
-  const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const pausableWatch: typeof import('@vueuse/core')['pausableWatch']
   const provide: typeof import('vue')['provide']
   const provideLocal: typeof import('@vueuse/core')['provideLocal']
@@ -128,10 +118,6 @@ declare global {
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
-  const saveLoginRes: typeof import('./utils/index')['saveLoginRes']
-  const setOpenId: typeof import('./utils/user')['setOpenId']
-  const setSessionKey: typeof import('./utils/user')['setSessionKey']
-  const setToken: typeof import('./utils/user')['setToken']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
@@ -147,7 +133,6 @@ declare global {
   const toRef: typeof import('vue')['toRef']
   const toRefs: typeof import('vue')['toRefs']
   const toValue: typeof import('vue')['toValue']
-  const toast: typeof import('./utils/components')['toast']
   const toastRef: typeof import('./utils/components')['toastRef']
   const triggerRef: typeof import('vue')['triggerRef']
   const tryOnBeforeMount: typeof import('@vueuse/core')['tryOnBeforeMount']
@@ -228,7 +213,6 @@ declare global {
   const useFullscreen: typeof import('@vueuse/core')['useFullscreen']
   const useGamepad: typeof import('@vueuse/core')['useGamepad']
   const useGeolocation: typeof import('@vueuse/core')['useGeolocation']
-  const useId: typeof import('vue')['useId']
   const useIdle: typeof import('@vueuse/core')['useIdle']
   const useImage: typeof import('@vueuse/core')['useImage']
   const useInfiniteScroll: typeof import('@vueuse/core')['useInfiniteScroll']
@@ -244,7 +228,6 @@ declare global {
   const useMediaQuery: typeof import('@vueuse/core')['useMediaQuery']
   const useMemoize: typeof import('@vueuse/core')['useMemoize']
   const useMemory: typeof import('@vueuse/core')['useMemory']
-  const useModel: typeof import('vue')['useModel']
   const useMounted: typeof import('@vueuse/core')['useMounted']
   const useMouse: typeof import('@vueuse/core')['useMouse']
   const useMouseInElement: typeof import('@vueuse/core')['useMouseInElement']
@@ -291,7 +274,6 @@ declare global {
   const useStyleTag: typeof import('@vueuse/core')['useStyleTag']
   const useSupported: typeof import('@vueuse/core')['useSupported']
   const useSwipe: typeof import('@vueuse/core')['useSwipe']
-  const useTemplateRef: typeof import('vue')['useTemplateRef']
   const useTemplateRefsList: typeof import('@vueuse/core')['useTemplateRefsList']
   const useTextDirection: typeof import('@vueuse/core')['useTextDirection']
   const useTextSelection: typeof import('@vueuse/core')['useTextSelection']
@@ -353,8 +335,6 @@ declare module 'vue' {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
-    readonly clearAll: UnwrapRef<typeof import('./utils/user')['clearAll']>
-    readonly clearToken: UnwrapRef<typeof import('./utils/user')['clearToken']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly computedAsync: UnwrapRef<typeof import('@vueuse/core')['computedAsync']>
     readonly computedEager: UnwrapRef<typeof import('@vueuse/core')['computedEager']>
@@ -386,24 +366,19 @@ declare module 'vue' {
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
-    readonly getLoginUser: UnwrapRef<typeof import('./utils/index')['getLoginUser']>
-    readonly getOpenId: UnwrapRef<typeof import('./utils/user')['getOpenId']>
-    readonly getSessionKey: UnwrapRef<typeof import('./utils/user')['getSessionKey']>
-    readonly getToken: UnwrapRef<typeof import('./utils/user')['getToken']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly host: UnwrapRef<typeof import('./utils/request')['host']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
+    readonly inputConfirmRef: UnwrapRef<typeof import('./utils/components')['inputConfirmRef']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly logger: UnwrapRef<typeof import('./utils/logger')['default']>
-    readonly loginHandle: UnwrapRef<typeof import('./utils/index')['loginHandle']>
-    readonly loginVerify: UnwrapRef<typeof import('./utils/index')['loginVerify']>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly navTo: UnwrapRef<typeof import('./utils/nav')['navTo']>
@@ -470,10 +445,6 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
-    readonly saveLoginRes: UnwrapRef<typeof import('./utils/index')['saveLoginRes']>
-    readonly setOpenId: UnwrapRef<typeof import('./utils/user')['setOpenId']>
-    readonly setSessionKey: UnwrapRef<typeof import('./utils/user')['setSessionKey']>
-    readonly setToken: UnwrapRef<typeof import('./utils/user')['setToken']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -684,8 +655,6 @@ declare module '@vue/runtime-core' {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
-    readonly clearAll: UnwrapRef<typeof import('./utils/user')['clearAll']>
-    readonly clearToken: UnwrapRef<typeof import('./utils/user')['clearToken']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly computedAsync: UnwrapRef<typeof import('@vueuse/core')['computedAsync']>
     readonly computedEager: UnwrapRef<typeof import('@vueuse/core')['computedEager']>
@@ -717,24 +686,19 @@ declare module '@vue/runtime-core' {
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
-    readonly getLoginUser: UnwrapRef<typeof import('./utils/index')['getLoginUser']>
-    readonly getOpenId: UnwrapRef<typeof import('./utils/user')['getOpenId']>
-    readonly getSessionKey: UnwrapRef<typeof import('./utils/user')['getSessionKey']>
-    readonly getToken: UnwrapRef<typeof import('./utils/user')['getToken']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly host: UnwrapRef<typeof import('./utils/request')['host']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
+    readonly inputConfirmRef: UnwrapRef<typeof import('./utils/components')['inputConfirmRef']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly logger: UnwrapRef<typeof import('./utils/logger')['default']>
-    readonly loginHandle: UnwrapRef<typeof import('./utils/index')['loginHandle']>
-    readonly loginVerify: UnwrapRef<typeof import('./utils/index')['loginVerify']>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly navTo: UnwrapRef<typeof import('./utils/nav')['navTo']>
@@ -801,10 +765,6 @@ declare module '@vue/runtime-core' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
-    readonly saveLoginRes: UnwrapRef<typeof import('./utils/index')['saveLoginRes']>
-    readonly setOpenId: UnwrapRef<typeof import('./utils/user')['setOpenId']>
-    readonly setSessionKey: UnwrapRef<typeof import('./utils/user')['setSessionKey']>
-    readonly setToken: UnwrapRef<typeof import('./utils/user')['setToken']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
