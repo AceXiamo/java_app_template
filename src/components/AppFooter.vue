@@ -3,29 +3,28 @@ import { useSettingStore } from '@/store/setting'
 import type { ActiveMenu } from '@/store/menu'
 import { useMenuStore } from '@/store/menu'
 
-uni.hideTabBar()
 const setting = useSettingStore()
 const { active } = toRefs(useMenuStore())
 
 function menuClick(key: ActiveMenu) {
   active.value = key
-  switch (key) {
-    case 'home':
-      uni.switchTab({
-        url: '/pages/main/index',
-      })
-      break
-    case 'customer':
-      uni.switchTab({
-        url: '/pages/customer/index',
-      })
-      break
-    case 'my':
-      uni.switchTab({
-        url: '/pages/my/index',
-      })
-      break
-  }
+  // switch (key) {
+  //   case 'home':
+  //     uni.redirectTo({
+  //       url: '/pages/main/index',
+  //     })
+  //     break
+  //   case 'customer':
+  //     uni.redirectTo({
+  //       url: '/pages/customer/index',
+  //     })
+  //     break
+  //   case 'my':
+  //     uni.redirectTo({
+  //       url: '/pages/my/index',
+  //     })
+  //     break
+  // }
 }
 </script>
 
@@ -48,7 +47,7 @@ function menuClick(key: ActiveMenu) {
       </text>
     </view>
     <view flex flex-col items-center gap-[10rpx] @tap="menuClick('customer')">
-      <template v-if="active === 'exam'">
+      <template v-if="active === 'customer'">
         <view i-heroicons:users-solid text-[40rpx] text-[#7ab6e0] />
       </template>
       <template v-else>
