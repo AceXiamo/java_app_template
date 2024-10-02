@@ -1,12 +1,13 @@
 <script setup lang="ts">
 const toast = ref()
 const confirm = ref()
+const inputConfirm = ref()
 
 function refInit() {
   toastRef.value = toast.value
   confirmRef.value = confirm.value
+  inputConfirmRef.value = inputConfirm.value
 }
-
 onMounted(refInit)
 
 onShow(refInit)
@@ -19,5 +20,6 @@ onShow(refInit)
     </view>
     <Toast ref="toast" />
     <Confirm ref="confirm" />
+    <InputConfirm ref="inputConfirm" />
   </view>
 </template>
