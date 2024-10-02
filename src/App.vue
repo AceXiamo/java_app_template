@@ -8,7 +8,7 @@ onLaunch(async () => {
   setting.setTopH(res.top * 2)
   setting.setCapsuleH(res.height * 2)
 
-  const info: any = await uni.getSystemInfo()
+  const info: any = await uni.getDeviceInfo()
   let isAppleAndHasLine = false
   if (info.model?.toLowerCase().includes('ip')) {
     const regex = /\d+/g
