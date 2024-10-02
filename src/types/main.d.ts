@@ -43,3 +43,18 @@ interface User {
   token?: string
   sessionKey?: string
 }
+
+interface Marker {
+  id: number
+  latitude: number
+  longitude: number
+  iconPath?: string
+  width?: number
+  height?: number
+}
+
+interface BaseRes<T> {
+  code: number
+  msg: string
+  data: T
+}
