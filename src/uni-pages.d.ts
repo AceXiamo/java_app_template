@@ -5,15 +5,21 @@
 
 export interface NavigateToOptions {
   url: "/pages/main/index" |
+       "/pages/customer/edit" |
        "/pages/customer/index" |
        "/pages/main/visitDetail" |
        "/pages/main/visitResult" |
-       "/pages/my/index";
+       "/pages/my/editUser" |
+       "/pages/my/index" |
+       "/pages/my/outcomeType" |
+       "/pages/my/user" |
+       "/pages/my/visitRecord" |
+       "/pages/my/visitType";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 
 export interface SwitchTabOptions {
-  url: "/pages/main/index" | "/pages/exam/index" | "/pages/my/index"
+  
 }
 
 type ReLaunchOptions = NavigateToOptions | SwitchTabOptions;

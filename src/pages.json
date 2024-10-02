@@ -5,6 +5,11 @@
       "type": "home"
     },
     {
+      "path": "pages/customer/edit",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/customer/index",
       "type": "page"
     },
@@ -19,8 +24,33 @@
       "layout": "home"
     },
     {
+      "path": "pages/my/editUser",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/my/index",
       "type": "page"
+    },
+    {
+      "path": "pages/my/outcomeType",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/user",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/visitRecord",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/visitType",
+      "type": "page",
+      "layout": "home"
     }
   ],
   "globalStyle": {
@@ -32,26 +62,6 @@
     "navigationBarTextStyle": "@navTxtStyle",
     "navigationBarTitleText": "Vitesse-Uni",
     "navigationStyle": "custom"
-  },
-  "tabBar": {
-    "backgroundColor": "@tabBgColor",
-    "borderStyle": "@tabBorderStyle",
-    "color": "@tabFontColor",
-    "selectedColor": "@tabSelectedColor",
-    "list": [
-      {
-        "pagePath": "pages/main/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/customer/index",
-        "text": "客户"
-      },
-      {
-        "pagePath": "pages/my/index",
-        "text": "管理"
-      }
-    ]
   },
   "subPackages": []
 }
