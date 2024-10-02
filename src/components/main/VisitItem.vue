@@ -1,21 +1,28 @@
 <script lang="ts" setup>
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   showAll: boolean
   hideButton: boolean
-}>()
+  showVisit: boolean
+}>(), {
+  showAll: false,
+  hideButton: false,
+  showVisit: true,
+})
 
 const instance = getCurrentInstance()
 const open = ref(false)
 const item = ref({
-  name: '张三',
-  phone: '13800138000',
-  address: '湖南省长沙市岳麓区枫林三路',
-  createTime: '2024-01-01 12:00:00',
+  name: '金',
+  phone: '19272002355',
+  address: '湖南省长沙市岳麓区枫林三路涉外经济学院',
+  createTime: '2024-09-30 11:43:23',
   purpose: '了解客户需求',
-  notes: '备注信息',
+  notes: '-',
   tags: ['商务', '售后'],
   height: 'auto',
   heightForSec: 'auto',
+  visitResult: '-',
+  visitResultNotes: '-',
 })
 const more = 17
 const marginTop = 5
@@ -155,6 +162,40 @@ onMounted(() => {
         </view>
         <text text-[24rpx] text-[#333]>
           {{ item.notes }}
+        </text>
+      </view>
+      <view
+        v-if="showVisit"
+        class="item" mt-[10rpx] flex items-start gap-[10rpx] transition-all duration-200
+        :style="{
+          opacity: open ? 1 : 0,
+        }"
+      >
+        <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
+          <view i-heroicons:paper-clip-20-solid text-[22rpx] text-gray-300 />
+          <text whitespace-nowrap>
+            拜访结果:
+          </text>
+        </view>
+        <text text-[24rpx] text-[#333]>
+          {{ item.visitResult }}
+        </text>
+      </view>
+      <view
+        v-if="showVisit"
+        class="item" mt-[10rpx] flex items-start gap-[10rpx] transition-all duration-200
+        :style="{
+          opacity: open ? 1 : 0,
+        }"
+      >
+        <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
+          <view i-heroicons:paper-clip-20-solid text-[22rpx] text-gray-300 />
+          <text whitespace-nowrap>
+            结果备注:
+          </text>
+        </view>
+        <text text-[24rpx] text-[#333]>
+          {{ item.visitResultNotes }}
         </text>
       </view>
       <view v-if="!showAll" absolute bottom-0 left-0 w-full flex items-center justify-center bg-white @click="open = !open">
