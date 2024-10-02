@@ -14,7 +14,7 @@ function back() {
   <view h-full flex flex-col>
     <VisitResultHead />
     <view h-0 flex flex-auto flex-col gap-[20rpx] p-[20rpx]>
-      <MainVisitItem :show-all="true" :hide-button="true" />
+      <MainVisitItem :show-all="true" :hide-button="true" :show-visit="false" />
       <view flex flex-col gap-[30rpx] rounded-[10rpx] bg-white p-[20rpx]>
         <view flex flex-col justify-center gap-[20rpx]>
           <view ml-[20rpx]>
