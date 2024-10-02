@@ -1,8 +1,8 @@
 import qs from 'qs'
-import { getToken } from './user'
-import logger from './logger'
-import { loginHandle } from '@/utils'
+import logger from '@/utils/logger'
+import { useUserStore } from '@/store/user'
 
+const userStore = useUserStore()
 const mode = import.meta.env.MODE
 // eslint-disable-next-line import/no-mutable-exports
 let domain: string, host: string
@@ -18,8 +18,8 @@ else {
 
 function setAuth(options: any) {
   const header: any = {}
-  if (getToken())
-    header.Authorization = getToken()
+  if (userStore.token)
+    header.Authorization = userStore.token
 
   header['Content-Type'] = 'application/json'
   options.header = header
@@ -77,7 +77,6 @@ function callbackHandle({
   resolve,
   reject,
   _obj,
-  method,
   res,
 }: {
   resolve: (value: any) => void
@@ -89,9 +88,12 @@ function callbackHandle({
   logger.info(`code: ${res.data.code}`)
   if (res.data.code === 401) {
     // re login & re request
-    loginHandle().then(() => {
-      logger.info('re login success. re request...')
-      requestHandle(_obj, method, resolve, reject)
+    // loginHandle().then(() => {
+    //   logger.info('re login success. re request...')
+    //   requestHandle(_obj, method, resolve, reject)
+    // })
+    uni.redirectTo({
+      url: '/pages/main/index',
     })
   }
   else {
