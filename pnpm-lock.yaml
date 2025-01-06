@@ -124,12 +124,12 @@ devDependencies:
   '@uni-helper/eslint-config':
     specifier: ^0.0.6
     version: 0.0.6(@typescript-eslint/utils@8.19.0)(@vue/compiler-sfc@3.5.13)(eslint@8.57.1)(typescript@5.7.2)
-  '@uni-helper/uni-app-types':
-    specifier: ^0.5.13
-    version: 0.5.13(typescript@5.7.2)
   '@uni-helper/uni-env':
     specifier: ^0.1.1
     version: 0.1.7
+  '@uni-helper/uni-types':
+    specifier: 1.0.0-alpha.6
+    version: 1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6)(@uni-helper/uni-cloud-types@1.0.0-alpha.6)(@uni-helper/uni-ui-types@1.0.0-alpha.6)(typescript@5.7.2)(vue@3.5.13)
   '@uni-helper/unocss-preset-uni':
     specifier: ^0.2.6
     version: 0.2.10(@unocss/rule-utils@0.65.3)(unocss-applet@0.9.0)(unocss@0.58.9)
@@ -4109,21 +4109,62 @@ packages:
     resolution: {integrity: sha512-vuyZn0HqHZvyGrt3Zvn3G8aAqghoBjGcoIYY+xFVgKWJ4Ll+R4bSxAPlVFyWQIRZW6XrWD3MGEne7GzUlrRCzA==}
     dev: true
 
-  /@uni-helper/uni-app-types@0.5.13(typescript@5.7.2):
-    resolution: {integrity: sha512-NIKHv9Zof7sxsznjH+LRB2VM8ncEyfpkwRVLm7u2N1X3e1RFWvABH+bttfu+d8FIP6JzksBNOQwsyZjDnLN0fw==}
+  /@uni-helper/uni-app-types@1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13):
+    resolution: {integrity: sha512-t9AKDYBmDaz4IW0fgtBt25ubEzf7kyUeMlHaBaG5nyNGd6pVuDpYkABhsnNPDiZcaHAoN6SbX1SQQx5axDOWbA==}
     engines: {node: '>=14.18'}
     peerDependencies:
-      typescript: ^4.8.0 || ^5.0.0
+      typescript: ^5.0.0
+      vue: ^3.0.0
     dependencies:
-      '@dcloudio/types': 3.4.14
       typescript: 5.7.2
-      vue3: /vue@3.5.13(typescript@5.7.2)
+      vue: 3.5.13(typescript@5.7.2)
+    dev: true
+
+  /@uni-helper/uni-cloud-types@1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13):
+    resolution: {integrity: sha512-xnLiRcqf14NXcmkcekF3BbN0O157WROpzHfyKVAeLhcXRhO0HIRUMy0+h9KnCDZ+LFteeIOZXJWC5ere3yhIiQ==}
+    engines: {node: '>=14.18'}
+    peerDependencies:
+      typescript: ^5.0.0
+      vue: ^3.0.0
+    dependencies:
+      typescript: 5.7.2
+      vue: 3.5.13(typescript@5.7.2)
     dev: true
 
   /@uni-helper/uni-env@0.1.7:
     resolution: {integrity: sha512-vxWnscbm1VgmK4ZzqN721mY0mIIVCeJutA32fH9P29itaYewVfL9VAWZWZi7nHJEssTkzhfdTTfydcnJKxUQzg==}
     dependencies:
       std-env: 3.8.0
+    dev: true
+
+  /@uni-helper/uni-types@1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6)(@uni-helper/uni-cloud-types@1.0.0-alpha.6)(@uni-helper/uni-ui-types@1.0.0-alpha.6)(typescript@5.7.2)(vue@3.5.13):
+    resolution: {integrity: sha512-lGSm3RUOQThyYIUuJI46b8ug3nGZMyRfMQ/ktOGNxOXBukGA1TF1TN2m4MjKUklIQ+kiIuIgZJoU3S7oIK5emw==}
+    engines: {node: '>=14.18'}
+    peerDependencies:
+      '@uni-helper/uni-app-types': 1.0.0-alpha.6
+      '@uni-helper/uni-cloud-types': 1.0.0-alpha.6
+      '@uni-helper/uni-ui-types': 1.0.0-alpha.6
+      typescript: ^5.0.0
+      vue: ^3.0.0
+    dependencies:
+      '@uni-helper/uni-app-types': 1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13)
+      '@uni-helper/uni-cloud-types': 1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13)
+      '@uni-helper/uni-ui-types': 1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6)(typescript@5.7.2)(vue@3.5.13)
+      typescript: 5.7.2
+      vue: 3.5.13(typescript@5.7.2)
+    dev: true
+
+  /@uni-helper/uni-ui-types@1.0.0-alpha.6(@uni-helper/uni-app-types@1.0.0-alpha.6)(typescript@5.7.2)(vue@3.5.13):
+    resolution: {integrity: sha512-2KuAup2M7rPVzpLaXhhnxCD/Cs5VQYiqzC9XNI/VZuA88+ApPmHzkwyS0THSHnz1VbDIGX/Ju69nj+mApfYKDw==}
+    engines: {node: '>=14.18'}
+    peerDependencies:
+      '@uni-helper/uni-app-types': 1.0.0-alpha.6
+      typescript: ^5.0.0
+      vue: ^3.0.0
+    dependencies:
+      '@uni-helper/uni-app-types': 1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13)
+      typescript: 5.7.2
+      vue: 3.5.13(typescript@5.7.2)
     dev: true
 
   /@uni-helper/unocss-preset-uni@0.2.10(@unocss/rule-utils@0.65.3)(unocss-applet@0.9.0)(unocss@0.58.9):
