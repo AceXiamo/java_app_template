@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { uploadFileToOss } from './alioss'
+import { host, uploadFileToOss } from './alioss'
 
 export function debounce(fn: any, delay: number) {
   let timer: any = null
@@ -35,5 +35,46 @@ export function generateFileName(suffix: string): string {
 export function uploadCoverToOSS(path: string) {
   const suffix = path.split('.').pop()
   const name = generateFileName(suffix || 'png')
-  return uploadFileToOss(path, `vote_ma/cover/${dayjs().format('YYYY-MM-DD')}/${name}`)
+  return uploadFileToOss(path, `custom_ma/cover/${dayjs().format('YYYY-MM-DD')}/${name}`)
+}
+
+export function uploadImageToOSS(path: string, module: string) {
+  const suffix = path.split('.').pop()
+  const name = generateFileName(suffix || 'png')
+  return uploadFileToOss(path, `custom_ma/${module}/${dayjs().format('YYYY-MM-DD')}/${name}`)
+}
+
+export function handleImageUpload(imgs: string, form: Ref<any>, module: string = 'customer') {
+  return new Promise((resolve) => {
+    const images = imgs.split(',')
+    const needUploadImages: string[] = []
+    const uploadedImages: string[] = []
+    const uploadPromises: Promise<string>[] = []
+    images.forEach((url) => {
+      if (url.includes('tmp'))
+        needUploadImages.push(url)
+      else
+        uploadedImages.push(url)
+    })
+
+    if (needUploadImages.length > 0) {
+      needUploadImages.forEach((url) => {
+        uploadPromises.push(uploadImageToOSS(url, module))
+      })
+      Promise.all(uploadPromises).then((res) => {
+        const images = [
+          ...(uploadedImages.map(url => url.replace(host, ''))),
+          ...(res.map(url => url.replace(host, ''))),
+        ]
+        form.value.images = images.join(',')
+        resolve(true)
+      }).catch(() => {
+        resolve(false)
+      })
+    }
+    else {
+      form.value.images = uploadedImages.map(url => url.replace(host, '')).join(',')
+      resolve(true)
+    }
+  })
 }

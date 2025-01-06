@@ -16,7 +16,8 @@
       "@dcloudio/types",
       "@uni-helper/uni-app-types"
     ],
-    "sourceMap": true
+    "sourceMap": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
@@ -26,11 +27,15 @@
   ],
   "vueCompilerOptions": {
     "experimentalRuntimeMode": "runtime-uni-app",
+    "plugins": [
+      "@uni-helper/uni-app-types/volar-plugin"
+    ],
     "nativeTags": [
       "block",
       "component",
       "template",
-      "slot"
+      "slot",
+      "image"
     ]
   }
 }

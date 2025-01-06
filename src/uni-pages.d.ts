@@ -6,10 +6,10 @@
 export interface NavigateToOptions {
   url: "/pages/main/index" |
        "/pages/customer/edit" |
-       "/pages/customer/index" |
        "/pages/main/visitDetail" |
        "/pages/main/visitResult" |
        "/pages/my/editUser" |
+       "/pages/my/editVisits" |
        "/pages/my/index" |
        "/pages/my/outcomeType" |
        "/pages/my/user" |

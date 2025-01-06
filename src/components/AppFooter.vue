@@ -2,30 +2,42 @@
 import { useSettingStore } from '@/store/setting'
 import type { ActiveMenu } from '@/store/menu'
 import { useMenuStore } from '@/store/menu'
+import { useMainStore } from '@/store/main'
 
+const mainStore = useMainStore()
 const setting = useSettingStore()
 const { active } = toRefs(useMenuStore())
 
-function menuClick(key: ActiveMenu) {
-  active.value = key
-  // switch (key) {
-  //   case 'home':
-  //     uni.redirectTo({
-  //       url: '/pages/main/index',
-  //     })
-  //     break
-  //   case 'customer':
-  //     uni.redirectTo({
-  //       url: '/pages/customer/index',
-  //     })
-  //     break
-  //   case 'my':
-  //     uni.redirectTo({
-  //       url: '/pages/my/index',
-  //     })
-  //     break
-  // }
+function load() {
+  switch (active.value) {
+    case 'home':
+      mainStore.loadMonthData()
+      break
+    case 'customer':
+      mainStore.searchCustomerData()
+      break
+    case 'my':
+      break
+  }
 }
+
+const loadWithDebounce = debounce(load, 100)
+
+function menuClick(key: ActiveMenu) {
+  if (key === active.value)
+    return
+
+  active.value = key
+  loadWithDebounce()
+}
+
+onMounted(() => {
+  loadWithDebounce()
+})
+
+onShow(() => {
+  loadWithDebounce()
+})
 </script>
 
 <template>

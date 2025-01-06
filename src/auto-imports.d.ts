@@ -39,8 +39,10 @@ declare global {
   const generateFileName: typeof import('./utils/tool')['generateFileName']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getJumpData: typeof import('./utils/index')['getJumpData']
   const getUploadConfig: typeof import('./utils/alioss')['getUploadConfig']
   const h: typeof import('vue')['h']
+  const handleImageUpload: typeof import('./utils/tool')['handleImageUpload']
   const host: typeof import('./utils/request')['host']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
   const inject: typeof import('vue')['inject']
@@ -118,6 +120,7 @@ declare global {
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
+  const setJumpData: typeof import('./utils/index')['setJumpData']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
@@ -145,6 +148,7 @@ declare global {
   const until: typeof import('@vueuse/core')['until']
   const uploadCoverToOSS: typeof import('./utils/tool')['uploadCoverToOSS']
   const uploadFileToOss: typeof import('./utils/alioss')['uploadFileToOss']
+  const uploadImageToOSS: typeof import('./utils/tool')['uploadImageToOSS']
   const useActiveElement: typeof import('@vueuse/core')['useActiveElement']
   const useAnimate: typeof import('@vueuse/core')['useAnimate']
   const useArrayDifference: typeof import('@vueuse/core')['useArrayDifference']
@@ -366,8 +370,10 @@ declare module 'vue' {
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getJumpData: UnwrapRef<typeof import('./utils/index')['getJumpData']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly handleImageUpload: UnwrapRef<typeof import('./utils/tool')['handleImageUpload']>
     readonly host: UnwrapRef<typeof import('./utils/request')['host']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -445,6 +451,7 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
+    readonly setJumpData: UnwrapRef<typeof import('./utils/index')['setJumpData']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -472,6 +479,7 @@ declare module 'vue' {
     readonly until: UnwrapRef<typeof import('@vueuse/core')['until']>
     readonly uploadCoverToOSS: UnwrapRef<typeof import('./utils/tool')['uploadCoverToOSS']>
     readonly uploadFileToOss: UnwrapRef<typeof import('./utils/alioss')['uploadFileToOss']>
+    readonly uploadImageToOSS: UnwrapRef<typeof import('./utils/tool')['uploadImageToOSS']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>
@@ -686,8 +694,10 @@ declare module '@vue/runtime-core' {
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getJumpData: UnwrapRef<typeof import('./utils/index')['getJumpData']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly handleImageUpload: UnwrapRef<typeof import('./utils/tool')['handleImageUpload']>
     readonly host: UnwrapRef<typeof import('./utils/request')['host']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -765,6 +775,7 @@ declare module '@vue/runtime-core' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
+    readonly setJumpData: UnwrapRef<typeof import('./utils/index')['setJumpData']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -792,6 +803,7 @@ declare module '@vue/runtime-core' {
     readonly until: UnwrapRef<typeof import('@vueuse/core')['until']>
     readonly uploadCoverToOSS: UnwrapRef<typeof import('./utils/tool')['uploadCoverToOSS']>
     readonly uploadFileToOss: UnwrapRef<typeof import('./utils/alioss')['uploadFileToOss']>
+    readonly uploadImageToOSS: UnwrapRef<typeof import('./utils/tool')['uploadImageToOSS']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>

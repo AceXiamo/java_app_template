@@ -6,11 +6,14 @@ const confirm = ref()
 const inputConfirm = ref()
 const user = useUserStore()
 
-onMounted(() => {
+function refInit() {
   toastRef.value = toast.value
   confirmRef.value = confirm.value
   inputConfirmRef.value = inputConfirm.value
-})
+}
+onMounted(refInit)
+
+onShow(refInit)
 </script>
 
 <template>

@@ -58,3 +58,44 @@ interface BaseRes<T> {
   msg: string
   data: T
 }
+
+interface BaseEntity {
+  searchValue?: string
+  createBy?: string
+  createTime?: Date
+  updateBy?: string
+  updateTime?: Date
+  remark?: string
+  params?: Record<string, any>
+}
+
+interface BaseRowRes<T> {
+  code: number
+  msg: string
+  rows: T[]
+  total: number
+}
+
+type LoadPageDataStatus = 'loading' | 'nomore' | 'hide'
+
+interface PageQuery {
+  pageNum?: number
+  pageSize?: number
+}
+
+interface MapResult {
+  adcode: string
+  address: string
+  city: string[]
+  district: string
+  id: string
+  location: string
+  name: string
+  typecode: string
+}
+
+interface MapModelValue {
+  latitude?: string
+  longitude?: string
+  location?: string
+}

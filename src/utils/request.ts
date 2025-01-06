@@ -10,16 +10,18 @@ let domain: string, host: string
 if (mode === 'development') {
   domain = '127.0.0.1:8080'
   host = `http://${domain}`
+  // domain = 'future.xiamoqwq.com'
+  // host = `https://${domain}`
 }
 else {
-  domain = 'hf-vote.xiamoqwq.com'
+  domain = 'future.xiamoqwq.com'
   host = `https://${domain}`
 }
 
 function setAuth(options: any) {
   const header: any = {}
   if (userStore.token)
-    header.Authorization = userStore.token
+    header.Authorization = `Bearer ${userStore.token}`
 
   header['Content-Type'] = 'application/json'
   options.header = header
@@ -92,6 +94,7 @@ function callbackHandle({
     //   logger.info('re login success. re request...')
     //   requestHandle(_obj, method, resolve, reject)
     // })
+    userStore.clearToken()
     uni.redirectTo({
       url: '/pages/main/index',
     })

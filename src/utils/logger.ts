@@ -9,13 +9,13 @@ function info(message: any) {
 function error(message: any) {
   if (!status)
     return
-  console.log(`🌲 %c[error] %c${message}`, 'color: #dc2626', 'color: #d1d5db')
+  console.log(`🌲 %c[error] %c${typeof message === 'object' ? JSON.stringify(message) : message}`, 'color: #dc2626', 'color: #d1d5db')
 }
 
 function warn(message: any) {
   if (!status)
     return
-  console.log(`🌲 %c[warn] %c${message}`, 'color: #ea580c', 'color: #d1d5db')
+  console.log(`🌲 %c[warn] %c${typeof message === 'object' ? JSON.stringify(message) : message}`, 'color: #ea580c', 'color: #d1d5db')
 }
 
 function success(message: any) {
@@ -27,7 +27,7 @@ function success(message: any) {
 function setting(title: string, message: any) {
   if (!status)
     return
-  console.log(`🔩 %c[${title}] %c${message}`, 'color: #22d3ee', 'color: #d1d5db')
+  console.log(`🔩 %c[${title}] %c${typeof message === 'object' ? JSON.stringify(message) : message}`, 'color: #22d3ee', 'color: #d1d5db')
 }
 
 export default {

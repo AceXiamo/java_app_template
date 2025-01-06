@@ -10,10 +10,6 @@
       "layout": "home"
     },
     {
-      "path": "pages/customer/index",
-      "type": "page"
-    },
-    {
       "path": "pages/main/visitDetail",
       "type": "page",
       "layout": "home"
@@ -25,6 +21,11 @@
     },
     {
       "path": "pages/my/editUser",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/editVisits",
       "type": "page",
       "layout": "home"
     },

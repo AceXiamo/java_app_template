@@ -1,4 +1,15 @@
 <script lang="ts" setup>
+import ClickButton from '@/components/ClickButton.vue'
+import { useUserStore } from '@/store/user'
+
+const { currentUser } = toRefs(useUserStore())
+const user = computed(() => {
+  return {
+    ...currentUser.value.user,
+    userType: currentUser.value.roles?.some(role => role === 'tenant') ? 'tenant' : 'tenant_user',
+  }
+})
+
 function toUser() {
   uni.navigateTo({
     url: '/pages/my/user',
@@ -33,14 +44,20 @@ function toOutcomeType() {
         <image src="https://axm.moe/avatar" mode="aspectFill" h-[120rpx] w-[120rpx] rounded-full />
         <view flex flex-col gap-[10rpx]>
           <text text-[34rpx] text-white font-bold>
-            AceXiamo
+            {{ user.nickName }}
           </text>
-          <view w-max rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[5rpx] text-[24rpx] text-white>
-            管理员
-          </view>
+          <template v-if="user.userType === 'tenant'">
+            <view w-max rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[5rpx] text-[24rpx] text-white>
+              管理员
+            </view>
+          </template>
+          <template v-else>
+            <view w-max rounded-[10rpx] bg-blue-500 px-[10rpx] py-[5rpx] text-[24rpx] text-white>
+              成员
+            </view>
+          </template>
         </view>
       </view>
-
       <view mx-[40rpx] mt-[40rpx] flex flex-col rounded-md bg-white p-[30rpx]>
         <view flex items-center gap-[15rpx]>
           <view i-twemoji:identification-card text-[28rpx] text-orange-500 />
@@ -59,7 +76,6 @@ function toOutcomeType() {
           </view>
         </view>
       </view>
-
       <view mx-[40rpx] mt-[40rpx] flex flex-col rounded-md bg-white p-[30rpx]>
         <view flex items-center gap-[15rpx]>
           <view i-twemoji:newspaper text-[28rpx] />
@@ -93,6 +109,9 @@ function toOutcomeType() {
             </text>
           </view>
         </view>
+      </view>
+      <view mx-[40rpx] mt-[40rpx] flex justify-end>
+        <ClickButton size="large" type="error" text="退出登录" @click="logout" />
       </view>
     </view>
   </view>

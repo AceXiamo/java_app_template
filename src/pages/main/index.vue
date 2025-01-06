@@ -6,6 +6,20 @@ import { login } from '@/api/login'
 const menu = useMenuStore()
 const user = useUserStore()
 
+onShareAppMessage(() => {
+  return {
+    title: '分享',
+    path: '/pages/main/index',
+  }
+})
+
+onShareTimeline(() => {
+  return {
+    title: '分享',
+    path: '/pages/main/index',
+  }
+})
+
 onLoad(() => {
   if (!user.user || !user.user.openId) {
     uni.login({
@@ -16,6 +30,8 @@ onLoad(() => {
       },
     })
   }
+  if ((!user.currentUser || Object.keys(user.currentUser).length === 0) && user.token)
+    user.loadCurrentUser()
 })
 </script>
 

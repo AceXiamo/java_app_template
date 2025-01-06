@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 const props = defineProps<{
   modelValue: any
+  disabled?: boolean
   options: {
     value: string | number
     label: string
@@ -23,6 +24,9 @@ function activeHandle(index: any) {
 <template>
   <view
     class="relative box-border h-full w-full flex items-center gap-[10rpx] border-1 border-gray-300 rounded-1 border-solid p-[8rpx_16rpx] text-[25rpx] text-[#333]"
+    :style="{
+      pointerEvents: props.disabled ? 'none' : 'auto',
+    }"
     @click="open = !open"
   >
     <text>{{ props.options.find(v => v.value === props.modelValue)?.label }}</text>

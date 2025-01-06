@@ -1,8 +1,59 @@
 <script lang="ts" setup>
-const selectValue = ref('1')
+import { addUser, getRoleList, getUserById, updateUser } from '@/api/user'
+import type { SysRole, SysUser } from '@/api/user'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
+const selectValue = ref<string>('tenant_user')
+const user = ref<SysUser>({})
+const id = ref(0)
+const currentUser = ref<SysUser>({})
+const roles = ref<SysRole[]>([])
+
+onLoad((options: any) => {
+  if (options.id) {
+    id.value = options.id
+    loadUser()
+  }
+  else {
+    getRoleList({ pageNum: 1, pageSize: 10, roleKey: 'tenant' }).then((res) => {
+      roles.value = res.rows || []
+    })
+  }
+  currentUser.value = userStore.currentUser.user || {}
+})
+
+function loadUser() {
+  getUserById(id.value).then((res) => {
+    user.value = res.data
+    const roleId = res.roleIds?.[0]
+    roles.value = res.roles
+    selectValue.value = roles.value.find(role => role.roleId === roleId)?.roleKey || 'tenant_user'
+  })
+}
 
 function submit() {
-  console.log('submit')
+  const role = roles.value.find(role => role.roleKey === selectValue.value)
+  if (user.value && user.value.userId) {
+    updateUser({
+      ...user.value,
+      roleIds: [role!.roleId!],
+      roles: [role!],
+    }).then(() => {
+      toastRef.value?.success('更新用户成功')
+      setTimeout(back, 1000)
+    })
+  }
+  else {
+    addUser({
+      ...user.value,
+      roleIds: [role!.roleId!],
+      roles: [role!],
+    }).then(() => {
+      toastRef.value?.success('添加用户成功')
+      setTimeout(back, 1000)
+    })
+  }
 }
 
 function back() {
@@ -26,7 +77,21 @@ function back() {
             </text>
           </view>
           <view box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
-            <input type="text" placeholder="请输入姓名" class="text-[26rpx]">
+            <input v-model="user.nickName" type="text" placeholder="请输入姓名" class="text-[26rpx]">
+          </view>
+        </view>
+        <view flex flex-col justify-center gap-[20rpx]>
+          <view ml-[20rpx]>
+            <view i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
+            <text text-[26rpx] text-[#333]>
+              电话
+            </text>
+            <text text-[30rpx] text-red-500>
+              *
+            </text>
+          </view>
+          <view relative box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
+            <input v-model="user.phonenumber" type="text" placeholder="请输入联系电话" class="text-[26rpx]">
           </view>
         </view>
         <view flex flex-col justify-center gap-[20rpx]>
@@ -39,11 +104,12 @@ function back() {
               *
             </text>
           </view>
-          <view box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
-            <input type="text" placeholder="请输入用户名" class="text-[26rpx]">
+          <view relative box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
+            <input v-model="user.userName" type="text" placeholder="请输入用户名" class="text-[26rpx]" :disabled="!!user.userId">
+            <view v-if="user.userId" absolute inset-0 bg="black/05" rounded-[10rpx] />
           </view>
         </view>
-        <view flex flex-col justify-center gap-[20rpx]>
+        <view v-if="!user.userId" flex flex-col justify-center gap-[20rpx]>
           <view ml-[20rpx]>
             <view i-heroicons:lock-closed-16-solid text-[26rpx] text-emerald-500 />
             <text text-[26rpx] text-[#333]>
@@ -53,8 +119,8 @@ function back() {
               *
             </text>
           </view>
-          <view box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
-            <input type="text" placeholder="请输入密码" class="text-[26rpx]">
+          <view relative box-border w-full border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
+            <input v-model="user.password" type="text" placeholder="请输入密码" class="text-[26rpx]">
           </view>
         </view>
         <view flex flex-col justify-center gap-[20rpx]>
@@ -67,7 +133,10 @@ function back() {
               *
             </text>
           </view>
-          <SelectBar v-model="selectValue" :options="[{ value: '1', label: '管理员' }, { value: '2', label: '员工' }]" h-[76.78rpx] />
+          <view relative h-[76.78rpx]>
+            <SelectBar v-model="selectValue" :options="[{ value: 'tenant', label: '管理员' }, { value: 'tenant_user', label: '员工' }]" h-[76.78rpx] />
+            <view v-if="currentUser.userId === user.userId" absolute inset-0 bg="black/05" rounded-[10rpx] />
+          </view>
         </view>
       </view>
       <view flex flex-col gap-[10rpx]>

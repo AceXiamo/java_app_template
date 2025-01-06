@@ -6,6 +6,7 @@ defineProps<{
   size: 'small' | 'medium' | 'large'
   bgColor?: string
   fontColor?: string
+  label?: string
 }>()
 
 const emit = defineEmits(['click'])
@@ -29,6 +30,9 @@ function handleClick() {
     }"
     @click="handleClick"
   >
-    <slot />
+    <template v-if="label">
+      {{ label }}
+    </template>
+    <slot v-else />
   </view>
 </template>
