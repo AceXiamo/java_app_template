@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 const props = withDefaults(defineProps<{
   label: string
   required?: boolean
-  modelValue?: string
+  modelValue?: any
   disabled?: boolean
   placeholder?: string
 }>(), {
