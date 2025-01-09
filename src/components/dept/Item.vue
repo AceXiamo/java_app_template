@@ -77,8 +77,8 @@ onMounted(() => {
           <view i-heroicons:link-16-solid text-[22rpx] text-gray-400 />
           <text>部门管理员:</text>
         </view>
-        <view text-[24rpx] text-[#333]>
-          <view v-for="user in item.deptUserRefs" :key="user.userId">
+        <view flex flex-wrap items-center text-[24rpx] text-[#333]>
+          <view v-for="user in item.deptUserRefs?.filter(item => item.hasManage === 1)" :key="user.userId" mb-[10rpx] mr-[10rpx] rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[4rpx] text-white>
             {{ user.nickname }}
           </view>
         </view>
