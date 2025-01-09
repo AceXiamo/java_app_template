@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { type DeptUserRef, del, getDeptUserRefList } from '@/api/deptUserRef'
+import { type DeptUserRef, del, getDeptUserRefList, save } from '@/api/deptUserRef'
 
 const queryForm = ref({
   deptId: '',
@@ -49,30 +49,41 @@ function reloadHandler() {
   })
 }
 
-// function reload() {
-//   queryForm.value.pageNum = 1
-//   reloadHandler()
-// }
-
 function handleDel(duId: number) {
-  del({ id: duId }).then(() => {
-    reloadHandler()
+  confirmRef.value?.show({
+    type: 'warning',
+    title: '删除成员',
+    content: '确定删除该成员吗？',
+    onConfirm: () => {
+      del({ id: duId }).then(() => {
+        reloadHandler()
+      })
+    },
   })
 }
 
-const editMemberRoleForm = ref({})
+const editMemberRoleForm = ref<DeptUserRef>({})
 const bottomDrawVisible = ref(false)
 function editMemberRole(item: DeptUserRef) {
-  editMemberRoleForm.value = item
+  editMemberRoleForm.value = {
+    ...item,
+  }
   bottomDrawVisible.value = true
 }
 
-// onLoad((options) => {
-//   // queryForm.value.deptId = (options as any).deptId
-//   queryForm.value.deptId = '5'
-//   queryForm.value.pageNum = 1
-//   reloadHandler()
-// })
+function submitRoleChange() {
+  save(editMemberRoleForm.value).then(() => {
+    toastRef.value?.success('变更角色成功')
+    reloadHandler()
+    bottomDrawVisible.value = false
+  })
+}
+
+onLoad((options) => {
+  queryForm.value.deptId = (options as any).deptId
+  queryForm.value.pageNum = 1
+  reloadHandler()
+})
 </script>
 
 <template>
@@ -112,18 +123,33 @@ function editMemberRole(item: DeptUserRef) {
       </view>
     </VerticalPage>
     <BottomDrawer :visible="bottomDrawVisible" title="变更角色" @update:visible="bottomDrawVisible = $event" @close="bottomDrawVisible = false">
-      <view>
-        <view>
-          <text>
-            变更角色
-          </text>
+      <view box-border h-full flex flex-col gap-[20rpx] pb-[40rpx] pt-[40rpx]>
+        <view flex flex-col gap-[20rpx]>
+          <view flex items-center gap-[20rpx]>
+            <text text-[26rpx] text-[#333]>
+              角色:
+            </text>
+            <SelectBar
+              v-model="editMemberRoleForm.hasManage"
+              :options="[
+                { value: 1, label: '部门管理员' },
+                { value: 0, label: '普通成员' },
+              ]"
+              h-[60rpx]
+              flex-auto
+            />
+          </view>
+        </view>
+        <view mt-auto flex justify-end gap-[20rpx]>
+          <ClickButton label="确定" type="primary" @click="submitRoleChange" />
+          <ClickButton label="取消" type="default" @click="bottomDrawVisible = false" />
         </view>
       </view>
     </BottomDrawer>
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
   {
     "layout": "home"
   }
