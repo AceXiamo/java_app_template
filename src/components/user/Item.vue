@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { type SysUser, deleteUser, resetPwd } from '@/api/user'
+import type { DeptUserRef } from '@/api/deptUserRef'
 
 const props = defineProps<{
   item: SysUser
+  deptRefList: DeptUserRef[]
 }>()
 const emit = defineEmits<{
   (e: 'reload'): void
@@ -15,6 +17,7 @@ type Item = SysUser & {
 const thisItem = ref<Item>({})
 
 function toEdit(id: number) {
+  setJumpData('user_dept', props.deptRefList)
   uni.navigateTo({
     url: `/pages/my/editUser?id=${id}`,
   })
@@ -82,13 +85,13 @@ onMounted(() => {
         </template>
       </view>
       <view ml-auto flex items-center gap-[10rpx]>
-        <ClickButton size="medium" type="warning" @click="changePassword(item.userId)">
+        <ClickButton size="medium" type="warning" @click="changePassword(item.userId!)">
           重置密码
         </ClickButton>
-        <ClickButton size="medium" type="primary" @click="toEdit(item.userId)">
+        <ClickButton size="medium" type="primary" @click="toEdit(item.userId!)">
           编辑
         </ClickButton>
-        <ClickButton size="medium" type="danger" @click="handleDelete(item.userId)">
+        <ClickButton size="medium" type="danger" @click="handleDelete(item.userId!)">
           删除
         </ClickButton>
       </view>
@@ -111,6 +114,32 @@ onMounted(() => {
         <text text-[24rpx] text-[#333]>
           {{ item.phonenumber }}
         </text>
+      </view>
+      <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
+        <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
+          <view i-heroicons:building-office-2-solid text-[22rpx] text-gray-400 />
+          <text>部门:</text>
+        </view>
+        <view class="flex-warp flex gap-[10rpx]">
+          <template v-for="item in deptRefList" :key="item.duId">
+            <template v-if="item.hasManage === 1">
+              <view w-max flex items-center gap-[10rpx] rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
+                <view i-heroicons:wrench-screwdriver-solid text-[20rpx] text-white />
+                <text>
+                  {{ item.deptName }}
+                </text>
+              </view>
+            </template>
+            <template v-else>
+              <view w-max flex items-center gap-[10rpx] rounded-[10rpx] bg-gray-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
+                <view i-heroicons:user text-[20rpx] text-white />
+                <text>
+                  {{ item.deptName }}
+                </text>
+              </view>
+            </template>
+          </template>
+        </view>
       </view>
       <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
         <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
