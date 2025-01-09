@@ -4,20 +4,22 @@ import { ref } from 'vue'
 const props = defineProps<{
   modelValue: any
   disabled?: boolean
+  placeholder?: string
   options: {
     value: string | number
     label: string
   }[]
 }>()
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
 const open = ref<boolean>(false)
-function activeHandle(index: any) {
+function activeHandle(item: any) {
   if (!open.value)
     return
   open.value = false
-  emit('update:modelValue', index)
+  emit('update:modelValue', item.value)
+  emit('change', item)
 }
 </script>
 
@@ -29,7 +31,9 @@ function activeHandle(index: any) {
     }"
     @click="open = !open"
   >
-    <text>{{ props.options.find(v => v.value === props.modelValue)?.label }}</text>
+    <text :class="{ 'text-[#808080] text-[24rpx]': !props.modelValue }">
+      {{ props.options.find(v => v.value === props.modelValue)?.label || props.placeholder }}
+    </text>
     <view
       class="ml-auto transition-all duration-200"
       :style="{ transform: open ? `rotate(180deg)` : 'rotate(0)' }"
@@ -49,7 +53,7 @@ function activeHandle(index: any) {
           :key="index"
           class="py-[10rpx] pl-[16rpx] active:text-blue-400"
           :style="{ color: item.value === props.modelValue ? 'rgb(96, 165, 250)' : '#333' }"
-          @click="activeHandle(item.value)"
+          @click="activeHandle(item)"
         >
           {{ props.options[index].label }}
         </view>
