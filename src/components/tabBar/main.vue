@@ -50,6 +50,10 @@ function loadData() {
 function dayClick(day: string) {
   activeDay.value = day
 }
+
+type ActiveTab = 'visit_customer' | 'customer_visit'
+
+const activeTab = ref<ActiveTab>('visit_customer')
 </script>
 
 <template>
@@ -88,7 +92,7 @@ function dayClick(day: string) {
           >
             {{ item }}
           </view>
-          <view v-for="(item, index) in monthData" :key="index" @click="dayClick(item.fullDay)">
+          <view v-for="(item, index) in monthData" :key="index" @click="dayClick(item.fullDay!)">
             <view
               relative box-border min-h-[80rpx] flex flex-1 flex-col items-center justify-center rounded-[15rpx]
               py-[10rpx] :style="{
@@ -100,13 +104,13 @@ function dayClick(day: string) {
                 v-if="item.fullDay === today" absolute right-[10rpx] top-[10rpx] h-[10rpx] w-[10rpx] rounded-full
                 bg-emerald-400
               />
-              <view v-if="item.visits.length > 0" flex items-center gap-[4rpx]>
+              <view v-if="(item.visits?.length || 0) > 0" flex items-center gap-[4rpx]>
                 <view i-heroicons:bell-alert-16-solid text-[18rpx] text-red-300 />
                 <text text-[20rpx] text-white>
                   x
                 </text>
                 <text text-[20rpx] text-white>
-                  {{ item.visits.length }}
+                  {{ item.visits?.length }}
                 </text>
               </view>
               <text
@@ -123,8 +127,38 @@ function dayClick(day: string) {
       <view mt-[30rpx] flex items-center gap-[10rpx] px-[20rpx]>
         <view i-heroicons:document-duplicate-solid text-[32rpx] text-purple-400 />
         <text text-[32rpx] font-bold>
-          拜访任务
+          任务列表
         </text>
+        <view ml-auto flex items-center bg="gray-500/10" p="4rpx" rounded-full>
+          <view
+            relative flex items-center rounded-full px-[24rpx] py-[12rpx] text-[24rpx] transition-colors duration-300
+            :class="[
+              activeTab === 'visit_customer' ? 'text-blue-500' : 'text-gray-400',
+            ]"
+            @click="activeTab = 'visit_customer'"
+          >
+            拜访客户
+            <view
+              absolute left-0 top-0 h-full w-full rounded-full bg-white
+              transition-all duration-300 -z-1
+              :style="{ opacity: activeTab === 'visit_customer' ? 1 : 0 }"
+            />
+          </view>
+          <view
+            relative flex items-center rounded-full px-[24rpx] py-[12rpx] text-[24rpx] transition-colors duration-300
+            :class="[
+              activeTab === 'customer_visit' ? 'text-blue-500' : 'text-gray-400',
+            ]"
+            @click="activeTab = 'customer_visit'"
+          >
+            客户来访
+            <view
+              absolute left-0 top-0 h-full w-full rounded-full bg-white
+              transition-all duration-300 -z-1
+              :style="{ opacity: activeTab === 'customer_visit' ? 1 : 0 }"
+            />
+          </view>
+        </view>
       </view>
       <view mx-[20rpx] mt-[20rpx] flex flex-col gap-[10rpx]>
         <template v-if="showVisitList.length > 0">
@@ -136,7 +170,7 @@ function dayClick(day: string) {
           <view h-[200rpx] w-full flex items-center justify-center gap-[10rpx]>
             <view i-heroicons:exclamation-circle-16-solid text-[24rpx] text-gray-300 />
             <text text-[24rpx] text-gray-400>
-              当日暂无拜访任务
+              当日暂无任务
             </text>
           </view>
         </template>
