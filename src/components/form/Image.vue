@@ -8,9 +8,11 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   placeholder?: string
   type?: 'text' | 'number' | 'textarea'
+  limit?: number
 }>(), {
   disabled: false,
   type: 'text',
+  limit: 3,
 })
 
 const emits = defineEmits(['update:modelValue'])
@@ -59,10 +61,10 @@ watch(() => props.modelValue, (value) => {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx]>
+    <view ml-[20rpx] flex items-center gap-[10rpx]>
       <view i-heroicons:photo-16-solid text-[26rpx] text-emerald-500 />
       <text text-[26rpx] text-[#333]>
-        图片
+        {{ label }}
       </text>
     </view>
     <view bw-full grid grid-cols-3 gap-[20rpx]>
@@ -71,7 +73,7 @@ watch(() => props.modelValue, (value) => {
       >
         <image :src="url" mode="aspectFill" class="h-full w-full" />
       </view>
-      <template v-if="images.length < 3">
+      <template v-if="images.length < limit">
         <view
           box-border aspect-square w-full flex items-center justify-center border border-gray-300 rounded-[10rpx] border-solid
           @click="handleAddImage"
