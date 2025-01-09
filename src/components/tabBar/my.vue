@@ -35,6 +35,12 @@ function toOutcomeType() {
   })
 }
 
+function toDept() {
+  uni.navigateTo({
+    url: '/pages/my/dept',
+  })
+}
+
 function logout() {
   confirmRef.value?.show({
     type: 'warning',
@@ -75,16 +81,24 @@ function logout() {
         <view flex items-center gap-[15rpx]>
           <view i-twemoji:identification-card text-[28rpx] text-orange-500 />
           <text text-[30rpx] text-[#333] font-bold>
-            人员
+            团队成员
           </text>
         </view>
         <view grid grid-cols-3 mt-[40rpx]>
+          <view flex flex-col items-center gap-[15rpx] @click="toDept">
+            <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
+              <view i-twemoji:office-building text-[40rpx] />
+            </view>
+            <text text-[26rpx]>
+              部门
+            </text>
+          </view>
           <view flex flex-col items-center gap-[15rpx] @click="toUser">
             <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
               <view i-logos:microsoft-teams text-[40rpx] />
             </view>
             <text text-[26rpx]>
-              团队成员
+              人员
             </text>
           </view>
         </view>
