@@ -2,7 +2,17 @@
 import type { SysUser } from '@/api/user'
 import { getUserList } from '@/api/user'
 import VerticalPage from '@/components/VerticalPage.vue'
+import { type TenantDept, getDeptList } from '@/api/dept'
+import type { DeptUserRef } from '@/api/deptUserRef'
 
+const deptList = ref<TenantDept[]>([])
+const userBindDeptRefs = computed<DeptUserRef[]>(() => {
+  const value: DeptUserRef[] = []
+  deptList.value.forEach((dept) => {
+    value.push(...(dept.deptUserRefs ?? []))
+  })
+  return value
+})
 const queryForm = ref({
   userName: '',
   pageNum: 1,
@@ -65,6 +75,13 @@ function reload() {
 onShow(() => {
   queryForm.value.pageNum = 1
   reloadHandler()
+
+  getDeptList({
+    pageNum: 1,
+    pageSize: 1000,
+  }).then((res) => {
+    deptList.value = res.data.records
+  })
 })
 </script>
 
@@ -75,7 +92,7 @@ onShow(() => {
     <VerticalPage :status="status" class="mt-[20rpx] h-0 flex flex-auto flex-col overflow-y-auto px-[20rpx] pb-[20rpx]" @scrolltolower="scrolltolower">
       <view flex flex-col gap-[20rpx]>
         <template v-for="item in userList" :key="item.id">
-          <UserItem :item="item" @reload="reload" />
+          <UserItem :item="item" :dept-ref-list="userBindDeptRefs.filter(v => v.userId === item.userId)" @reload="reload" />
         </template>
       </view>
     </VerticalPage>

@@ -33,6 +33,14 @@ function toOutcomeType() {
     url: '/pages/my/outcomeType',
   })
 }
+
+function logout() {
+  // TODO: 退出登录
+  // uni.clearStorage()
+  // uni.reLaunch({
+  //   url: '/pages/main/index',
+  // })
+}
 </script>
 
 <template>
@@ -62,7 +70,7 @@ function toOutcomeType() {
         <view flex items-center gap-[15rpx]>
           <view i-twemoji:identification-card text-[28rpx] text-orange-500 />
           <text text-[30rpx] text-[#333] font-bold>
-            人员
+            团队成员
           </text>
         </view>
         <view grid grid-cols-3 mt-[40rpx]>
@@ -71,7 +79,15 @@ function toOutcomeType() {
               <view i-logos:microsoft-teams text-[40rpx] />
             </view>
             <text text-[26rpx]>
-              团队成员
+              部门
+            </text>
+          </view>
+          <view flex flex-col items-center gap-[15rpx] @click="toUser">
+            <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
+              <view i-logos:microsoft-teams text-[40rpx] />
+            </view>
+            <text text-[26rpx]>
+              人员
             </text>
           </view>
         </view>
@@ -111,7 +127,7 @@ function toOutcomeType() {
         </view>
       </view>
       <view mx-[40rpx] mt-[40rpx] flex justify-end>
-        <ClickButton size="large" type="error" text="退出登录" @click="logout" />
+        <ClickButton size="large" type="danger" text="退出登录" @click="logout" />
       </view>
     </view>
   </view>
