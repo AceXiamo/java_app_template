@@ -59,7 +59,7 @@ function logout() {
     <MyHeadBar sticky top-0 z-[10] bg-color="transparent" />
     <view z-1 flex-none>
       <view mx-[40rpx] flex items-start gap-[20rpx]>
-        <image src="https://axm.moe/avatar" mode="aspectFill" h-[120rpx] w-[120rpx] rounded-full />
+        <!-- <image src="https://axm.moe/avatar" mode="aspectFill" h-[120rpx] w-[120rpx] rounded-full /> -->
         <view flex flex-col gap-[10rpx]>
           <text text-[34rpx] text-white font-bold>
             {{ user.nickName }}
@@ -122,7 +122,7 @@ function logout() {
           </view>
           <view flex flex-col items-center gap-[15rpx] @click="toVisitType">
             <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
-              <view i-twemoji:wrench text-[35rpx] />
+              <view i-twemoji:page-with-curl text-[35rpx] />
             </view>
             <text text-[26rpx]>
               拜访类型
@@ -130,10 +130,45 @@ function logout() {
           </view>
           <view flex flex-col items-center gap-[15rpx] @click="toOutcomeType">
             <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
-              <view i-twemoji:pushpin text-[35rpx] />
+              <view i-twemoji:memo text-[35rpx] />
             </view>
             <text text-[26rpx]>
               结果类型
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <view mx-[40rpx] mt-[40rpx] flex flex-col rounded-md bg-white p-[30rpx]>
+        <view flex items-center gap-[15rpx]>
+          <view i-twemoji:house-with-garden text-[28rpx] />
+          <text text-[30rpx] text-[#333] font-bold>
+            客户来访
+          </text>
+        </view>
+        <view grid grid-cols-3 mt-[40rpx]>
+          <view flex flex-col items-center gap-[15rpx] @click="toVisitRecord">
+            <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
+              <view i-twemoji:notebook-with-decorative-cover text-[35rpx] />
+            </view>
+            <text text-[26rpx]>
+              申请记录
+            </text>
+          </view>
+          <view flex flex-col items-center gap-[15rpx] @click="toOutcomeType">
+            <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
+              <view i-twemoji:bookmark-tabs text-[35rpx] />
+            </view>
+            <text text-[26rpx]>
+              到访记录
+            </text>
+          </view>
+          <view flex flex-col items-center gap-[15rpx] @click="toOutcomeType">
+            <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
+              <view i-twemoji:receipt text-[35rpx] />
+            </view>
+            <text text-[26rpx]>
+              申请页编辑
             </text>
           </view>
         </view>
