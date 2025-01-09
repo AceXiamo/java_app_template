@@ -108,7 +108,7 @@ function logout() {
         <view flex items-center gap-[15rpx]>
           <view i-twemoji:newspaper text-[28rpx] />
           <text text-[30rpx] text-[#333] font-bold>
-            拜访
+            拜访客户
           </text>
         </view>
         <view grid grid-cols-3 mt-[40rpx]>
