@@ -2,7 +2,7 @@
 const props = withDefaults(defineProps<{
   label: string
   required?: boolean
-  modelValue: string
+  modelValue?: string
   disabled?: boolean
   placeholder?: string
   type?: 'text' | 'number' | 'textarea'
@@ -13,11 +13,11 @@ const props = withDefaults(defineProps<{
 
 const emits = defineEmits(['update:modelValue'])
 
-const inputValue = ref<string>(props.modelValue)
+const inputValue = ref<string>(props.modelValue ?? '')
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== inputValue.value)
-    inputValue.value = newValue
+    inputValue.value = newValue ?? ''
 }, { immediate: true })
 
 watch(inputValue, (newValue) => {

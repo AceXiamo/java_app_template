@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 const props = withDefaults(defineProps<{
   label: string
   required?: boolean
-  modelValue: string
+  modelValue?: string
   disabled?: boolean
   placeholder?: string
 }>(), {
@@ -18,7 +18,7 @@ const inputValue = ref<string>(dayjs(props.modelValue).format('YYYY-MM-DD'))
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== inputValue.value)
-    inputValue.value = newValue
+    inputValue.value = newValue ?? ''
 }, { immediate: true })
 
 watch(inputValue, (newValue) => {

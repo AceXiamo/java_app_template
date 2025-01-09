@@ -4,7 +4,7 @@ import { host } from '@/utils/alioss'
 const props = withDefaults(defineProps<{
   label: string
   required?: boolean
-  modelValue: string
+  modelValue?: string
   disabled?: boolean
   placeholder?: string
   type?: 'text' | 'number' | 'textarea'
