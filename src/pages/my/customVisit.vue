@@ -154,7 +154,7 @@ onShow(() => {
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
 {
   "layout": "home"
 }

@@ -1,7 +1,7 @@
 {
   "pages": [
     {
-      "path": "pages/my/customVisit",
+      "path": "pages/share/tanant",
       "type": "home",
       "layout": "home"
     },
@@ -21,6 +21,11 @@
     },
     {
       "path": "pages/main/visitResult",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/customVisit",
       "type": "page",
       "layout": "home"
     },
@@ -70,11 +75,6 @@
     },
     {
       "path": "pages/my/visitType",
-      "type": "page",
-      "layout": "home"
-    },
-    {
-      "path": "pages/share/tanant",
       "type": "page",
       "layout": "home"
     }
