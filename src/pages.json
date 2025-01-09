@@ -20,6 +20,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/my/customVisit",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/my/dept",
       "type": "page",
       "layout": "home"

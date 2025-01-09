@@ -8,6 +8,7 @@ interface NavigateToOptions {
        "/pages/customer/edit" |
        "/pages/main/visitDetail" |
        "/pages/main/visitResult" |
+       "/pages/my/customVisit" |
        "/pages/my/dept" |
        "/pages/my/deptMember" |
        "/pages/my/editUser" |
