@@ -41,6 +41,12 @@ function toDept() {
   })
 }
 
+function toCustomVisit() {
+  uni.navigateTo({
+    url: '/pages/my/customVisit',
+  })
+}
+
 function logout() {
   confirmRef.value?.show({
     type: 'warning',
@@ -147,7 +153,7 @@ function logout() {
           </text>
         </view>
         <view grid grid-cols-3 mt-[40rpx]>
-          <view flex flex-col items-center gap-[15rpx] @click="toVisitRecord">
+          <view flex flex-col items-center gap-[15rpx] @click="toCustomVisit">
             <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
               <view i-twemoji:notebook-with-decorative-cover text-[35rpx] />
             </view>

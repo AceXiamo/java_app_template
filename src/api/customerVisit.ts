@@ -28,6 +28,7 @@ export interface ListQuery extends PageQuery {
   deptId: number
   pageNum?: number
   pageSize?: number
+  searchValue?: string
 }
 
 export function getCustomerVisitList(params: ListQuery): Promise<BaseRes<PageData<CustomerVisit>>> {

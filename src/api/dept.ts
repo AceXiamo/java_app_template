@@ -17,6 +17,12 @@ export function getDeptList(params: PageQuery): Promise<BaseRes<PageData<TenantD
   })
 }
 
+export function options(): Promise<BaseRes<TenantDept[]>> {
+  return request.get({
+    url: `${host}/admin/tenantDept/options`,
+  })
+}
+
 export function save(data: TenantDept): Promise<any> {
   return request.post({
     url: `${host}/admin/tenantDept/save`,

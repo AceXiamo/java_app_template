@@ -1,13 +1,18 @@
 {
   "pages": [
     {
-      "path": "pages/main/index",
-      "type": "home"
+      "path": "pages/my/customVisit",
+      "type": "home",
+      "layout": "home"
     },
     {
       "path": "pages/customer/edit",
       "type": "page",
       "layout": "home"
+    },
+    {
+      "path": "pages/main/index",
+      "type": "page"
     },
     {
       "path": "pages/main/visitDetail",
@@ -16,11 +21,6 @@
     },
     {
       "path": "pages/main/visitResult",
-      "type": "page",
-      "layout": "home"
-    },
-    {
-      "path": "pages/my/customVisit",
       "type": "page",
       "layout": "home"
     },

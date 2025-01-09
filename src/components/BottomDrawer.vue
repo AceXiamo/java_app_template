@@ -3,12 +3,22 @@ const props = defineProps<{
   visible: boolean
   onClose?: () => void
   title?: string
+  height?: string | number
 }>()
 defineEmits<{
   (e: 'update:visible', v: boolean): void
 }>()
 const className = computed(() => props.visible ? 'ani_in' : 'ani_out')
 const containerVisible = ref(false)
+const heightVal = computed(() => {
+  if (!props.height) {
+    return '500rpx'
+  }
+  if (typeof props.height === 'number') {
+    return `${props.height}rpx`
+  }
+  return props.height
+})
 
 watch(() => props.visible, (v) => {
   if (!v) {
@@ -24,7 +34,7 @@ watch(() => props.visible, (v) => {
   <view
     v-if="containerVisible" absolute inset-0 bg="black/20" z-9999 flex flex-col justify-end transition-all duration-200 @tap="$emit('update:visible', false)"
   >
-    <view min-h-[500rpx] flex flex-col bg-white p-[30rpx] :class="className" @tap.stop>
+    <view flex flex-col bg-white p-[30rpx] :class="className" :style="{ height: heightVal }" @tap.stop>
       <view flex justify-between>
         <text text-[32rpx] font-bold>
           {{ $props.title || '' }}
