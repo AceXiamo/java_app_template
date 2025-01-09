@@ -67,33 +67,38 @@ onMounted(() => {
 
 <template>
   <view flex flex-col overflow-hidden rounded-[10rpx] bg-white>
-    <view item-center flex p-[20rpx] shadow-md>
-      <view i-heroicons:user-circle-16-solid mr-[10rpx] text-[30rpx] text-blue-500 />
-      <text text-[28rpx] font-bold>
-        {{ item.nickName }}
-      </text>
-      <view ml-[10rpx]>
-        <template v-if="thisItem.userType === 'tenant'">
-          <view w-max rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
-            管理员
-          </view>
-        </template>
-        <template v-else>
-          <view w-max rounded-[10rpx] bg-blue-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
-            员工
-          </view>
-        </template>
-      </view>
-      <view ml-auto flex items-center gap-[10rpx]>
-        <ClickButton size="medium" type="warning" @click="changePassword(item.userId!)">
-          重置密码
-        </ClickButton>
-        <ClickButton size="medium" type="primary" @click="toEdit(item.userId!)">
-          编辑
-        </ClickButton>
-        <ClickButton size="medium" type="danger" @click="handleDelete(item.userId!)">
-          删除
-        </ClickButton>
+    <view flex flex-col p-[20rpx] shadow-md>
+      <!-- <view>
+        <image :src="item.avatar" mode="aspectFill" class="h-[80rpx] w-[80rpx] rounded-full" />
+      </view> -->
+      <view flex items-center>
+        <view i-heroicons:user-circle-16-solid mr-[10rpx] text-[30rpx] text-blue-500 />
+        <text text-[28rpx] font-bold>
+          {{ item.nickName }}
+        </text>
+        <view ml-[10rpx]>
+          <template v-if="thisItem.userType === 'tenant'">
+            <view w-max rounded-[10rpx] bg-emerald-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
+              管理员
+            </view>
+          </template>
+          <template v-else>
+            <view w-max rounded-[10rpx] bg-blue-500 px-[10rpx] py-[5rpx] text-[22rpx] text-white>
+              员工
+            </view>
+          </template>
+        </view>
+        <view ml-auto flex items-center gap-[10rpx]>
+          <ClickButton size="medium" type="warning" @click="changePassword(item.userId!)">
+            重置密码
+          </ClickButton>
+          <ClickButton size="medium" type="primary" @click="toEdit(item.userId!)">
+            编辑
+          </ClickButton>
+          <ClickButton size="medium" type="danger" @click="handleDelete(item.userId!)">
+            删除
+          </ClickButton>
+        </view>
       </view>
     </view>
     <view bg-gray-200 p-[20rpx]>
