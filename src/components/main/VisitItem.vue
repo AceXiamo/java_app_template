@@ -5,9 +5,9 @@ import ClickButton from '@/components/ClickButton.vue'
 import { useUserStore } from '@/store/user'
 
 const props = withDefaults(defineProps<{
-  showAll: boolean
-  hideButton: boolean
-  showVisit: boolean
+  showAll?: boolean
+  hideButton?: boolean
+  showVisit?: boolean
   item: Visits
 }>(), {
   showAll: false,
@@ -111,7 +111,7 @@ onMounted(() => {
             backgroundColor: `${stringToColor(VisitsStatus[item.status || 0])}20`,
           }"
         >
-          {{ VisitsStatus[item.status] }}
+          {{ VisitsStatus[item.status || 0] }}
         </view>
       </view>
     </view>
