@@ -106,6 +106,7 @@ function deleteDeptRef(item: DeptUserRef) {
     <EditUserHead />
     <view h-0 flex flex-auto flex-col gap-[20rpx] overflow-y-auto px-[20rpx] pb-[20rpx]>
       <view mt-[20rpx] flex flex-col gap-[30rpx] rounded-[10rpx] bg-white p-[20rpx]>
+        <FormImage v-model="user.avatar" label="头像" :limit="1" />
         <view flex flex-col justify-center gap-[20rpx]>
           <view ml-[20rpx]>
             <view i-heroicons:phone-16-solid text-[26rpx] text-emerald-500 />
