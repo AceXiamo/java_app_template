@@ -1,3 +1,4 @@
+import type { DeptUserRef } from './deptUserRef'
 import { host, request } from '@/utils/request'
 
 export interface SysUser extends BaseEntity, PageQuery {
@@ -21,6 +22,7 @@ export interface SysUser extends BaseEntity, PageQuery {
   roleIds?: number[]
   postIds?: number[]
   roleId?: number
+  deptUserRefs?: DeptUserRef[]
 }
 
 export interface SysDept extends BaseEntity {
