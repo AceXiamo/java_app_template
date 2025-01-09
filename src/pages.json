@@ -1,18 +1,13 @@
 {
   "pages": [
     {
-      "path": "pages/my/deptMember",
-      "type": "home",
-      "layout": "home"
+      "path": "pages/main/index",
+      "type": "home"
     },
     {
       "path": "pages/customer/edit",
       "type": "page",
       "layout": "home"
-    },
-    {
-      "path": "pages/main/index",
-      "type": "page"
     },
     {
       "path": "pages/main/visitDetail",
@@ -26,6 +21,11 @@
     },
     {
       "path": "pages/my/dept",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/deptMember",
       "type": "page",
       "layout": "home"
     },
