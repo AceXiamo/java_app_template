@@ -9,6 +9,7 @@ interface NavigateToOptions {
        "/pages/main/index" |
        "/pages/main/visitDetail" |
        "/pages/main/visitResult" |
+       "/pages/my/customVisitDetail" |
        "/pages/my/dept" |
        "/pages/my/deptMember" |
        "/pages/my/editUser" |
@@ -17,7 +18,8 @@ interface NavigateToOptions {
        "/pages/my/outcomeType" |
        "/pages/my/user" |
        "/pages/my/visitRecord" |
-       "/pages/my/visitType";
+       "/pages/my/visitType" |
+       "/pages/share/tanant";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

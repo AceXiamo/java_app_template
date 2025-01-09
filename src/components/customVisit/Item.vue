@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { CustomerVisit } from '@/api/customerVisit'
+import { type CustomerVisit, saveCustomerVisit } from '@/api/customerVisit'
 
 const props = defineProps<{
   item: CustomerVisit
@@ -27,8 +27,21 @@ function reject() {
     title: '驳回记录',
     content: '确定驳回该记录吗？',
     onConfirm: () => {
-      // TODO: 实现驳回逻辑
+      saveCustomerVisit({
+        id: props.item.id,
+        recordStatus: 3,
+      }).then(() => {
+        emit('reload')
+        toastRef.value?.success('驳回成功')
+      })
     },
+  })
+}
+
+function toDetail() {
+  setJumpData('customerVisit', props.item)
+  uni.navigateTo({
+    url: '/pages/my/customVisitDetail',
   })
 }
 </script>
@@ -47,6 +60,10 @@ function reject() {
           {{ statusMap[item.recordStatus ?? 0].text }}
         </view>
         <view ml-auto flex items-center gap-[10rpx]>
+          <ClickButton type="primary" size="medium" @click="toDetail">
+            <view i-heroicons:information-circle mr-[10rpx] />
+            <text>详情</text>
+          </ClickButton>
           <template v-if="item.recordStatus === 0">
             <ClickButton size="medium" type="primary" @click="assignTo">
               指派
