@@ -2,7 +2,7 @@
 import { host } from '@/utils/alioss'
 
 const props = withDefaults(defineProps<{
-  label: string
+  label?: string
   required?: boolean
   modelValue?: string
   disabled?: boolean
@@ -61,7 +61,7 @@ watch(() => props.modelValue, (value) => {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx] flex items-center gap-[10rpx]>
+    <view v-if="label" ml-[20rpx] flex items-center gap-[10rpx]>
       <view i-heroicons:photo-16-solid text-[26rpx] text-emerald-500 />
       <text text-[26rpx] text-[#333]>
         {{ label }}
