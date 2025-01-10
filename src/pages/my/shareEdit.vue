@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { delBanner, listBanner, saveBanner } from '@/api/banner'
 import type { TenantBanner } from '@/api/banner'
+import { getVisitQrcode } from '@/api/customerVisit'
 import FormImage from '@/components/form/Image.vue'
+import { host } from '@/utils/alioss'
 
 type BannerItem = TenantBanner & { x?: number, y?: number }
 
@@ -10,7 +12,6 @@ const showAddForm = ref(false)
 const formData = ref<BannerItem>({
   url: '',
   sort: 0,
-  tenantId: 0,
 })
 const dragId = ref<number | null>(null)
 const dragIndex = ref(-1)
@@ -122,8 +123,8 @@ function handleDelete(id: number) {
 
 function previewImage(url: string) {
   uni.previewImage({
-    current: url,
-    urls: bannerList.value.map(item => item.url!),
+    current: host + url,
+    urls: bannerList.value.map(item => host + item.url!),
   })
 }
 
@@ -132,15 +133,38 @@ async function handleSave() {
   if (!formData.value.url)
     return toastRef.value?.error('请上传图片')
 
-  await saveBanner(formData.value)
-  toastRef.value?.success('保存成功')
-  showAddForm.value = false
-  formData.value = {
-    url: '',
-    sort: 0,
-    tenantId: 0,
+  uploadImageToOSS(formData.value.url, 'banner').then(async (res) => {
+    await saveBanner({
+      ...formData.value,
+      url: res.replace(host, ''),
+    })
+    toastRef.value?.success('保存成功')
+    showAddForm.value = false
+    formData.value = {
+      url: '',
+      sort: bannerList.value.length,
+    }
+    loadBanners()
+  })
+}
+
+const showQrCodeViewer = ref(false)
+const qrCodeBase64 = ref('')
+
+function showQrCode() {
+  if (qrCodeBase64.value) {
+    showQrCodeViewer.value = true
+    return
   }
-  loadBanners()
+  uni.showLoading({
+    title: '加载中',
+  })
+  getVisitQrcode().then((res) => {
+    qrCodeBase64.value = res.msg
+    showQrCodeViewer.value = true
+  }).finally(() => {
+    uni.hideLoading()
+  })
 }
 
 onMounted(() => {
@@ -173,6 +197,9 @@ onMounted(() => {
       <view pb-[20rpx] text-[24rpx] text-gray-400>
         提示: 拖动图片可以调整顺序，长按图片可删除
       </view>
+      <view class="flex pb-[20rpx]">
+        <ClickButton label="分享页二维码" type="primary" @click="showQrCode" />
+      </view>
       <movable-area class="w-full flex flex-auto" :style="{ height: `${containerHeight * 2}rpx` }">
         <movable-view
           v-for="(item, index) in bannerList"
@@ -188,7 +215,7 @@ onMounted(() => {
         >
           <view class="h-full w-full border border-gray-200 rounded-[10rpx] border-dashed bg-white">
             <image
-              :src="item.url" class="h-full w-full rounded-[10rpx]" mode="aspectFill" @click="previewImage(item.url!)"
+              :src="host + item.url" class="h-full w-full rounded-[10rpx]" mode="aspectFill" @click="previewImage(item.url!)"
               @longpress="handleDelete(item.id!)"
             />
           </view>
@@ -219,10 +246,21 @@ onMounted(() => {
         </view>
       </view>
     </BottomDrawer>
+
+    <CenterDialog :visible="showQrCodeViewer" title="分享页二维码" width="550rpx" @update:visible="showQrCodeViewer = $event">
+      <view flex flex-col items-center justify-center gap-[20rpx]>
+        <image :src="qrCodeBase64" mode="aspectFill" class="h-[400rpx] w-[400rpx]" />
+        <view flex justify-center>
+          <text text-[24rpx] text-gray-400 font-medium>
+            提示: 长按图片保存到相册
+          </text>
+        </view>
+      </view>
+    </CenterDialog>
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
 {
   "layout": "home"
 }

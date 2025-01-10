@@ -6,6 +6,7 @@ import { type UserWithTenantDept, listUserForTenantDept } from '@/api/deptUserRe
 const queryForm = ref({
   deptId: -1,
   pageNum: 1,
+  recordStatus: -1,
   pageSize: 10,
   searchValue: '',
 })
@@ -49,6 +50,7 @@ function search(val: any) {
   queryForm.value.pageNum = 1
   queryForm.value.deptId = val.deptId
   queryForm.value.searchValue = val.searchValue
+  queryForm.value.recordStatus = val.recordStatus
   reloadHandler()
 }
 
