@@ -31,7 +31,7 @@ function activeHandle(item: any) {
     }"
     @click="open = !open"
   >
-    <text :class="{ 'text-[#808080] text-[24rpx]': !props.modelValue }">
+    <text :class="{ 'text-[#808080] text-[24rpx]': !props.modelValue }" class="truncate">
       {{ props.options.find(v => v.value === props.modelValue)?.label || props.placeholder }}
     </text>
     <view
@@ -51,11 +51,13 @@ function activeHandle(item: any) {
         <view
           v-for="(item, index) in props.options"
           :key="index"
-          class="py-[10rpx] pl-[16rpx] active:text-blue-400"
+          class="flex px-[16rpx] py-[10rpx] active:text-blue-400"
           :style="{ color: item.value === props.modelValue ? 'rgb(96, 165, 250)' : '#333' }"
           @click="activeHandle(item)"
         >
-          {{ props.options[index].label }}
+          <text truncate>
+            {{ props.options[index].label }}
+          </text>
         </view>
       </view>
     </view>

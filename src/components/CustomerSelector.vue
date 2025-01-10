@@ -4,7 +4,7 @@ import { useSettingStore } from '@/store/setting'
 import { type Customer, getCustomerList } from '@/api/customer'
 
 const props = defineProps<{
-  value: Customer
+  value?: Customer
   ignore?: Customer[]
 }>()
 const emits = defineEmits(['confirm'])
@@ -30,7 +30,7 @@ watch(inputValue, (value) => {
 
 watchEffect(() => {
   showItems.value = originalData.value
-  selectValue.value = props.value
+  selectValue.value = props.value || {}
 })
 
 function show() {

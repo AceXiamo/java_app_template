@@ -4,7 +4,7 @@ import { useSettingStore } from '@/store/setting'
 import { type SysUser, getUserList } from '@/api/user'
 
 const props = defineProps<{
-  value: SysUser
+  value?: SysUser
   ignore?: SysUser[]
 }>()
 const emits = defineEmits(['confirm'])
@@ -30,7 +30,7 @@ watch(inputValue, (value) => {
 
 watchEffect(() => {
   showItems.value = originalData.value
-  selectValue.value = props.value
+  selectValue.value = props.value || {}
 })
 
 function show() {

@@ -22,7 +22,7 @@ function onChange(e: any) {
       @change="onChange"
     >
       <swiper-item v-for="(image, index) in images" :key="index">
-        <image :src="image" mode="aspectFill" class="h-full w-full" />
+        <image :src="image" mode="aspectFill" class="h-full w-full rounded-[10rpx]" />
       </swiper-item>
     </swiper>
     <view absolute bottom-[20rpx] left="50%" flex translate-x-[-50%] items-center gap-[10rpx]>
