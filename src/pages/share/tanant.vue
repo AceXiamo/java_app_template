@@ -59,6 +59,12 @@ function submit() {
     uni.navigateBack()
   })
 }
+
+const bannerImages = [
+  'https://axm.moe/avatar',
+  'https://axm.moe/avatar',
+  'https://axm.moe/avatar',
+]
 </script>
 
 <template>
@@ -73,7 +79,8 @@ function submit() {
     </HeadBar>
 
     <view class="h-0 flex-1 overflow-y-auto px-[30rpx] py-[20rpx]">
-      <view>
+      <Banner :images="bannerImages" />
+      <view mt-[50rpx]>
         <view flex flex-col gap-[30rpx]>
           <FormInput
             v-model="formData.customerName"
@@ -202,7 +209,7 @@ function submit() {
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
 {
   "layout": "home"
 }

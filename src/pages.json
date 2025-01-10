@@ -1,7 +1,7 @@
 {
   "pages": [
     {
-      "path": "pages/share/tanant",
+      "path": "pages/my/shareEdit",
       "type": "home",
       "layout": "home"
     },
@@ -75,6 +75,11 @@
     },
     {
       "path": "pages/my/visitType",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/share/tanant",
       "type": "page",
       "layout": "home"
     }

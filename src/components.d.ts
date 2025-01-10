@@ -10,6 +10,7 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
+    Banner: typeof import('./components/Banner.vue')['default']
     BottomDrawer: typeof import('./components/BottomDrawer.vue')['default']
     ClickButton: typeof import('./components/ClickButton.vue')['default']
     Confirm: typeof import('./components/Confirm.vue')['default']
@@ -45,6 +46,7 @@ declare module '@vue/runtime-core' {
     OutcomeTypeHead: typeof import('./components/outcomeType/Head.vue')['default']
     QrCode: typeof import('./components/QrCode.vue')['default']
     SelectBar: typeof import('./components/SelectBar.vue')['default']
+    ShareEditHead: typeof import('./components/shareEdit/Head.vue')['default']
     TabBarCustomer: typeof import('./components/tabBar/customer.vue')['default']
     TabBarLogin: typeof import('./components/tabBar/login.vue')['default']
     TabBarMain: typeof import('./components/tabBar/main.vue')['default']
