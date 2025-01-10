@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import type { CustomerVisit } from '@/api/customerVisit'
 import { saveCustomerVisit } from '@/api/customerVisit'
+import { banners } from '@/api/banner'
+import { host } from '@/utils/alioss'
+import { listDept } from '@/api/submitVisit'
+import type { TenantDept } from '@/api/dept'
 
 const formData = ref<CustomerVisit>({
   customerName: '',
@@ -16,6 +20,7 @@ const formData = ref<CustomerVisit>({
 })
 
 const carList = ref<string[]>([])
+const deptList = ref<TenantDept[]>([])
 
 function addCar() {
   if (carList.value.length >= 5)
@@ -39,10 +44,10 @@ function removeCar(index: number) {
 }
 
 function submit() {
+  if (!formData.value.deptId)
+    return toastRef.value?.error('请选择访问部门')
   if (!formData.value.customerName)
     return toastRef.value?.error('请输入访客姓名')
-  if (!formData.value.customerCompany)
-    return toastRef.value?.error('请输入访客单位')
   if (!formData.value.visitDesc)
     return toastRef.value?.error('请输入到访事由')
   if (!formData.value.visitBegin)
@@ -60,11 +65,17 @@ function submit() {
   })
 }
 
-const bannerImages = [
-  'https://axm.moe/avatar',
-  'https://axm.moe/avatar',
-  'https://axm.moe/avatar',
-]
+const bannerImages = ref<string[]>([])
+
+onLoad(() => {
+  banners({ tenantId: 1 }).then((res) => {
+    bannerImages.value = res.data.map(item => host + item.url!)
+  })
+
+  listDept({ tenantId: 1 }).then((res) => {
+    deptList.value = res.data
+  })
+})
 </script>
 
 <template>
@@ -82,6 +93,12 @@ const bannerImages = [
       <Banner :images="bannerImages" />
       <view mt-[50rpx]>
         <view flex flex-col gap-[30rpx]>
+          <FormSelect
+            v-model="formData.deptId"
+            label="访问部门"
+            required
+            :options="deptList.map(item => ({ label: item.deptName!, value: item.id! }))"
+          />
           <FormInput
             v-model="formData.customerName"
             label="访客姓名"
@@ -96,7 +113,6 @@ const bannerImages = [
           <FormInput
             v-model="formData.customerCompany"
             label="访客单位"
-            required
             placeholder="请填写您的单位名称"
           >
             <template #icon>
@@ -121,6 +137,7 @@ const bannerImages = [
             label="计划到访时间"
             required
             placeholder="请选择"
+            mode="date"
           />
 
           <FormDate
@@ -128,6 +145,7 @@ const bannerImages = [
             label="计划离开时间"
             required
             placeholder="请选择"
+            mode="date"
           />
 
           <FormInput
@@ -209,7 +227,7 @@ const bannerImages = [
   </view>
 </template>
 
-<route lang="json">
+<route type="home" lang="json">
 {
   "layout": "home"
 }
