@@ -44,7 +44,7 @@ export function uploadImageToOSS(path: string, module: string) {
   return uploadFileToOss(path, `custom_ma/${module}/${dayjs().format('YYYY-MM-DD')}/${name}`)
 }
 
-export function handleImageUpload(imgs: string, form: Ref<any>, module: string = 'customer') {
+export function handleImageUpload(imgs: string, form: Ref<any>, module: string = 'customer', key: string = 'images') {
   return new Promise((resolve) => {
     const images = imgs.split(',')
     const needUploadImages: string[] = []
@@ -66,14 +66,14 @@ export function handleImageUpload(imgs: string, form: Ref<any>, module: string =
           ...(uploadedImages.map(url => url.replace(host, ''))),
           ...(res.map(url => url.replace(host, ''))),
         ]
-        form.value.images = images.join(',')
+        form.value[key] = images.join(',')
         resolve(true)
       }).catch(() => {
         resolve(false)
       })
     }
     else {
-      form.value.images = uploadedImages.map(url => url.replace(host, '')).join(',')
+      form.value[key] = uploadedImages.map(url => url.replace(host, '')).join(',')
       resolve(true)
     }
   })
