@@ -47,6 +47,12 @@ function toCustomVisit() {
   })
 }
 
+function toShareEdit() {
+  uni.navigateTo({
+    url: '/pages/my/shareEdit',
+  })
+}
+
 function logout() {
   confirmRef.value?.show({
     type: 'warning',
@@ -169,7 +175,7 @@ function logout() {
               到访记录
             </text>
           </view>
-          <view flex flex-col items-center gap-[15rpx] @click="toOutcomeType">
+          <view flex flex-col items-center gap-[15rpx] @click="toShareEdit">
             <view grid h-[80rpx] w-[80rpx] place-content-center rounded-md>
               <view i-twemoji:receipt text-[35rpx] />
             </view>
