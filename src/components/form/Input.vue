@@ -28,7 +28,7 @@ watch(inputValue, (newValue) => {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx]>
+    <view ml-[20rpx] flex items-center gap-[10rpx]>
       <slot name="icon">
         <view i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
       </slot>

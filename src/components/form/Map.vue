@@ -99,7 +99,7 @@ onMounted(() => {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx]>
+    <view ml-[20rpx] flex items-center gap-[10rpx]>
       <view i-carbon:location-filled text-[26rpx] text-emerald-500 />
       <text text-[26rpx] text-[#333]>
         客户地址

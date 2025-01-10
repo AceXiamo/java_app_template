@@ -2,23 +2,33 @@
 import dayjs from 'dayjs'
 
 const props = withDefaults(defineProps<{
-  label: string
+  label?: string
+  hideIcon?: boolean
   required?: boolean
   modelValue?: any
   disabled?: boolean
   placeholder?: string
+  mode?: 'date' | 'time'
 }>(), {
   disabled: false,
+  mode: 'date',
 })
 
 const emits = defineEmits(['update:modelValue'])
 const startDate = ref<string>('2000-01-01')
 const endDate = ref<string>('2099-01-01')
-const inputValue = ref<string>(dayjs(props.modelValue).format('YYYY-MM-DD'))
+
+const formatMap = {
+  date: 'YYYY-MM-DD',
+  time: 'HH:mm:ss',
+  datetime: 'YYYY-MM-DD HH:mm:ss',
+}
+
+const inputValue = ref<string>(dayjs(props.modelValue).format(formatMap[props.mode]))
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== inputValue.value)
-    inputValue.value = newValue ?? ''
+    inputValue.value = newValue ? dayjs(newValue).format(formatMap[props.mode]) : ''
 }, { immediate: true })
 
 watch(inputValue, (newValue) => {
@@ -33,17 +43,17 @@ function bindDateChange(e: { detail: { value: string } }) {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx]>
-      <view i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
+    <view ml-[20rpx] flex items-center gap-[10rpx]>
+      <view :style="{ opacity: $props.hideIcon ? 0 : 1 }" i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
       <text text-[26rpx] text-[#333]>
         {{ $props.label }}
       </text>
-      <text v-if="$props.required" text-[30rpx] text-red-500>
+      <text :style="{ opacity: $props.required ? 1 : 0 }" text-[30rpx] text-red-500>
         *
       </text>
     </view>
     <view relative box-border w-full flex items-center gap-[10rpx] border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
-      <picker mode="date" :value="inputValue" :start="startDate" :end="endDate" @change="bindDateChange">
+      <picker :mode="mode" :value="inputValue" :start="startDate" :end="endDate" @change="bindDateChange">
         <input
           v-model="inputValue" type="text" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-[26rpx]"
           :disabled="true"
