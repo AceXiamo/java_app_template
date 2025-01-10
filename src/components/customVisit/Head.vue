@@ -9,7 +9,7 @@ function back() {
     <view relative h-full flex items-center justify-center>
       <view i-heroicons:chevron-left-20-solid absolute left-[20rpx] text-[40rpx] text-black @click="back" />
       <text text-[30rpx] text-black>
-        访客记录
+        申请记录
       </text>
     </view>
   </HeadBar>
