@@ -44,3 +44,9 @@ export function saveCustomerVisit(data: CustomerVisit): Promise<BaseRes<void>> {
     data,
   })
 }
+
+export function getVisitQrcode() {
+  return request.post({
+    url: `${host}/admin/customer/visit/qrcode`,
+  })
+}
