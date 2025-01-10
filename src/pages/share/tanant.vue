@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import dayjs from 'dayjs'
 import type { CustomerVisit } from '@/api/customerVisit'
 import { saveCustomerVisit } from '@/api/customerVisit'
 import { banners } from '@/api/banner'
@@ -6,12 +7,21 @@ import { host } from '@/utils/alioss'
 import { listDept } from '@/api/submitVisit'
 import type { TenantDept } from '@/api/dept'
 
-const formData = ref<CustomerVisit>({
+type FormData = CustomerVisit & {
+  visitBeginTime?: Date
+  visitEndTime?: Date
+}
+
+const today = dayjs()
+
+const formData = ref<FormData>({
   customerName: '',
   customerCompany: '',
   visitDesc: '',
-  visitBegin: undefined,
-  visitEnd: undefined,
+  visitBegin: today.toDate(),
+  visitBeginTime: today.toDate(),
+  visitEnd: today.toDate(),
+  visitEndTime: today.toDate(),
   visitPerson: undefined,
   cars: '',
   customerPhone: '',
@@ -43,25 +53,41 @@ function removeCar(index: number) {
   updateCars()
 }
 
-function submit() {
+async function submit() {
   if (!formData.value.deptId)
     return toastRef.value?.error('请选择访问部门')
   if (!formData.value.customerName)
     return toastRef.value?.error('请输入访客姓名')
   if (!formData.value.visitDesc)
     return toastRef.value?.error('请输入到访事由')
-  if (!formData.value.visitBegin)
-    return toastRef.value?.error('请选择计划到访时间')
-  if (!formData.value.visitEnd)
-    return toastRef.value?.error('请选择计划离开时间')
+  if (!formData.value.visitBegin || !formData.value.visitBeginTime)
+    return toastRef.value?.error('请选择完整的计划到访时间')
+  if (!formData.value.visitEnd || !formData.value.visitEndTime)
+    return toastRef.value?.error('请选择完整的计划离开时间')
   if (!formData.value.visitPerson)
     return toastRef.value?.error('请输入随行人数')
   if (!formData.value.customerPhone)
     return toastRef.value?.error('请输入访客手机号')
 
-  saveCustomerVisit(formData.value).then(() => {
+  // 合并日期和时间
+  const visitBegin = `${formData.value.visitBegin} ${formData.value.visitBeginTime}`
+  const visitEnd = `${formData.value.visitEnd} ${formData.value.visitEndTime}`
+
+  // 创建提交用的数据对象
+  const submitData: CustomerVisit = {
+    ...formData.value,
+    visitBegin: new Date(visitBegin),
+    visitEnd: new Date(visitEnd),
+  }
+
+  // 上传图片
+  if (formData.value.customerFiles) {
+    await handleImageUpload(formData.value.customerFiles, formData, 'customer', 'customerFiles')
+    submitData.customerFiles = formData.value.customerFiles
+  }
+
+  saveCustomerVisit(submitData).then(() => {
     toastRef.value?.success('提交成功')
-    uni.navigateBack()
   })
 }
 
@@ -132,21 +158,41 @@ onLoad(() => {
             </template>
           </FormInput>
 
-          <FormDate
-            v-model="formData.visitBegin"
-            label="计划到访时间"
-            required
-            placeholder="请选择"
-            mode="date"
-          />
+          <view flex items-center gap-[20rpx]>
+            <FormDate
+              v-model="formData.visitBegin"
+              label="计划到访时间"
+              required
+              placeholder="请选择日期"
+              mode="date"
+              class="flex-1"
+            />
+            <FormDate
+              v-model="formData.visitBeginTime"
+              hide-icon
+              placeholder="请选择时间"
+              mode="time"
+              class="flex-1"
+            />
+          </view>
 
-          <FormDate
-            v-model="formData.visitEnd"
-            label="计划离开时间"
-            required
-            placeholder="请选择"
-            mode="date"
-          />
+          <view flex items-center gap-[20rpx]>
+            <FormDate
+              v-model="formData.visitEnd"
+              label="计划离开时间"
+              required
+              placeholder="请选择日期"
+              mode="date"
+              class="flex-1"
+            />
+            <FormDate
+              v-model="formData.visitEndTime"
+              hide-icon
+              placeholder="请选择时间"
+              mode="time"
+              class="flex-1"
+            />
+          </view>
 
           <FormInput
             v-model="formData.visitPerson"
@@ -227,7 +273,7 @@ onLoad(() => {
   </view>
 </template>
 
-<route type="home" lang="json">
+<route lang="json">
 {
   "layout": "home"
 }
