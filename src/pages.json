@@ -1,18 +1,13 @@
 {
   "pages": [
     {
-      "path": "pages/my/shareEdit",
-      "type": "home",
-      "layout": "home"
+      "path": "pages/main/index",
+      "type": "home"
     },
     {
       "path": "pages/customer/edit",
       "type": "page",
       "layout": "home"
-    },
-    {
-      "path": "pages/main/index",
-      "type": "page"
     },
     {
       "path": "pages/main/visitDetail",
@@ -60,6 +55,11 @@
     },
     {
       "path": "pages/my/outcomeType",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/shareEdit",
       "type": "page",
       "layout": "home"
     },
