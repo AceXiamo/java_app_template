@@ -48,6 +48,6 @@ onLoad(() => {
   </view>
 </template>
 
-<route lang="json">
+<route type="home" lang="json">
 {}
 </route>
