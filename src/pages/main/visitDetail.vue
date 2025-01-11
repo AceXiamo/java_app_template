@@ -107,6 +107,14 @@ function handleImageClick(url: string) {
   })
 }
 
+function handleDeleteImage(index: number) {
+  const arr = images.value.filter((_, i) => i !== index)
+  visits.value.images = arr.join(',')
+  saveVisits(visits.value).then(() => {
+    toastRef.value?.success('删除成功')
+  })
+}
+
 onMounted(() => {
   visits.value = getJumpData('visits') as Visits
   handleLocation()
