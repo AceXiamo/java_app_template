@@ -4,6 +4,7 @@ import type { SysRole, SysUser } from '@/api/user'
 import { useUserStore } from '@/store/user'
 import { type TenantDept, getDeptList } from '@/api/dept'
 import type { DeptUserRef } from '@/api/deptUserRef'
+import { host } from '@/utils/alioss'
 
 const deptList = ref<TenantDept[]>([])
 const deptDrawerVisible = ref(false)
@@ -15,6 +16,14 @@ const user = ref<SysUser>({})
 const id = ref(0)
 const currentUser = ref<SysUser>({})
 const roles = ref<SysRole[]>([])
+const menuPermissionIds = ref<number[]>([])
+
+const menuPermissions = [
+  { id: 102, label: '人员管理' },
+  { id: 103, label: '访客校验' },
+  { id: 104, label: '到访记录' },
+  { id: 105, label: '申请页编辑' },
+]
 
 onLoad((options: any) => {
   if (options.id) {
@@ -44,15 +53,23 @@ function loadUser() {
     const roleId = res.roleIds?.[0]
     roles.value = res.roles
     selectValue.value = roles.value.find(role => role.roleId === roleId)?.roleKey || 'tenant_user'
+
+    menuPermissionIds.value = res.roleIds?.filter(id => id !== roleId) || []
   })
 }
 
-function submit() {
+async function submit() {
   const role = roles.value.find(role => role.roleKey === selectValue.value)
+  const allRoleIds = [role!.roleId!, ...menuPermissionIds.value]
+  if (user.value.avatar && user.value.avatar.includes('tmp')) {
+    const url = await uploadImageToOSS(user.value.avatar, 'avatar')
+    user.value.avatar = url.replace(host, '')
+  }
+
   if (user.value && user.value.userId) {
     updateUser({
       ...user.value,
-      roleIds: [role!.roleId!],
+      roleIds: allRoleIds,
       roles: [role!],
     }).then(() => {
       toastRef.value?.success('更新用户成功')
@@ -62,7 +79,7 @@ function submit() {
   else {
     addUser({
       ...user.value,
-      roleIds: [role!.roleId!],
+      roleIds: allRoleIds,
       roles: [role!],
     }).then(() => {
       toastRef.value?.success('添加用户成功')
@@ -98,6 +115,17 @@ function submitAddDeptRef() {
 
 function deleteDeptRef(item: DeptUserRef) {
   user.value.deptUserRefs = user.value.deptUserRefs?.filter(v => v.deptId !== item.deptId)
+}
+
+function handlePermissionChange(item: any, checked: boolean) {
+  if (checked) {
+    if (!menuPermissionIds.value.includes(item.id)) {
+      menuPermissionIds.value.push(item.id)
+    }
+  }
+  else {
+    menuPermissionIds.value = menuPermissionIds.value.filter(id => id !== item.id)
+  }
 }
 </script>
 
@@ -179,6 +207,11 @@ function deleteDeptRef(item: DeptUserRef) {
             <view v-if="currentUser.userId === user.userId" absolute inset-0 bg="black/05" rounded-[10rpx] />
           </view>
         </view>
+        <view flex flex-col gap-[10rpx]>
+          <text text-[24rpx] text-gray-500>
+            提示：管理员拥有所有权限，员工不可管理用户且拜访记录仅能产看到由自己产生的记录
+          </text>
+        </view>
         <view flex flex-col justify-center gap-[20rpx]>
           <view ml-[20rpx] flex items-center gap-[10rpx]>
             <view i-heroicons:user-group-20-solid text-[26rpx] text-emerald-500 />
@@ -218,11 +251,26 @@ function deleteDeptRef(item: DeptUserRef) {
               </view>
             </template>
           </view>
-        </view>
-        <view flex flex-col gap-[10rpx]>
-          <text text-[24rpx] text-gray-500>
-            提示：管理员拥有所有权限，员工不可管理用户且拜访记录仅能产看到由自己产生的记录
-          </text>
+          <view flex flex-col justify-center gap-[20rpx]>
+            <view ml-[20rpx]>
+              <view i-heroicons:user-group-20-solid text-[26rpx] text-emerald-500 />
+              <text text-[26rpx] text-[#333]>
+                菜单权限
+              </text>
+            </view>
+            <view flex flex-col gap-[20rpx] px-[20rpx]>
+              <CheckboxItem
+                v-for="item in menuPermissions"
+                :key="item.id"
+                :checked="menuPermissionIds.includes(item.id)"
+                @update:checked="(checked) => handlePermissionChange(item, checked)"
+              >
+                <text text-[26rpx] text-[#333]>
+                  {{ item.label }}
+                </text>
+              </CheckboxItem>
+            </view>
+          </view>
         </view>
         <view flex justify-end gap-[20rpx]>
           <ClickButton type="primary" drop-shadow-lg @click="submit">

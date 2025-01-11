@@ -93,6 +93,7 @@ function assignTo(item: CustomerVisit) {
 function submitAssign() {
   currentVisit.value!.userId = activeUser.value!.userId
   currentVisit.value!.nickname = activeUser.value!.nickName
+  currentVisit.value!.phonenumber = activeUser.value!.phonenumber
   currentVisit.value!.recordStatus = 1
   saveCustomerVisit(currentVisit.value!).then(() => {
     toastRef.value?.success('指派成功')

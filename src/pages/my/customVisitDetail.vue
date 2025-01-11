@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import type { CustomerVisit } from '@/api/customerVisit'
+import { host } from '@/utils/alioss'
+import { type CustomerVisit, saveCustomerVisit } from '@/api/customerVisit'
 
 const visit = ref<CustomerVisit>({})
 
@@ -9,6 +10,9 @@ const statusMap: any = {
   2: { text: '已完成', color: 'bg-blue-500' },
   3: { text: '已驳回', color: 'bg-red-500' },
 }
+const images = computed(() => {
+  return visit.value.customerFiles?.split(',').map(item => `${host}${item}`)
+})
 
 onMounted(() => {
   visit.value = getJumpData('customerVisit') as CustomerVisit
@@ -18,10 +22,25 @@ function back() {
   uni.navigateBack()
 }
 
-function previewImage() {
+function previewImage(file: string) {
   uni.previewImage({
-    urls: visit.value.customerFiles!.split(','),
-    current: visit.value.customerFiles!.split(',')[0],
+    urls: images.value!,
+    current: file,
+  })
+}
+
+async function handleSubmit() {
+  if (visit.value.recordFiles) {
+    await handleImageUpload(visit.value.recordFiles, visit, 'visit', 'recordFiles')
+  }
+  saveCustomerVisit({
+    ...visit.value,
+    recordStatus: 2,
+  }).then(() => {
+    toastRef.value?.success('保存成功')
+    setTimeout(() => {
+      back()
+    }, 1000)
   })
 }
 </script>
@@ -102,7 +121,7 @@ function previewImage() {
               <text>备注:</text>
             </view>
             <text text-[24rpx] text-[#333]>
-              {{ visit.recordRemark || '-' }}
+              {{ visit.customerRemark || '-' }}
             </text>
           </view>
           <view flex items-start gap-[10rpx]>
@@ -112,17 +131,51 @@ function previewImage() {
             </view>
             <view v-if="visit.customerFiles" flex flex-wrap gap-[10rpx]>
               <image
-                v-for="(file, index) in JSON.parse(visit.customerFiles!)"
+                v-for="(file, index) in images"
                 :key="index"
                 :src="file"
                 mode="aspectFill"
                 class="h-[150rpx] w-[150rpx] rounded-[10rpx]"
-                @click="previewImage"
+                @click="previewImage(file)"
               />
             </view>
             <text v-else text-[24rpx] text-[#333]>
               -
             </text>
+          </view>
+        </view>
+      </view>
+      <view v-if="visit.recordStatus !== 3" flex flex-col rounded-[15rpx] bg-white p-[20rpx]>
+        <view flex flex-col gap-[20rpx]>
+          <view ml-[20rpx]>
+            <view i-heroicons:paper-clip-16-solid text-[26rpx] text-emerald-500 />
+            <text text-[26rpx] text-[#333]>
+              备注拜访结果
+            </text>
+          </view>
+
+          <FormInput
+            v-model="visit.recordRemark"
+            label="备注"
+            type="textarea"
+            required
+            placeholder="请输入备注"
+          >
+            <template #icon>
+              <view i-heroicons:document-text-16-solid text-[26rpx] text-emerald-500 />
+            </template>
+          </FormInput>
+
+          <FormImage
+            v-model="visit.recordFiles"
+            label="附件"
+            :limit="3"
+          />
+
+          <view mt-[20rpx] flex justify-end>
+            <ClickButton type="primary" @click="handleSubmit">
+              保存
+            </ClickButton>
           </view>
         </view>
       </view>
