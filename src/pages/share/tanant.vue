@@ -1,27 +1,30 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import type { CustomerVisit } from '@/api/customerVisit'
-import { saveCustomerVisit } from '@/api/customerVisit'
 import { banners } from '@/api/banner'
 import { host } from '@/utils/alioss'
-import { listDept } from '@/api/submitVisit'
+import { listDept, submitVisit } from '@/api/submitVisit'
+import { useUserStore } from '@/store/user'
 import type { TenantDept } from '@/api/dept'
+import { login } from '@/api/login'
 
 type FormData = CustomerVisit & {
   visitBeginTime?: Date
   visitEndTime?: Date
 }
 
+const user = useUserStore()
 const today = dayjs()
+const time = dayjs(`${today.format('YYYY-MM-DD')} 00:00`)
 
 const formData = ref<FormData>({
   customerName: '',
   customerCompany: '',
   visitDesc: '',
-  visitBegin: today.toDate(),
-  visitBeginTime: today.toDate(),
-  visitEnd: today.toDate(),
-  visitEndTime: today.toDate(),
+  visitBegin: today.format('YYYY-MM-DD'),
+  visitBeginTime: time.toDate(),
+  visitEnd: today.format('YYYY-MM-DD'),
+  visitEndTime: time.toDate(),
   visitPerson: undefined,
   cars: '',
   customerPhone: '',
@@ -70,15 +73,15 @@ async function submit() {
     return toastRef.value?.error('请输入访客手机号')
 
   // 合并日期和时间
-  const visitBegin = `${formData.value.visitBegin} ${formData.value.visitBeginTime}`
-  const visitEnd = `${formData.value.visitEnd} ${formData.value.visitEndTime}`
-
+  const visitBegin = `${dayjs(formData.value.visitBegin).format('YYYY-MM-DD')} ${dayjs(formData.value.visitBeginTime).format('HH:mm')}:00`
+  const visitEnd = `${dayjs(formData.value.visitEnd).format('YYYY-MM-DD')} ${dayjs(formData.value.visitEndTime).format('HH:mm')}:00`
   // 创建提交用的数据对象
   const submitData: CustomerVisit = {
     ...formData.value,
-    visitBegin: new Date(visitBegin),
-    visitEnd: new Date(visitEnd),
+    visitBegin,
+    visitEnd,
   }
+  console.log(submitData)
 
   // 上传图片
   if (formData.value.customerFiles) {
@@ -86,14 +89,33 @@ async function submit() {
     submitData.customerFiles = formData.value.customerFiles
   }
 
-  saveCustomerVisit(submitData).then(() => {
+  submitVisit({
+    ...submitData,
+    openId: user.user.openId!,
+  }).then(() => {
     toastRef.value?.success('提交成功')
   })
 }
 
 const bannerImages = ref<string[]>([])
 
+function goToRecord() {
+  uni.navigateTo({
+    url: '/pages/share/record',
+  })
+}
+
 onLoad(() => {
+  if (!user.user || !user.user.openId) {
+    uni.login({
+      provider: 'weixin',
+      success: async (res: { code: string }) => {
+        const { data } = await login({ code: res.code })
+        user.saveLoginRes(data)
+      },
+    })
+  }
+
   banners({ tenantId: 1 }).then((res) => {
     bannerImages.value = res.data.map(item => host + item.url!)
   })
@@ -267,6 +289,11 @@ onLoad(() => {
           @click="submit"
         >
           提交
+        </view>
+        <view mt-[20rpx] flex items-center justify-end>
+          <text border-b border-gray-400 border-b-solid pb-[4rpx] text-[26rpx] text-gray-400 @click="goToRecord">
+            提交记录
+          </text>
         </view>
       </view>
     </view>
