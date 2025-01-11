@@ -28,11 +28,11 @@ watch(inputValue, (newValue) => {
 
 <template>
   <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx] flex items-center gap-[10rpx]>
+    <view ml-[20rpx] flex items-center gap-[10rpx] text-[26rpx]>
       <slot name="icon">
-        <view i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
+        <view i-heroicons:user-16-solid text-emerald-500 />
       </slot>
-      <text text-[26rpx] text-[#333]>
+      <text text-[#333]>
         {{ $props.label }}
       </text>
       <text v-if="$props.required" text-[30rpx] text-red-500>
