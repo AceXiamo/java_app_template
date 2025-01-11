@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { type SysUser, deleteUser, resetPwd } from '@/api/user'
 import type { DeptUserRef } from '@/api/deptUserRef'
+import { useUserStore } from '@/store/user'
 
 const props = defineProps<{
   item: SysUser
@@ -9,12 +10,23 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'reload'): void
 }>()
+const { currentUser } = toRefs(useUserStore())
 
-type Item = SysUser & {
-  userType?: 'tenant' | 'tenant_user'
-}
+const thisItem = computed(() => {
+  return {
+    ...props.item,
+    userType: props.item.roles?.some(role => role.roleKey === 'tenant') ? 'tenant' : 'tenant_user',
+  }
+})
 
-const thisItem = ref<Item>({})
+const hasEditManage = computed(() => {
+  if (thisItem.value.userType === 'tenant') {
+    return hasManage(currentUser.value.user || {}, 'tenant')
+  }
+  else {
+    return hasManage(currentUser.value.user || {}, 'tenant_user_manage')
+  }
+})
 
 function toEdit(id: number) {
   setJumpData('user_dept', props.deptRefList)
@@ -56,13 +68,6 @@ function changePassword(userId: number) {
     },
   })
 }
-
-onMounted(() => {
-  thisItem.value = {
-    ...props.item,
-    userType: props.item.roles?.some(role => role.roleKey === 'tenant') ? 'tenant' : 'tenant_user',
-  }
-})
 </script>
 
 <template>
@@ -89,15 +94,17 @@ onMounted(() => {
           </template>
         </view>
         <view ml-auto flex items-center gap-[10rpx]>
-          <ClickButton size="medium" type="warning" @click="changePassword(item.userId!)">
-            重置密码
-          </ClickButton>
-          <ClickButton size="medium" type="primary" @click="toEdit(item.userId!)">
-            编辑
-          </ClickButton>
-          <ClickButton size="medium" type="danger" @click="handleDelete(item.userId!)">
-            删除
-          </ClickButton>
+          <template v-if="hasEditManage">
+            <ClickButton size="medium" type="warning" @click="changePassword(item.userId!)">
+              重置密码
+            </ClickButton>
+            <ClickButton size="medium" type="primary" @click="toEdit(item.userId!)">
+              编辑
+            </ClickButton>
+            <ClickButton size="medium" type="danger" @click="handleDelete(item.userId!)">
+              删除
+            </ClickButton>
+          </template>
         </view>
       </view>
     </view>
