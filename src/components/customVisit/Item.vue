@@ -117,7 +117,6 @@ function toDetail() {
           {{ item.visitDesc }}
         </text>
       </view>
-      <!-- 负责人 -->
       <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
         <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
           <view i-heroicons:user-solid text-[22rpx] text-gray-400 />
@@ -125,6 +124,15 @@ function toDetail() {
         </view>
         <text text-[24rpx] text-[#333]>
           {{ item.nickname }}
+        </text>
+      </view>
+      <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
+        <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
+          <view i-heroicons:clock-solid text-[22rpx] text-gray-400 />
+          <text>创建时间:</text>
+        </view>
+        <text text-[24rpx] text-[#333]>
+          {{ item.createTime }}
         </text>
       </view>
     </view>
