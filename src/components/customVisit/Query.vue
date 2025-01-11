@@ -41,7 +41,9 @@ onMounted(() => {
         placeholder="输入内容以筛选"
       >
     </view>
-    <SelectBar v-model="queryForm.deptId" :options="deptOptions" placeholder="请选择部门" w-[210rpx] />
+    <template v-if="deptOptions.length > 1">
+      <SelectBar v-model="queryForm.deptId" :options="deptOptions" placeholder="请选择部门" w-[210rpx] />
+    </template>
     <SelectBar v-model="queryForm.recordStatus" :options="statusOptions" placeholder="请选择状态" w-[170rpx] />
     <ClickButton
       size="medium"

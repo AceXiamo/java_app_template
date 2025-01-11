@@ -1,14 +1,23 @@
 <script lang="ts" setup>
 import { type CustomerVisit, saveCustomerVisit } from '@/api/customerVisit'
+import { useUserStore } from '@/store/user'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   item: CustomerVisit
-}>()
+  isView?: boolean
+  hideAssignTo?: boolean
+}>(), {
+  item: () => ({}),
+  isView: false,
+  hideAssignTo: false,
+})
 
 const emit = defineEmits<{
   (e: 'reload'): void
   (e: 'assignTo', item: CustomerVisit): void
 }>()
+
+const { currentUser } = toRefs(useUserStore())
 
 const statusMap: any = {
   0: { text: '待审核', color: 'bg-yellow-500' },
@@ -59,7 +68,7 @@ function toDetail() {
         >
           {{ statusMap[item.recordStatus ?? 0].text }}
         </view>
-        <view ml-auto flex items-center gap-[10rpx]>
+        <view v-if="!isView" ml-auto flex items-center gap-[10rpx]>
           <ClickButton type="primary" size="medium" @click="toDetail">
             <view i-heroicons:information-circle mr-[10rpx] />
             <text>详情</text>
@@ -72,7 +81,7 @@ function toDetail() {
               驳回
             </ClickButton>
           </template>
-          <template v-else-if="item.recordStatus === 1">
+          <template v-if="(item.recordStatus === 1 && !hideAssignTo) && (hasManage(currentUser.user || {}, 'tenant') || currentUser.user?.userId !== item.userId)">
             <ClickButton size="medium" type="primary" @click="assignTo">
               变更指派
             </ClickButton>
@@ -102,10 +111,19 @@ function toDetail() {
       <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
         <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
           <view i-heroicons:calendar-solid text-[22rpx] text-gray-400 />
-          <text>访问时间:</text>
+          <text>开始时间:</text>
         </view>
         <text text-[24rpx] text-[#333]>
-          {{ item.visitBegin }} - {{ item.visitEnd }}
+          {{ item.visitBegin }}
+        </text>
+      </view>
+      <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
+        <view w-[140rpx] flex items-center gap-[10rpx] text-[24rpx] text-gray-500>
+          <view i-heroicons:calendar-solid text-[22rpx] text-gray-400 />
+          <text>结束时间:</text>
+        </view>
+        <text text-[24rpx] text-[#333]>
+          {{ item.visitEnd }}
         </text>
       </view>
       <view class="item" mt-[10rpx] flex items-center gap-[10rpx]>
