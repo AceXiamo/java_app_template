@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { host, uploadFileToOss } from './alioss'
+import type { SysUser } from '@/api/user'
 
 export function debounce(fn: any, delay: number) {
   let timer: any = null
@@ -77,4 +78,14 @@ export function handleImageUpload(imgs: string, form: Ref<any>, module: string =
       resolve(true)
     }
   })
+}
+
+export function hasManage(user: SysUser, roleKey: string) {
+  if (user.roles?.some(role => role.roleKey === 'tenant')) {
+    return true
+  }
+  if (user.roles?.some(role => role.roleKey === roleKey)) {
+    return true
+  }
+  return false
 }

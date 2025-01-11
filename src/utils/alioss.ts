@@ -4,7 +4,9 @@ import logger from './logger'
 import Storage from './storage'
 import type { OSSSTSCredential } from '@/api/alioss'
 import { getStsToken } from '@/api/alioss'
+import { useUserStore } from '@/store/user'
 
+const user = useUserStore()
 const bucket = import.meta.env.VITE_OSS_BUCKET_NAME
 const region = import.meta.env.VITE_OSS_REGION
 const host = `https://${bucket}.oss-${region}.aliyuncs.com/`
@@ -26,9 +28,9 @@ function getPolicy(expires: string): string {
 interface UploadConfig {
   host: string
   formData: {
-    OSSAccessKeyId: string
-    signature: string
-    policy: string
+    'OSSAccessKeyId': string
+    'signature': string
+    'policy': string
     'x-oss-security-token': string
   }
 }
@@ -41,7 +43,7 @@ interface UploadConfig {
 async function getUploadConfig(): Promise<UploadConfig> {
   let credentials: OSSSTSCredential = Storage.get('credentials')
   if (!credentials) {
-    const res = await getStsToken()
+    const res = await getStsToken({ openId: user.user.openId! })
     if (res.code === 200) {
       Storage.set({
         key: 'credentials',
@@ -96,7 +98,7 @@ function uploadFileToOss(filePath: string, path: string, onProgress?: ({ progres
       })
 
       uploadTask.onProgressUpdate(({ progress }) => {
-        onProgress && onProgress({ progress })
+        onProgress?.({ progress })
       })
     })
   })
