@@ -30,6 +30,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/my/customerVisitLog",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/my/dept",
       "type": "page",
       "layout": "home"
@@ -75,6 +80,11 @@
     },
     {
       "path": "pages/my/visitType",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/share/record",
       "type": "page",
       "layout": "home"
     },

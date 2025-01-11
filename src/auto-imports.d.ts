@@ -43,6 +43,7 @@ declare global {
   const getUploadConfig: typeof import('./utils/alioss')['getUploadConfig']
   const h: typeof import('vue')['h']
   const handleImageUpload: typeof import('./utils/tool')['handleImageUpload']
+  const hasManage: typeof import('./utils/tool')['hasManage']
   const host: typeof import('./utils/request')['host']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
   const inject: typeof import('vue')['inject']
@@ -379,6 +380,7 @@ declare module 'vue' {
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly handleImageUpload: UnwrapRef<typeof import('./utils/tool')['handleImageUpload']>
+    readonly hasManage: UnwrapRef<typeof import('./utils/tool')['hasManage']>
     readonly host: UnwrapRef<typeof import('./utils/request')['host']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
