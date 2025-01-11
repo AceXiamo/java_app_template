@@ -9,8 +9,8 @@ export interface CustomerVisit {
   customerName?: string
   customerCompany?: string
   visitDesc?: string
-  visitBegin?: Date
-  visitEnd?: Date
+  visitBegin?: string
+  visitEnd?: string
   visitPerson?: number
   cars?: string
   customerPhone?: string
@@ -22,6 +22,7 @@ export interface CustomerVisit {
   updateTime?: Date
   recordStatus?: number
   openId?: string
+  phonenumber?: string
 }
 
 export interface ListQuery extends PageQuery {
@@ -48,5 +49,18 @@ export function saveCustomerVisit(data: CustomerVisit): Promise<BaseRes<void>> {
 export function getVisitQrcode() {
   return request.post({
     url: `${host}/admin/customer/visit/qrcode`,
+  })
+}
+
+export function getCustomerVisit(params: { id: number }) {
+  return request.get({
+    url: `${host}/admin/customer/visit/${params.id}`,
+  })
+}
+
+export function generateQrcode(params: { text: string }) {
+  return request.post({
+    url: `${host}/admin/customer/visit/qrcode`,
+    data: params,
   })
 }

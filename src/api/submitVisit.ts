@@ -22,3 +22,10 @@ export function listForCustomer(params: { openId: string }) {
     params,
   })
 }
+
+export function qrcode(params: { text: string }) {
+  return request.post({
+    url: `${host}/app/customer/visit/qrcode`,
+    params,
+  })
+}

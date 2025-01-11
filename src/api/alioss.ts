@@ -8,8 +8,9 @@ export interface OSSSTSCredential {
   expiration: string
 }
 
-export function getStsToken(): Promise<ResponseData<OSSSTSCredential>> {
+export function getStsToken(params?: { openId: string }): Promise<ResponseData<OSSSTSCredential>> {
   return request.post({
     url: `${host}/ali/oss/getStsToken`,
+    params,
   })
 }

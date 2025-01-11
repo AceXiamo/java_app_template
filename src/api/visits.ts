@@ -1,9 +1,11 @@
+import type { CustomerVisit } from './customerVisit'
 import { host, request } from '@/utils/request'
 
 export interface CalendarResVo {
   day?: string
   isThisMonth?: boolean
   visits?: Visits[]
+  customerVisits?: CustomerVisit[]
   fullDay?: string
 }
 
