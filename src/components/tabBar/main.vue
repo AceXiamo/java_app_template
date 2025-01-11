@@ -21,6 +21,10 @@ const showVisitList = computed(() => {
   const item = month.value.find(v => v.fullDay === activeDay.value)
   return item?.visits || []
 })
+const showCustomerVisitList = computed(() => {
+  const item = month.value.find(v => v.fullDay === activeDay.value)
+  return item?.customerVisits || []
+})
 const pickerValue = ref(dayjs().format('YYYY-MM'))
 const startDate = ref<string>('2000-01-01')
 const endDate = ref<string>('2099-01-01')
@@ -104,13 +108,13 @@ const activeTab = ref<ActiveTab>('visit_customer')
                 v-if="item.fullDay === today" absolute right-[10rpx] top-[10rpx] h-[10rpx] w-[10rpx] rounded-full
                 bg-emerald-400
               />
-              <view v-if="(item.visits?.length || 0) > 0" flex items-center gap-[4rpx]>
+              <view v-if="((item.visits?.length || 0) + (item.customerVisits?.length || 0)) > 0" flex items-center gap-[4rpx]>
                 <view i-heroicons:bell-alert-16-solid text-[18rpx] text-red-300 />
                 <text text-[20rpx] text-white>
                   x
                 </text>
                 <text text-[20rpx] text-white>
-                  {{ item.visits?.length }}
+                  {{ (item.visits?.length || 0) + (item.customerVisits?.length || 0) }}
                 </text>
               </view>
               <text
@@ -161,18 +165,35 @@ const activeTab = ref<ActiveTab>('visit_customer')
         </view>
       </view>
       <view mx-[20rpx] mt-[20rpx] flex flex-col gap-[10rpx]>
-        <template v-if="showVisitList.length > 0">
-          <view flex flex-col gap-[20rpx] pb-[20rpx]>
-            <MainVisitItem v-for="item in showVisitList" :key="item.id" :item="item" />
-          </view>
+        <template v-if="activeTab === 'visit_customer'">
+          <template v-if="showVisitList.length > 0">
+            <view flex flex-col gap-[20rpx] pb-[20rpx]>
+              <MainVisitItem v-for="item in showVisitList" :key="item.id" :item="item" />
+            </view>
+          </template>
+          <template v-else>
+            <view h-[200rpx] w-full flex items-center justify-center gap-[10rpx]>
+              <view i-heroicons:exclamation-circle-16-solid text-[24rpx] text-gray-300 />
+              <text text-[24rpx] text-gray-400>
+                当日暂无任务
+              </text>
+            </view>
+          </template>
         </template>
         <template v-else>
-          <view h-[200rpx] w-full flex items-center justify-center gap-[10rpx]>
-            <view i-heroicons:exclamation-circle-16-solid text-[24rpx] text-gray-300 />
-            <text text-[24rpx] text-gray-400>
-              当日暂无任务
-            </text>
-          </view>
+          <template v-if="showCustomerVisitList.length > 0">
+            <view flex flex-col gap-[20rpx] pb-[20rpx]>
+              <CustomVisitItem v-for="item in showCustomerVisitList" :key="item.id" :item="item" hide-assign-to />
+            </view>
+          </template>
+          <template v-else>
+            <view h-[200rpx] w-full flex items-center justify-center gap-[10rpx]>
+              <view i-heroicons:exclamation-circle-16-solid text-[24rpx] text-gray-300 />
+              <text text-[24rpx] text-gray-400>
+                当日暂无任务
+              </text>
+            </view>
+          </template>
         </template>
       </view>
     </view>
