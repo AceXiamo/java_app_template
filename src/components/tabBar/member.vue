@@ -1,9 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <view>
-    <text>
-      成员
-    </text>
+  <view relative h-full flex flex-col overflow-y-auto>
+    <PageMemberHead />
   </view>
 </template>
