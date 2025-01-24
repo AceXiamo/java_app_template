@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { useUserStore } from '@/store/user'
-
 const toast = ref()
 const confirm = ref()
 const inputConfirm = ref()
-const user = useUserStore()
 
 function refInit() {
   toastRef.value = toast.value
@@ -21,7 +18,7 @@ onShow(refInit)
     <view class="h-0 w-full flex-auto">
       <slot />
     </view>
-    <app-footer v-if="user.token" />
+    <app-footer />
     <Toast ref="toast" />
     <Confirm ref="confirm" />
     <InputConfirm ref="inputConfirm" />
