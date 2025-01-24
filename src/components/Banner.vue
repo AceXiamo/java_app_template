@@ -18,14 +18,14 @@ function onChange(e: any) {
       :autoplay="true"
       :circular="true"
       :interval="3000"
-      class="h-[300rpx] w-full"
+      class="h-[400rpx] w-full"
       @change="onChange"
     >
       <swiper-item v-for="(image, index) in images" :key="index">
-        <image :src="image" mode="aspectFill" class="h-full w-full rounded-[10rpx]" />
+        <image :src="image" mode="aspectFill" class="h-full w-full" />
       </swiper-item>
     </swiper>
-    <view absolute bottom-[20rpx] left="50%" flex translate-x-[-50%] items-center gap-[10rpx]>
+    <view absolute bottom-[30rpx] right-[30rpx] flex items-center gap-[10rpx]>
       <view
         v-for="(_, index) in images"
         :key="index"
