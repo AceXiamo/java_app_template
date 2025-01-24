@@ -2,9 +2,9 @@
 </script>
 
 <template>
-  <view />
+  <view relative h-full flex flex-col overflow-y-auto>
+    <PageMyHead />
+  </view>
 </template>
 
-<route lang="json">
-  {}
-</route>
+
