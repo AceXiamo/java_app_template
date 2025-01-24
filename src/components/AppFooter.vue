@@ -45,7 +45,7 @@ onShow(() => {
     :style="{
       paddingBottom: setting.isAppleAndHasLine ? 'calc(env(safe-area-inset-bottom) + 10rpx)' : '20rpx',
     }"
-    flex justify-between bg-white px-[60rpx] pt-[20rpx]
+    flex justify-between border-t border-t-[#f3f3f3] border-t-solid bg-white px-[60rpx] pt-[20rpx]
   >
     <view flex flex-col items-center gap-[10rpx] @tap="menuClick('home')">
       <view relative h-[40rpx] w-[40rpx] flex items-center justify-center>
