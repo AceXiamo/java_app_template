@@ -21,3 +21,16 @@ onLaunch(async () => {
   setting.setIsAppleAndHasLine(isAppleAndHasLine)
 })
 </script>
+
+<style>
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+    width: 0;
+    height: 0;
+    background-color: transparent;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
