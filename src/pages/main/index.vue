@@ -24,6 +24,9 @@ onLoad(() => {
 <template>
   <view relative h-full flex flex-col overflow-y-auto>
     <TabBarMain v-if="menu.active === 'home'" h-full />
+    <TabBarGroup v-if="menu.active === 'group'" h-full />
+    <TabBarShop v-if="menu.active === 'shop'" h-full />
+    <TabBarMember v-if="menu.active === 'member'" h-full />
     <TabBarMy v-if="menu.active === 'my'" h-full />
   </view>
 </template>
