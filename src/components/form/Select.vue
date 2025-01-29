@@ -6,9 +6,11 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   placeholder?: string
   options: { label: string, value: any }[]
+  showBottomLine?: boolean
 }>(), {
   disabled: false,
   options: () => [],
+  showBottomLine: true,
 })
 
 const emits = defineEmits(['update:modelValue'])
@@ -32,34 +34,36 @@ const selectedLabel = computed(() => {
 </script>
 
 <template>
-  <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx] flex items-center gap-[10rpx]>
-      <view i-heroicons:list-bullet-16-solid text-[26rpx] text-emerald-500 />
-      <text text-[26rpx] text-[#333]>
+  <view relative flex justify-center gap-[20rpx] py-[20rpx]>
+    <view flex items-center gap-[5rpx] text-[26rpx]>
+      <slot name="icon" />
+      <text text-[#333]>
         {{ $props.label }}
       </text>
       <text v-if="$props.required" text-[30rpx] text-red-500>
         *
       </text>
     </view>
-    <view relative box-border w-full flex items-center gap-[10rpx] border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
+    <view relative box-border flex flex-auto items-center gap-[10rpx] p-[15rpx]>
       <picker
         :value="options.findIndex(opt => opt.value === selectedValue)"
         :range="options"
         range-key="label"
         @change="handleChange"
+        w-full
       >
         <input
           :value="selectedLabel"
           type="text"
           :placeholder="placeholder ?? `请选择${$props.label}`"
-          class="flex-auto text-[26rpx]"
+          class="flex-auto text-[26rpx] text-right"
           disabled
         >
       </picker>
       <slot name="suffix" />
       <view v-if="$props.disabled" bg="black/05" absolute inset-0 rounded-[10rpx] />
     </view>
+    <view v-if="$props.showBottomLine" absolute bottom-0 left-0 right-0 h-[1px] bg-gray-300 />
   </view>
 </template>
 

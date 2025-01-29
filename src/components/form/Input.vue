@@ -6,9 +6,11 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   placeholder?: string
   type?: 'text' | 'number' | 'textarea'
+  showBottomLine?: boolean
 }>(), {
   disabled: false,
   type: 'text',
+  showBottomLine: true,
 })
 
 const emits = defineEmits(['update:modelValue'])
@@ -27,11 +29,12 @@ watch(inputValue, (newValue) => {
 </script>
 
 <template>
-  <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx] flex items-center gap-[10rpx] text-[26rpx]>
-      <slot name="icon">
-        <view i-heroicons:user-16-solid text-emerald-500 />
-      </slot>
+  <view
+    relative flex justify-center gap-[20rpx] py-[20rpx]
+    :class="{ 'flex-col': $props.type === 'textarea' }"
+  >
+    <view flex items-center gap-[5rpx] text-[26rpx]>
+      <slot name="icon" />
       <text text-[#333]>
         {{ $props.label }}
       </text>
@@ -39,7 +42,10 @@ watch(inputValue, (newValue) => {
         *
       </text>
     </view>
-    <view relative box-border w-full flex items-center gap-[10rpx] border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
+    <view
+      relative box-border flex flex-auto items-center gap-[10rpx] p-[15rpx]
+      :class="{ 'bg-[#F0F0F0] rounded-[6rpx]': $props.type === 'textarea' }"
+    >
       <template v-if="$props.type === 'textarea'">
         <textarea
           v-model="inputValue"
@@ -50,12 +56,13 @@ watch(inputValue, (newValue) => {
       </template>
       <template v-else>
         <input
-          v-model="inputValue" :type="$props.type" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-[26rpx]"
+          v-model="inputValue" :type="$props.type" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-right text-[26rpx]"
           :disabled="$props.disabled"
         >
       </template>
       <slot name="suffix" />
       <view v-if="$props.disabled" absolute inset-0 bg="black/05" rounded-[10rpx] />
     </view>
+    <view v-if="$props.showBottomLine && type !== 'textarea'" absolute bottom-0 left-0 right-0 h-[1px] bg-gray-300 />
   </view>
 </template>

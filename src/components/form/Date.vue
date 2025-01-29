@@ -9,9 +9,11 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   placeholder?: string
   mode?: 'date' | 'time'
+  showBottomLine?: boolean
 }>(), {
   disabled: false,
   mode: 'date',
+  showBottomLine: true,
 })
 
 const emits = defineEmits(['update:modelValue'])
@@ -42,9 +44,9 @@ function bindDateChange(e: { detail: { value: string } }) {
 </script>
 
 <template>
-  <view flex flex-col justify-center gap-[20rpx]>
-    <view ml-[20rpx] flex items-center gap-[10rpx]>
-      <view :style="{ opacity: $props.hideIcon ? 0 : 1 }" i-heroicons:user-16-solid text-[26rpx] text-emerald-500 />
+  <view relative flex justify-center gap-[20rpx] py-[20rpx]>
+    <view flex items-center gap-[5rpx]>
+      <slot name="icon" />
       <text text-[26rpx] text-[#333]>
         {{ $props.label }}
       </text>
@@ -52,15 +54,16 @@ function bindDateChange(e: { detail: { value: string } }) {
         *
       </text>
     </view>
-    <view relative box-border w-full flex items-center gap-[10rpx] border border-gray-300 rounded-[10rpx] border-solid p-[15rpx]>
-      <picker :mode="mode" :value="inputValue" :start="startDate" :end="endDate" @change="bindDateChange">
+    <view relative box-border flex flex-auto items-center gap-[10rpx] p-[15rpx]>
+      <picker :mode="mode" :value="inputValue" :start="startDate" :end="endDate" @change="bindDateChange" w-full>
         <input
-          v-model="inputValue" type="text" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-[26rpx]"
+          v-model="inputValue" type="text" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-[26rpx] text-right"
           :disabled="true"
         >
       </picker>
       <slot name="suffix" />
       <view v-if="$props.disabled" absolute inset-0 bg="black/05" rounded-[10rpx] />
     </view>
+    <view v-if="$props.showBottomLine" absolute bottom-0 left-0 right-0 h-[1px] bg-gray-300 />
   </view>
 </template>
