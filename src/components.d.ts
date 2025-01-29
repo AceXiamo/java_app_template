@@ -11,6 +11,7 @@ declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     AIcon: typeof import('./components/AIcon.vue')['default']
     AppFooter: typeof import('./components/AppFooter.vue')['default']
+    ARating: typeof import('./components/ARating.vue')['default']
     Banner: typeof import('./components/Banner.vue')['default']
     BottomDrawer: typeof import('./components/BottomDrawer.vue')['default']
     CenterDialog: typeof import('./components/CenterDialog.vue')['default']
@@ -25,6 +26,8 @@ declare module '@vue/runtime-core' {
     HeadBar: typeof import('./components/HeadBar.vue')['default']
     InputConfirm: typeof import('./components/InputConfirm.vue')['default']
     MyHeadBar: typeof import('./components/My/HeadBar.vue')['default']
+    PageActivityListHead: typeof import('./components/page/activityList/Head.vue')['default']
+    PageActivityReleaseHead: typeof import('./components/page/activityRelease/Head.vue')['default']
     PageGroupHead: typeof import('./components/page/group/Head.vue')['default']
     PageMainHead: typeof import('./components/page/main/Head.vue')['default']
     PageMemberHead: typeof import('./components/page/member/Head.vue')['default']

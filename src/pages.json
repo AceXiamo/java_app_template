@@ -3,6 +3,16 @@
     {
       "path": "pages/main/index",
       "type": "home"
+    },
+    {
+      "path": "pages/activity/list",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/activity/release",
+      "type": "page",
+      "layout": "home"
     }
   ],
   "globalStyle": {
