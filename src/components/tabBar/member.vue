@@ -20,6 +20,8 @@ const memberList = ref([
     tags: ['标签文案', '标签文案', '标签文案'],
   },
 ])
+
+const showMobile = ref(false)
 </script>
 
 <template>
@@ -62,7 +64,7 @@ const memberList = ref([
         <view
           v-for="(member, index) in memberList"
           :key="index"
-          class="member-card mx-[30rpx] rounded-lg bg-white p-[30rpx] border border-solid border-[#F2F2F2]"
+          class="member-card mx-[30rpx] border border-[#F2F2F2] rounded-lg border-solid bg-white p-[30rpx]"
           style="box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2)"
         >
           <view class="h-[180rpx] flex items-start">
@@ -92,7 +94,7 @@ const memberList = ref([
             </text>
           </view>
           <view class="mt-[30rpx] flex justify-end border-t border-t-[#F2F2F2] border-t-solid pt-[24rpx]">
-            <view class="rounded-full bg-[#C6A95D] px-4 py-2 text-sm text-white">
+            <view class="rounded-full bg-[#C6A95D] px-4 py-2 text-sm text-white" @tap="showMobile = true">
               查看联系方式
             </view>
           </view>
@@ -100,4 +102,21 @@ const memberList = ref([
       </view>
     </view>
   </view>
+  <CenterDialog :visible="showMobile" :show-header="false" @close="showMobile = false" @update:visible="showMobile = $event">
+    <view flex flex-col pt-[20rpx]>
+      <view text-center>
+        <text text-[30rpx] text-[#3a3a3a]>
+          办理会员即可查看联创 / 会员联系方式
+        </text>
+      </view>
+      <view flex justify-between mt-[80rpx] gap-[20rpx]>
+        <view w-max flex-1 py-[20rpx] rounded-[50rpx] border border-solid border-[#E6E6E6] box-border text-center @tap="showMobile = false">
+          <text text-[#737373] text-[28rpx]>我知道了</text>
+        </view>
+        <view w-max flex-1 py-[20rpx] rounded-[50rpx] bg-[#C6A95D] text-center>
+          <text text-white text-[28rpx]>办理会员</text>
+        </view>
+      </view>
+    </view>
+  </CenterDialog>
 </template>
