@@ -4,6 +4,7 @@ const props = defineProps<{
   onClose?: () => void
   title?: string
   width?: string | number
+  showHeader?: boolean
 }>()
 
 defineEmits<{
@@ -45,7 +46,7 @@ watch(() => props.visible, (v) => {
       :style="{ width: widthVal }"
       @tap.stop
     >
-      <view flex items-center justify-between>
+      <view v-if="showHeader" flex items-center justify-between>
         <text text-[28rpx] font-bold>
           {{ $props.title || '' }}
         </text>
