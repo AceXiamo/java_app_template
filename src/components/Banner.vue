@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 withDefaults(defineProps<{
   images?: string[]
+  height?: number
 }>(), {
   images: () => [],
+  height: 400,
 })
 
 const current = ref(0)
@@ -18,7 +20,8 @@ function onChange(e: any) {
       :autoplay="true"
       :circular="true"
       :interval="3000"
-      class="h-[400rpx] w-full"
+      class="w-full"
+      :style="{ height: `${height}rpx` }"
       @change="onChange"
     >
       <swiper-item v-for="(image, index) in images" :key="index">
