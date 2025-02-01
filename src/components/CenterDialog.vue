@@ -1,11 +1,18 @@
 <script lang="ts" setup>
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   visible: boolean
   onClose?: () => void
   title?: string
   width?: string | number
   showHeader?: boolean
-}>()
+  shadowColor?: string
+  bgColor?: string
+  withPadding?: boolean
+}>(), {
+  showHeader: true,
+  withPadding: true,
+  bgColor: '#fff',
+})
 
 defineEmits<{
   (e: 'update:visible', v: boolean): void
@@ -36,14 +43,21 @@ watch(() => props.visible, (v) => {
 <template>
   <view
     v-if="containerVisible"
-    absolute inset-0 bg="black/20" z-9999 flex flex-col items-center justify-center
+    absolute inset-0 z-9999 flex flex-col items-center justify-center
     transition-all duration-200
+    :class="{
+      'bg-black/20': !shadowColor,
+    }"
+    :style="{ backgroundColor: shadowColor }"
     @tap="$emit('update:visible', false)"
   >
     <view
-      flex flex-col rounded-[10rpx] bg-white p-[30rpx]
-      :class="className"
-      :style="{ width: widthVal }"
+      flex flex-col rounded-[10rpx]
+      :class="[
+        className,
+        $props.withPadding ? 'p-[30rpx]' : '',
+      ]"
+      :style="{ width: widthVal, backgroundColor: bgColor }"
       @tap.stop
     >
       <view v-if="showHeader" flex items-center justify-between>
@@ -55,7 +69,11 @@ watch(() => props.visible, (v) => {
           @tap="$emit('update:visible', false)"
         />
       </view>
-      <view mt-[20rpx]>
+      <view
+        :class="[
+          $props.withPadding ? 'mt-[20rpx]' : '',
+        ]"
+      >
         <slot />
       </view>
     </view>
