@@ -14,6 +14,12 @@ const cardList = ref([
     date: '07.13南山',
   },
 ])
+
+function toGroupHome() {
+  uni.navigateTo({
+    url: '/pages/group/home',
+  })
+}
 </script>
 
 <template>
@@ -58,6 +64,7 @@ const cardList = ref([
           v-for="(item, index) in cardList"
           :key="index"
           class="flex flex-col overflow-hidden border border-[#EBECED] rounded-lg border-solid"
+          @tap="toGroupHome"
         >
           <image
             :src="item.image"
