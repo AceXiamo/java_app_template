@@ -1,4 +1,35 @@
 <script lang="ts" setup>
+function toProfile() {
+  uni.navigateTo({
+    url: '/pages/my/profile',
+  })
+}
+
+function toPoint() {
+  uni.navigateTo({
+    url: '/pages/my/point',
+  })
+}
+
+function toOrder() {
+  uni.navigateTo({
+    url: '/pages/my/order',
+  })
+}
+
+function toActivity() {
+  uni.navigateTo({
+    url: '/pages/my/activity',
+  })
+}
+
+function toMember() {
+  uni.navigateTo({
+    url: '/pages/my/member',
+  })
+}
+
+const visibleProfileCard = ref(false)
 </script>
 
 <template>
@@ -18,8 +49,12 @@
               <view absolute inset-0 z-[1] bg-[#c4aa5e] />
               <view absolute inset-0 z-[2] rounded-tl-[10rpx] bg-white />
               <view relative z-[3] flex gap-[50rpx] text-[24rpx] text-[#777777]>
-                <text>编辑个人资料</text>
-                <text>查看个人名片</text>
+                <text @click="toProfile">
+                  编辑个人资料
+                </text>
+                <text @click="visibleProfileCard = true">
+                  查看个人名片
+                </text>
               </view>
             </view>
           </view>
@@ -61,28 +96,28 @@
           </view>
         </view>
       </view>
-      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx]>
+      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx] @click="toPoint">
         <AIcon icon="my_point" :size="40" />
         <text ml-[20rpx] text-[28rpx] text-[#3A3A3A]>
           我的积分
         </text>
         <AIcon icon="my_right" :size="40" ml-auto />
       </view>
-      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx]>
+      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx] @click="toActivity">
         <AIcon icon="my_flag" :size="40" />
         <text ml-[20rpx] text-[28rpx] text-[#3A3A3A]>
           我的活动
         </text>
         <AIcon icon="my_right" :size="40" ml-auto />
       </view>
-      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx]>
+      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx] @click="toOrder">
         <AIcon icon="my_order" :size="40" />
         <text ml-[20rpx] text-[28rpx] text-[#3A3A3A]>
           我的商城订单
         </text>
         <AIcon icon="my_right" :size="40" ml-auto />
       </view>
-      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx]>
+      <view mx-[30rpx] flex rounded-[8rpx] bg-white px-[30rpx] py-[26rpx] @click="toMember">
         <AIcon icon="my_member" :size="40" />
         <text ml-[20rpx] text-[28rpx] text-[#3A3A3A]>
           我的嘉宾
@@ -97,5 +132,58 @@
         <AIcon icon="my_right" :size="40" ml-auto />
       </view>
     </view>
+    <CenterDialog v-model:visible="visibleProfileCard" :show-header="false" :with-padding="false" bg-color="transparent">
+      <view flex flex-col>
+        <view flex flex-col px-[50rpx] py-[60rpx] class="bg-[url(https://joint-dev.oss-cn-shenzhen.aliyuncs.com/icon/profile_card_image.png)] bg-cover bg-center">
+          <image src="https://axm.moe/avatar" h-[180rpx] w-[180rpx] border border-white rounded-full border-solid />
+          <text mt-[40rpx] text-white>
+            AceXiamo
+          </text>
+          <view mt-[40rpx] flex flex-col>
+            <text text-[24rpx] text-[#a77d6d]>
+              企业
+            </text>
+            <text mt-[10rpx] text-[24rpx] text-white>
+              Future Radio
+            </text>
+          </view>
+          <view mt-[40rpx] flex flex-col>
+            <text text-[24rpx] text-[#a77d6d]>
+              职务
+            </text>
+            <text mt-[10rpx] text-[24rpx] text-white>
+              CEO
+            </text>
+          </view>
+          <view mt-[40rpx] flex flex-col>
+            <text text-[24rpx] text-[#a77d6d]>
+              联系电话
+            </text>
+            <text mt-[10rpx] text-[24rpx] text-white>
+              18888888888
+            </text>
+          </view>
+          <view mt-[20rpx] flex items-center justify-between gap-[30rpx]>
+            <view h-[140rpx] flex flex-col justify-center>
+              <text text-[24rpx] text-[#a77d6d]>
+                主营业务
+              </text>
+              <text mt-[10rpx] text-[24rpx] text-white>
+                软件开发，Web3 开发，区块链开发，Solana 开发
+              </text>
+            </view>
+            <image flex-none src="https://axm.moe/avatar" ml-auto h-[140rpx] w-[140rpx] />
+          </view>
+        </view>
+        <view mt-[30rpx] flex gap-[20rpx]>
+          <view w-full flex-1 rounded-[50rpx] bg-[#e6e6e6] py-[20rpx] text-center text-[26rpx] text-[#737373] @click="visibleProfileCard = false">
+            返回
+          </view>
+          <view w-full flex-1 rounded-[50rpx] bg-[#c6a95d] py-[20rpx] text-center text-[26rpx] text-white>
+            保存到相册
+          </view>
+        </view>
+      </view>
+    </CenterDialog>
   </view>
 </template>
