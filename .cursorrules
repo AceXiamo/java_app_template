@@ -1,0 +1,15 @@
+{
+  "rules": [
+    {
+      "pattern": "src/pages/*.vue",
+      "attributes": {
+        "language": "vue",
+        "framework": ["uniapp", "vue3", "typescript", "unocss"],
+        "platform": "wechat-miniprogram",
+        "template": {
+          "suffix": "\n<route lang=\"json\">\n  {\n    \"layout\": \"home\"\n  }\n</route>"
+        }
+      }
+    }
+  ]
+}
