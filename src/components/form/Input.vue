@@ -50,7 +50,7 @@ watch(inputValue, (newValue) => {
         <textarea
           v-model="inputValue"
           :placeholder="placeholder ?? `请输入${$props.label}`"
-          class="h-[100rpx] flex-auto text-[26rpx]"
+          class="h-[200rpx] flex-auto text-[26rpx]"
           :disabled="$props.disabled"
         />
       </template>
