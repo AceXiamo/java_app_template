@@ -34,14 +34,14 @@ watch(() => props.visible, (v) => {
   <view
     v-if="containerVisible" absolute inset-0 bg="black/20" z-9999 flex flex-col justify-end transition-all duration-200 @tap="$emit('update:visible', false)"
   >
-    <view flex flex-col bg-white p-[30rpx] :class="className" :style="{ height: heightVal }" @tap.stop>
-      <view flex justify-between>
+    <view flex flex-col bg-white p-[30rpx] :class="className" :style="{ minHeight: heightVal }" @tap.stop>
+      <view relative flex items-center justify-center>
         <text text-[32rpx] font-bold>
           {{ $props.title || '' }}
         </text>
-        <view i-carbon:close-filled text-[40rpx] text-red-500 @tap="$emit('update:visible', false)" />
+        <AIcon icon="delete" :size="45" absolute right-0 @tap="$emit('update:visible', false)" />
       </view>
-      <view h-0 flex-auto>
+      <view>
         <slot />
       </view>
     </view>
