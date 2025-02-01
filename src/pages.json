@@ -5,12 +5,72 @@
       "type": "home"
     },
     {
+      "path": "pages/activity/home",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/activity/list",
       "type": "page",
       "layout": "home"
     },
     {
       "path": "pages/activity/release",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/group/activity",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/group/home",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/member/home",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/activity",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/member",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/order",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/point",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/profile",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/shop/cart",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/shop/home",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/shop/order",
       "type": "page",
       "layout": "home"
     }

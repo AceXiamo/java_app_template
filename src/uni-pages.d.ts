@@ -5,8 +5,20 @@
 
 interface NavigateToOptions {
   url: "/pages/main/index" |
+       "/pages/activity/home" |
        "/pages/activity/list" |
-       "/pages/activity/release";
+       "/pages/activity/release" |
+       "/pages/group/activity" |
+       "/pages/group/home" |
+       "/pages/member/home" |
+       "/pages/my/activity" |
+       "/pages/my/member" |
+       "/pages/my/order" |
+       "/pages/my/point" |
+       "/pages/my/profile" |
+       "/pages/shop/cart" |
+       "/pages/shop/home" |
+       "/pages/shop/order";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 
