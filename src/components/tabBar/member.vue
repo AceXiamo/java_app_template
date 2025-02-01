@@ -22,6 +22,12 @@ const memberList = ref([
 ])
 
 const showMobile = ref(false)
+
+function toMemberHome() {
+  uni.navigateTo({
+    url: '/pages/member/home',
+  })
+}
 </script>
 
 <template>
@@ -64,8 +70,8 @@ const showMobile = ref(false)
         <view
           v-for="(member, index) in memberList"
           :key="index"
-          class="member-card mx-[30rpx] border border-[#F2F2F2] rounded-lg border-solid bg-white p-[30rpx]"
-          style="box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2)"
+          class="member-card mx-[30rpx] border border-[#F2F2F2] rounded-lg border-solid bg-white p-[30rpx] shadow-md"
+          @click="toMemberHome"
         >
           <view class="h-[180rpx] flex items-start">
             <image
