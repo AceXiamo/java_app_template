@@ -31,6 +31,12 @@ const courseList = ref([
 
 const activeType = ref(0)
 const type = ['全部', '分类一', '分类二', '分类三']
+
+function toShopHome() {
+  uni.navigateTo({
+    url: '/pages/shop/home',
+  })
+}
 </script>
 
 <template>
@@ -87,6 +93,7 @@ const type = ['全部', '分类一', '分类二', '分类三']
           v-for="(course, index) in courseList"
           :key="index"
           class="course-item flex rounded-lg bg-white"
+          @click="toShopHome"
         >
           <view p-[6rpx]>
             <image
