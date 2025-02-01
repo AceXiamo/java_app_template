@@ -19,6 +19,7 @@ function navigateTo(path: string) {
           <view
             flex items-center justify-between border border-#e5e5e5 rounded-[13px] border-solid bg-cover bg-center px-[22rpx] py-[30rpx]
             style="background-image: url('https://joint-dev.oss-cn-shenzhen.aliyuncs.com/icon/homepage_background.png')"
+            @tap="navigateTo('/pages/activity/list')"
           >
             <view flex flex-col>
               <text text-[36rpx] text-[#3A3A3A]>
@@ -47,7 +48,7 @@ function navigateTo(path: string) {
           </view>
         </view>
 
-        <image mt-[60rpx] w-full rounded-[13px] h-[300rpx] src="https://image.qwq.link/images/2025/01/25/twitter_Gracilegracile_jp_20250122-142749_1882072683086815710_photo.jpg" mode="aspectFill" />
+        <image mt-[60rpx] h-[300rpx] w-full rounded-[13px] src="https://image.qwq.link/images/2025/01/25/twitter_Gracilegracile_jp_20250122-142749_1882072683086815710_photo.jpg" mode="aspectFill" />
 
         <view mt-[60rpx] flex flex-col>
           <text text-[36rpx] text-[#3A3A3A]>
