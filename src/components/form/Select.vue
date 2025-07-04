@@ -49,14 +49,14 @@ const selectedLabel = computed(() => {
         :value="options.findIndex(opt => opt.value === selectedValue)"
         :range="options"
         range-key="label"
-        @change="handleChange"
         w-full
+        @change="handleChange"
       >
         <input
           :value="selectedLabel"
           type="text"
           :placeholder="placeholder ?? `请选择${$props.label}`"
-          class="flex-auto text-[26rpx] text-right"
+          class="flex-auto text-right text-[26rpx]"
           disabled
         >
       </picker>

@@ -25,7 +25,7 @@ function activeHandle(item: any) {
 
 <template>
   <view
-    class="relative box-border h-full w-full flex items-center gap-[10rpx] border-1 bg-white border-gray-300 rounded-[50rpx] border-solid p-[8rpx_16rpx] text-[25rpx] text-[#333]"
+    class="relative box-border h-full w-full flex items-center gap-[10rpx] border-1 border-gray-300 rounded-[50rpx] border-solid bg-white p-[8rpx_16rpx] text-[25rpx] text-[#333]"
     :style="{
       pointerEvents: props.disabled ? 'none' : 'auto',
     }"

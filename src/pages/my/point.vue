@@ -61,13 +61,13 @@
           <view mt-[20rpx] border-t border-t-[#f2f2f2] border-t-solid />
           <view mt-[20rpx] flex flex-col>
             <view flex items-center text-[26rpx] text-[#3a3a3a]>
-              <text flex-1 w-0 truncate>
+              <text w-0 flex-1 truncate>
                 2025-01-01
               </text>
-              <text flex-1 w-0 truncate>
+              <text w-0 flex-1 truncate>
                 100
               </text>
-              <text flex-1 w-0 truncate text-[#9A9A9A]>
+              <text w-0 flex-1 truncate text-[#9a9a9a]>
                 备注
               </text>
             </view>

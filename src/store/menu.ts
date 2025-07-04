@@ -1,11 +1,18 @@
 import { defineStore } from 'pinia'
 
-export type ActiveMenu = 'home' | 'group' | 'shop' | 'member' | 'my'
+// 租车应用的主要导航
+export type ActiveMenu = 'home' | 'order' | 'my'
 
 export const useMenuStore = defineStore('menu', () => {
   const active = ref<ActiveMenu>('home')
 
+  // 设置当前激活的菜单
+  function setActive(menu: ActiveMenu) {
+    active.value = menu
+  }
+
   return {
     active,
+    setActive,
   }
 })

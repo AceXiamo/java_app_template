@@ -2,7 +2,6 @@ import qs from 'qs'
 import logger from '@/utils/logger'
 import { useUserStore } from '@/store/user'
 
-const userStore = useUserStore()
 const mode = import.meta.env.MODE
 // eslint-disable-next-line import/no-mutable-exports
 let domain: string, host: string
@@ -20,8 +19,8 @@ else {
 
 function setAuth(options: any) {
   const header: any = {}
-  if (userStore.token)
-    header.Authorization = `Bearer ${userStore.token}`
+  if (useUserStore().token)
+    header.Authorization = `Bearer ${useUserStore().token}`
 
   header['Content-Type'] = 'application/json'
   options.header = header
@@ -94,7 +93,7 @@ function callbackHandle({
     //   logger.info('re login success. re request...')
     //   requestHandle(_obj, method, resolve, reject)
     // })
-    userStore.clearToken()
+    useUserStore().logout()
     uni.redirectTo({
       url: '/pages/main/index',
     })

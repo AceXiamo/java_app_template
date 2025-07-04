@@ -152,9 +152,9 @@ const showgEvaluateDrawer = ref(false)
           活动图片
         </text>
         <view grid grid-cols-3 mt-[20rpx] gap-[20rpx]>
-          <view class="aspect-square w-full bg-[url(https://axm.moe/avatar)] bg-cover bg-center rounded-[10rpx]" />
-          <view class="aspect-square w-full bg-[url(https://axm.moe/avatar)] bg-cover bg-center rounded-[10rpx]" />
-          <view class="aspect-square w-full bg-[url(https://axm.moe/avatar)] bg-cover bg-center rounded-[10rpx]" />
+          <view class="aspect-square w-full rounded-[10rpx] bg-[url(https://axm.moe/avatar)] bg-cover bg-center" />
+          <view class="aspect-square w-full rounded-[10rpx] bg-[url(https://axm.moe/avatar)] bg-cover bg-center" />
+          <view class="aspect-square w-full rounded-[10rpx] bg-[url(https://axm.moe/avatar)] bg-cover bg-center" />
         </view>
       </view>
     </BottomDrawer>

@@ -58,8 +58,8 @@ function toActivity() {
           <SelectBar v-model="selectValue" :options="[{ label: '全部', value: 0 }, { label: '分类一', value: 1 }, { label: '分类二', value: 2 }]" w-[200rpx] />
         </view>
         <view grid grid-cols-2 mt-[30rpx] gap-[20rpx]>
-          <view flex flex-col w-full items-center v-for="i in 4" :key="i">
-            <view :style="{ backgroundImage: `url(https://axm.moe/avatar)` }" aspect-square w-full bg-cover bg-center rounded-1 />
+          <view v-for="i in 4" :key="i" w-full flex flex-col items-center>
+            <view :style="{ backgroundImage: `url(https://axm.moe/avatar)` }" aspect-square w-full rounded-1 bg-cover bg-center />
             <text mt-[20rpx] text-[28rpx] text-[#3a3a3a]>
               商品名称
             </text>

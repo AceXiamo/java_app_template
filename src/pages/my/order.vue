@@ -40,7 +40,7 @@ const type = ['全部', '待付款', '待发货', '已发货', '待评价', '已
       </view>
 
       <view p-[30rpx]>
-        <view flex flex-col bg-white rounded-[20rpx] shadow-md overflow-hidden>
+        <view flex flex-col overflow-hidden rounded-[20rpx] bg-white shadow-md>
           <view relative flex gap-[20rpx] bg-white p-[20rpx]>
             <image h-[200rpx] w-[200rpx] src="https://axm.moe/avatar" mode="aspectFill" rounded-[12rpx] />
             <view h-[200rpx] flex flex-col>
@@ -59,8 +59,10 @@ const type = ['全部', '待付款', '待发货', '已发货', '待评价', '已
             </text>
           </view>
           <view border-t border-t-[#ededed] border-t-solid />
-          <view p-[20rpx] flex>
-            <text text-[#888888] text-[24rpx]>订单编号：561654654654654</text>
+          <view flex p-[20rpx]>
+            <text text-[24rpx] text-[#888888]>
+              订单编号：561654654654654
+            </text>
           </view>
         </view>
       </view>

@@ -73,7 +73,7 @@
         <text text-[28rpx] text-[#3a3a3a]>
           买家备注
         </text>
-        <textarea placeholder="请输入备注" class="h-[150rpx] w-full rounded-[10rpx] bg-[#F0F0F0] p-[20rpx] text-[24rpx] box-border" />
+        <textarea placeholder="请输入备注" class="box-border h-[150rpx] w-full rounded-[10rpx] bg-[#F0F0F0] p-[20rpx] text-[24rpx]" />
       </view>
     </view>
     <view flex items-center border-t border-t-gray-200 border-t-solid bg-white px-[60rpx] pb-[40rpx] pt-[20rpx]>

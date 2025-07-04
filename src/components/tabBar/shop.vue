@@ -74,11 +74,11 @@ function toShopHome() {
         </view>
       </view>
 
-      <view class="flex gap-[20rpx] px-[30rpx] pt-[30rpx] overflow-x-auto hide-scrollbar">
+      <view class="hide-scrollbar flex gap-[20rpx] overflow-x-auto px-[30rpx] pt-[30rpx]">
         <view
           v-for="(item, index) in type"
           :key="index"
-          class="flex flex-none rounded-full bg-white text-[#9D9D9D] px-[20rpx] py-[10rpx]"
+          class="flex flex-none rounded-full bg-white px-[20rpx] py-[10rpx] text-[#9D9D9D]"
           :class="{ '!text-black': activeType === index }"
           @tap="activeType = index"
         >

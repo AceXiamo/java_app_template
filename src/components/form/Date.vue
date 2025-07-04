@@ -55,9 +55,9 @@ function bindDateChange(e: { detail: { value: string } }) {
       </text>
     </view>
     <view relative box-border flex flex-auto items-center gap-[10rpx] p-[15rpx]>
-      <picker :mode="mode" :value="inputValue" :start="startDate" :end="endDate" @change="bindDateChange" w-full>
+      <picker :mode="mode" :value="inputValue" :start="startDate" :end="endDate" w-full @change="bindDateChange">
         <input
-          v-model="inputValue" type="text" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-[26rpx] text-right"
+          v-model="inputValue" type="text" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-right text-[26rpx]"
           :disabled="true"
         >
       </picker>

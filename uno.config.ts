@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   shortcuts: [
     ['a-content', 'h-0 flex-1 overflow-y-auto'],
-    ['a-container', 'relative h-full flex flex-col overflow-y-auto']
+    ['a-container', 'relative h-full flex flex-col overflow-y-auto'],
   ],
   transformers: [
     transformerDirectives(),

@@ -115,12 +115,16 @@ function toMemberHome() {
           办理会员即可查看联创 / 会员联系方式
         </text>
       </view>
-      <view flex justify-between mt-[80rpx] gap-[20rpx]>
-        <view w-max flex-1 py-[20rpx] rounded-[50rpx] border border-solid border-[#E6E6E6] box-border text-center @tap="showMobile = false">
-          <text text-[#737373] text-[28rpx]>我知道了</text>
+      <view mt-[80rpx] flex justify-between gap-[20rpx]>
+        <view box-border w-max flex-1 border border-[#e6e6e6] rounded-[50rpx] border-solid py-[20rpx] text-center @tap="showMobile = false">
+          <text text-[28rpx] text-[#737373]>
+            我知道了
+          </text>
         </view>
-        <view w-max flex-1 py-[20rpx] rounded-[50rpx] bg-[#C6A95D] text-center>
-          <text text-white text-[28rpx]>办理会员</text>
+        <view w-max flex-1 rounded-[50rpx] bg-[#c6a95d] py-[20rpx] text-center>
+          <text text-[28rpx] text-white>
+            办理会员
+          </text>
         </view>
       </view>
     </view>

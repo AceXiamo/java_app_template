@@ -17,7 +17,7 @@ function back() {
       <FormInput label="行业" />
       <FormInput label="个人介绍" type="textarea" :show-bottom-line="false" />
       <FormInput label="所需的资源/能提供的价值" type="textarea" :show-bottom-line="false" />
-      <view mt-[150rpx] mb-[50rpx] flex gap-[30rpx]>
+      <view mb-[50rpx] mt-[150rpx] flex gap-[30rpx]>
         <view box-border flex flex-1 items-center justify-center border border-gray-200 rounded-[50rpx] border-solid py-[20rpx] @click="back">
           <text text-[26rpx] text-gray-500 font-bold>
             取消

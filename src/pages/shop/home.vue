@@ -46,25 +46,25 @@ function toCart() {
       </view>
       <image src="https://image.qwq.link/images/2025/01/25/265d992c18c57c862db14dce35f1e027.jpg" h-[600rpx] w-full mode="aspectFill" />
     </view>
-    <view flex items-center fixed bottom-0 left-0 right-0 pt-[20rpx] pb-[50rpx] bg-[#fff] px-[50rpx] shadow-lg>
-      <view flex flex-col gap-[5rpx] items-center>
+    <view fixed bottom-0 left-0 right-0 flex items-center bg-[#fff] px-[50rpx] pb-[50rpx] pt-[20rpx] shadow-lg>
+      <view flex flex-col items-center gap-[5rpx]>
         <AIcon icon="shop_bag" :size="40" />
         <text text-[20rpx] text-[#3a3a3a]>
           商城
         </text>
       </view>
-      <view flex flex-col gap-[5rpx] ml-[50rpx] items-center @click="toCart">
+      <view ml-[50rpx] flex flex-col items-center gap-[5rpx] @click="toCart">
         <AIcon icon="cart" :size="40" />
         <text text-[20rpx] text-[#3a3a3a]>
           购物车
         </text>
       </view>
-      <view py-[20rpx] bg-[#C6A95D] rounded-[50rpx] flex items-center justify-center ml-auto w-[200rpx] text-center>
+      <view ml-auto w-[200rpx] flex items-center justify-center rounded-[50rpx] bg-[#c6a95d] py-[20rpx] text-center>
         <text text-[24rpx] text-[#fff] font-bold>
           加入购物车
         </text>
       </view>
-      <view py-[20rpx] bg-[#C6A95D] rounded-[50rpx] flex items-center justify-center ml-[20rpx] w-[200rpx] text-center>
+      <view ml-[20rpx] w-[200rpx] flex items-center justify-center rounded-[50rpx] bg-[#c6a95d] py-[20rpx] text-center>
         <text text-[24rpx] text-[#fff] font-bold>
           立即购买
         </text>

@@ -2,17 +2,22 @@
 </script>
 
 <template>
-  <HeadBar bg-color="#2E2E2E">
+  <HeadBar bg-color="linear-gradient(to right, #faf5ff, #f0f9ff)">
     <view relative h-full flex items-center>
-      <view ml-[20rpx] flex items-center>
-        <AIcon icon="map" :size="24" color="#fff" />
-        <text ml-[16rpx] text-[28rpx] text-white>
-          深圳
+      <!-- 左侧城市定位 -->
+      <view ml-[32rpx] flex items-center>
+        <view
+          i-material-symbols:location-on
+          class="text-[32rpx] text-[#8b5cf6]"
+        />
+        <text ml-[8rpx] text-[28rpx] text-black font-medium>
+          上海
         </text>
+        <view
+          i-material-symbols:keyboard-arrow-down
+          class="ml-[4rpx] text-[24rpx] text-gray-600"
+        />
       </view>
-      <text absolute left-0 right-0 text-center text-white>
-        创客空间
-      </text>
     </view>
   </HeadBar>
 </template>
