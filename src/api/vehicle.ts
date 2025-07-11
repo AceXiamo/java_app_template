@@ -7,6 +7,7 @@ export interface Vehicle {
   name: string
   brand: string
   model: string
+  licensePlate: string // 车牌号
   carType: string // 轿车/SUV等
   energyType: string // 汽油/电动/混动
   seats: number

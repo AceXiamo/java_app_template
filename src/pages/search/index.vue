@@ -98,6 +98,7 @@ async function searchVehicleList(isLoadMore = false) {
       searchParams.value.page = 1
       vehicles.value = []
       noMore.value = false
+      total.value = 0 // 重置总数
     }
 
     // 合并筛选参数
@@ -118,19 +119,27 @@ async function searchVehicleList(isLoadMore = false) {
         vehicles.value = newVehicles
       }
 
-      total.value = response.data.total
+      // 确保 total 有正确的值
+      total.value = response.data.total || 0
 
       // 检查是否还有更多数据
-      if (newVehicles.length < searchParams.value.limit) {
+      if (newVehicles.length < (searchParams.value.limit || 0)) {
         noMore.value = true
       }
+
+      // 搜索成功
     }
     else {
+      console.error('搜索失败:', response)
+      total.value = 0
+      vehicles.value = []
       toastRef.value?.error(response.msg || '搜索失败')
     }
   }
   catch (error) {
     console.error('搜索车辆失败:', error)
+    total.value = 0
+    vehicles.value = []
     toastRef.value?.error('搜索失败，请重试')
   }
   finally {
@@ -219,23 +228,11 @@ function onReachBottom() {
   }
 }
 
-// 下拉刷新
-function onPullDownRefresh() {
-  searchVehicleList().finally(() => {
-    uni.stopPullDownRefresh()
-  })
-}
-
 // 车辆详情跳转
 function goToVehicleDetail(vehicleId: number) {
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicleId}`,
   })
-}
-
-// 价格格式化
-function formatPrice(price: number) {
-  return `¥${price}/天`
 }
 
 // 距离格式化
@@ -302,6 +299,22 @@ function getTagStyle(tagType: string) {
     featured: 'bg-blue-500',
   }
   return styles[tagType] || 'bg-gray-500'
+}
+
+// 能源类型显示（后端已返回中文，直接使用）
+function getEnergyTypeText(energyType: string) {
+  return energyType
+}
+
+// 格式化车牌号
+function formatLicensePlate(plate: string) {
+  if (!plate)
+    return '待定'
+  // 如果是完整车牌号，进行脱敏处理
+  if (plate.length >= 7) {
+    return `${plate.substring(0, 2)}·${plate.substring(2, 5)}***`
+  }
+  return plate
 }
 
 // 格式化时间范围
@@ -461,7 +474,7 @@ function quickBook(vehicleId: number) {
                     <view
                       v-for="tag in vehicle.tags.slice(0, 2)"
                       :key="tag.tagName"
-                      class="rounded-[12rpx] px-[12rpx] w-max py-[4rpx] text-[18rpx] text-white font-medium"
+                      class="w-max rounded-[12rpx] px-[12rpx] py-[4rpx] text-[18rpx] text-white font-medium"
                       :class="getTagStyle(tag.tagType)"
                     >
                       {{ tag.tagName }}
@@ -478,20 +491,20 @@ function quickBook(vehicleId: number) {
                   <!-- 车牌和基本信息分两行显示 -->
                   <view class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600">
                     <text class="flex-shrink-0">
-                      浙A·xxxxx
+                      {{ formatLicensePlate(vehicle.licensePlate) }}
                     </text>
                     <view class="flex items-center space-x-[12rpx]">
                       <text class="flex-shrink-0">
                         {{ vehicle.seats }}座
                       </text>
                       <text class="flex-shrink-0">
-                        {{ vehicle.energyType }}
+                        {{ getEnergyTypeText(vehicle.energyType) }}
                       </text>
                     </view>
                   </view>
 
                   <!-- 车辆特性 -->
-                  <view class="mt-[12rpx] flex items-center flex-wrap gap-[16rpx]">
+                  <view class="mt-[12rpx] flex flex-wrap items-center gap-[16rpx]">
                     <view v-if="vehicle.rangeKm" class="flex items-center">
                       <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
                       <text class="text-[20rpx] text-gray-600">
@@ -536,7 +549,7 @@ function quickBook(vehicleId: number) {
                 </view>
 
                 <!-- 快速预订按钮 -->
-                <view class="rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+                <view class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
                   <text class="text-[24rpx] text-white font-medium">
                     立即预订
                   </text>
@@ -565,7 +578,7 @@ function quickBook(vehicleId: number) {
     <BottomDrawer v-model:visible="showFilters" title="筛选条件">
       <view class="mt-[32rpx]">
         <!-- 操作按钮 -->
-        <view class="flex items-center justify-end space-x-[32rpx] mb-[32rpx] pb-[24rpx] border-b border-gray-100">
+        <view class="mb-[32rpx] flex items-center justify-end border-b border-gray-100 pb-[24rpx] space-x-[32rpx]">
           <text class="text-[28rpx] text-gray-600" @tap="resetFilters">
             重置
           </text>
