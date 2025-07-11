@@ -1,69 +1,123 @@
+import { host, request } from '@/utils/request'
+import type { BaseRes } from '@/types/common'
+
 // 车辆相关 API
 export interface Vehicle {
-  id: number
+  vehicleId: number
   name: string
   brand: string
   model: string
-  type: string // 轿车/SUV等
-  energyType: string // 电动/混动
+  carType: string // 轿车/SUV等
+  energyType: string // 汽油/电动/混动
   seats: number
   dailyPrice: number
   monthlyPrice?: number
   imageUrl: string
-  distance: number
-  batteryRange: number
+  images: string[]
+  rangeKm: number
   rating: number
+  ratingCount: number
+  isMonthlyRental: boolean
+  distance?: number
   isHot?: boolean
   isNew?: boolean
-  isLuxury?: boolean
-  tags: string[]
   location: {
-    name: string
-    distance: number
+    address: string
+    city: string
+    district: string
+    latitude: number
+    longitude: number
   }
+  tags: {
+    tagName: string
+    tagType: string
+    tagColor: string
+  }[]
 }
 
 export interface VehicleSearchParams {
-  city?: string
+  city: string
   startTime?: string
   endTime?: string
-  vehicleType?: string
-  energyType?: string
-  priceRange?: [number, number]
-  sortBy?: 'price' | 'distance' | 'rating'
+  keywords?: string
+  vehicleTypes?: string[]
+  energyTypes?: string[]
+  minPrice?: number
+  maxPrice?: number
+  seats?: number[]
+  sortBy?: 'price' | 'distance' | 'rating' | 'hot'
   page?: number
   limit?: number
+  latitude?: number
+  longitude?: number
+  categoryId?: number
 }
 
 export interface VehicleSearchResult {
   vehicles: Vehicle[]
   total: number
-  filters: {
-    brands: string[]
-    types: string[]
-    energyTypes: string[]
-    priceRange: [number, number]
-  }
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export interface VehicleFilterOptions {
+  brands: string[]
+  carTypes: string[]
+  energyTypes: string[]
+  seats: number[]
+  priceRange: [number, number]
+}
+
+export interface VehicleCategory {
+  categoryId: number
+  categoryName: string
+  categoryCode: string
+  description?: string
+  minPrice: number
+  iconUrl?: string
+  sortOrder: number
+  isActive: boolean
+}
+
+export interface VehicleTagType {
+  label: string
+  value: string
+  color: string
 }
 
 // 搜索车辆
 export function searchVehicles(params: VehicleSearchParams): Promise<BaseRes<VehicleSearchResult>> {
-  return request.get({
-    url: '/api/vehicles/search',
-    params,
+  return request.post({
+    url: `${host}/api/vehicles/search`,
+    data: params,
   })
 }
 
 // 获取车辆详情
-export function getVehicleDetail(id: number): Promise<BaseRes<Vehicle>> {
+export function getVehicleDetail(vehicleId: number): Promise<BaseRes<Vehicle>> {
   return request.get({
-    url: `/api/vehicles/${id}`,
+    url: `${host}/api/vehicles/${vehicleId}`,
   })
 }
 
 // 获取筛选条件
-export function getVehicleFilters(): Promise<BaseRes<VehicleSearchResult['filters']>> {
+export function getVehicleFilters(): Promise<BaseRes<VehicleFilterOptions>> {
   return request.get({
-    url: '/api/vehicles/filters',
+    url: `${host}/api/vehicles/filter-options`,
+  })
+}
+
+// 获取车辆分类
+export function getVehicleCategories(): Promise<BaseRes<VehicleCategory[]>> {
+  return request.get({
+    url: `${host}/api/vehicles/categories`,
+  })
+}
+
+// 获取车辆标签类型
+export function getVehicleTagTypes(): Promise<BaseRes<VehicleTagType[]>> {
+  return request.get({
+    url: `${host}/api/vehicles/tag-types`,
   })
 }

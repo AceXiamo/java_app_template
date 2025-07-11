@@ -5,17 +5,23 @@
 
 interface NavigateToOptions {
   url: "/pages/main/index" |
-       "/pages/activity/home" |
-       "/pages/activity/list" |
-       "/pages/activity/release" |
        "/pages/group/activity" |
        "/pages/group/home" |
        "/pages/member/home" |
+       "/pages/monthly-rental/index" |
+       "/pages/my/about" |
        "/pages/my/activity" |
+       "/pages/my/documents" |
        "/pages/my/member" |
+       "/pages/my/notifications" |
        "/pages/my/order" |
        "/pages/my/point" |
        "/pages/my/profile" |
+       "/pages/my/wallet" |
+       "/pages/mystery-box/index" |
+       "/pages/owner-certification/index" |
+       "/pages/ranking/index" |
+       "/pages/search/index" |
        "/pages/shop/cart" |
        "/pages/shop/home" |
        "/pages/shop/order";

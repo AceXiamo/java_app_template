@@ -17,7 +17,7 @@ function goBack() {
 
       <!-- 页面标题 -->
       <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
-        个人资料
+        卡包
       </text>
     </view>
   </HeadBar>

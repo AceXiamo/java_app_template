@@ -78,6 +78,7 @@ function callbackHandle({
   resolve,
   reject,
   _obj,
+  method,
   res,
 }: {
   resolve: (value: any) => void
@@ -88,15 +89,8 @@ function callbackHandle({
 }) {
   logger.info(`code: ${res.data.code}`)
   if (res.data.code === 401) {
-    // re login & re request
-    // loginHandle().then(() => {
-    //   logger.info('re login success. re request...')
-    //   requestHandle(_obj, method, resolve, reject)
-    // })
-    useUserStore().logout()
-    uni.redirectTo({
-      url: '/pages/main/index',
-    })
+    // 401 处理：自动重新登录
+    handleUnauthorized(_obj, method, resolve, reject)
   }
   else {
     if (res.data.code === 500) {
@@ -105,6 +99,36 @@ function callbackHandle({
     }
     else { resolve(res.data) }
   }
+}
+
+/**
+ * 处理 401 未授权错误
+ * 自动重新登录并重试请求
+ */
+function handleUnauthorized(_obj: RequestOptions, method: string, resolve: (value: any) => void, reject: (reason: any) => void) {
+  const userStore = useUserStore()
+  logger.info('Token expired, attempting to re-login...')
+  
+  // 尝试重新登录
+  userStore.wxLogin()
+    .then(() => {
+      logger.info('Re-login successful, retrying request...')
+      // 重新发起请求
+      requestHandle(_obj, method, resolve, reject)
+    })
+    .catch((error) => {
+      logger.error('Re-login failed:', error)
+      // 登录失败，清除用户信息并跳转到首页
+      userStore.logout()
+      uni.showToast({
+        title: '登录已过期，请重新登录',
+        icon: 'none',
+      })
+      uni.reLaunch({
+        url: '/pages/main/index',
+      })
+      reject(new Error('Authentication failed'))
+    })
 }
 
 export { request, host }

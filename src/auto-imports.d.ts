@@ -6,6 +6,7 @@
 export {}
 declare global {
   const EffectScope: typeof import('vue')['EffectScope']
+  const UploadType: typeof import('./utils/upload')['UploadType']
   const asyncComputed: typeof import('@vueuse/core')['asyncComputed']
   const autoResetRef: typeof import('@vueuse/core')['autoResetRef']
   const computed: typeof import('vue')['computed']
@@ -131,6 +132,9 @@ declare global {
   const syncRef: typeof import('@vueuse/core')['syncRef']
   const syncRefs: typeof import('@vueuse/core')['syncRefs']
   const templateRef: typeof import('@vueuse/core')['templateRef']
+  const testUploadAvatar: typeof import('./utils/upload-test')['testUploadAvatar']
+  const testUploadIdCard: typeof import('./utils/upload-test')['testUploadIdCard']
+  const testUploadMultipleFiles: typeof import('./utils/upload-test')['testUploadMultipleFiles']
   const throttledRef: typeof import('@vueuse/core')['throttledRef']
   const throttledWatch: typeof import('@vueuse/core')['throttledWatch']
   const toRaw: typeof import('vue')['toRaw']
@@ -148,9 +152,16 @@ declare global {
   const unref: typeof import('vue')['unref']
   const unrefElement: typeof import('@vueuse/core')['unrefElement']
   const until: typeof import('@vueuse/core')['until']
+  const uploadAvatar: typeof import('./utils/upload')['uploadAvatar']
   const uploadCoverToOSS: typeof import('./utils/tool')['uploadCoverToOSS']
+  const uploadDrivingLicense: typeof import('./utils/upload')['uploadDrivingLicense']
+  const uploadExamples: typeof import('./utils/upload-test')['uploadExamples']
+  const uploadFile: typeof import('./utils/upload')['uploadFile']
   const uploadFileToOss: typeof import('./utils/alioss')['uploadFileToOss']
+  const uploadIdCard: typeof import('./utils/upload')['uploadIdCard']
   const uploadImageToOSS: typeof import('./utils/tool')['uploadImageToOSS']
+  const uploadMultipleFiles: typeof import('./utils/upload')['uploadMultipleFiles']
+  const uploadVehicleImage: typeof import('./utils/upload')['uploadVehicleImage']
   const useActiveElement: typeof import('@vueuse/core')['useActiveElement']
   const useAnimate: typeof import('@vueuse/core')['useAnimate']
   const useArrayDifference: typeof import('@vueuse/core')['useArrayDifference']
@@ -336,6 +347,9 @@ declare global {
   // @ts-ignore
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { UploadType } from './utils/upload'
+  import('./utils/upload')
 }
 // for vue template auto import
 import { UnwrapRef } from 'vue'
@@ -343,6 +357,7 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly UploadType: UnwrapRef<typeof import('./utils/upload')['UploadType']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -468,6 +483,9 @@ declare module 'vue' {
     readonly syncRef: UnwrapRef<typeof import('@vueuse/core')['syncRef']>
     readonly syncRefs: UnwrapRef<typeof import('@vueuse/core')['syncRefs']>
     readonly templateRef: UnwrapRef<typeof import('@vueuse/core')['templateRef']>
+    readonly testUploadAvatar: UnwrapRef<typeof import('./utils/upload-test')['testUploadAvatar']>
+    readonly testUploadIdCard: UnwrapRef<typeof import('./utils/upload-test')['testUploadIdCard']>
+    readonly testUploadMultipleFiles: UnwrapRef<typeof import('./utils/upload-test')['testUploadMultipleFiles']>
     readonly throttledRef: UnwrapRef<typeof import('@vueuse/core')['throttledRef']>
     readonly throttledWatch: UnwrapRef<typeof import('@vueuse/core')['throttledWatch']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
@@ -485,9 +503,16 @@ declare module 'vue' {
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly unrefElement: UnwrapRef<typeof import('@vueuse/core')['unrefElement']>
     readonly until: UnwrapRef<typeof import('@vueuse/core')['until']>
+    readonly uploadAvatar: UnwrapRef<typeof import('./utils/upload')['uploadAvatar']>
     readonly uploadCoverToOSS: UnwrapRef<typeof import('./utils/tool')['uploadCoverToOSS']>
+    readonly uploadDrivingLicense: UnwrapRef<typeof import('./utils/upload')['uploadDrivingLicense']>
+    readonly uploadExamples: UnwrapRef<typeof import('./utils/upload-test')['uploadExamples']>
+    readonly uploadFile: UnwrapRef<typeof import('./utils/upload')['uploadFile']>
     readonly uploadFileToOss: UnwrapRef<typeof import('./utils/alioss')['uploadFileToOss']>
+    readonly uploadIdCard: UnwrapRef<typeof import('./utils/upload')['uploadIdCard']>
     readonly uploadImageToOSS: UnwrapRef<typeof import('./utils/tool')['uploadImageToOSS']>
+    readonly uploadMultipleFiles: UnwrapRef<typeof import('./utils/upload')['uploadMultipleFiles']>
+    readonly uploadVehicleImage: UnwrapRef<typeof import('./utils/upload')['uploadVehicleImage']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>

@@ -88,7 +88,8 @@ async function loadBanners() {
         id: 1,
         title: '新用户首单5折',
         subtitle: '驾驭未来，选择电动',
-        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        imageUrl:
+          'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
         linkType: 'page',
         linkUrl: '/pages/activity/newUser',
         isActive: true,
@@ -97,7 +98,8 @@ async function loadBanners() {
         id: 2,
         title: '月租8折优惠',
         subtitle: '长期租赁，更多优惠',
-        imageUrl: 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        imageUrl:
+          'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
         linkType: 'page',
         linkUrl: '/pages/monthly-rental',
         isActive: true,
@@ -106,7 +108,8 @@ async function loadBanners() {
         id: 3,
         title: '盲盒惊喜价',
         subtitle: '¥99起，神秘车型等你解锁',
-        imageUrl: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        imageUrl:
+          'https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
         linkType: 'page',
         linkUrl: '/pages/mystery-box',
         isActive: true,
@@ -158,8 +161,21 @@ async function getLocation() {
 
 // 搜索车辆
 function searchVehicles() {
+  const startDateTime = `${searchForm.value.startDate} ${searchForm.value.startTime}`
+  const endDateTime = `${searchForm.value.endDate} ${searchForm.value.endTime}`
+
+  // 使用 setJumpData 传递搜索参数
+  const searchData = {
+    city: searchForm.value.city,
+    keywords: searchForm.value.keywords || '',
+    startTime: startDateTime,
+    endTime: endDateTime,
+  }
+
+  setJumpData('searchParams', searchData)
+
   uni.navigateTo({
-    url: `/pages/search/index?city=${searchForm.value.city}&keywords=${searchForm.value.keywords}`,
+    url: '/pages/search/index',
   })
 }
 
@@ -177,7 +193,7 @@ function goToRanking() {
 }
 
 function goToOwnerCertification() {
-  uni.navigateTo({ url: '/pages/owner/certification' })
+  uni.navigateTo({ url: '/pages/owner-certification/index' })
 }
 
 // 显示时间选择器
@@ -215,7 +231,9 @@ onMounted(() => {
     <view class="flex-1 overflow-y-auto">
       <!-- 轮播图 - 扩展高度以便卡片覆盖 -->
       <view class="h-[640rpx]">
-        <view class="relative h-full overflow-hidden from-purple-500 to-purple-600 bg-gradient-to-r">
+        <view
+          class="relative h-full overflow-hidden from-purple-500 to-purple-600 bg-gradient-to-r"
+        >
           <!-- 轮播图片 -->
           <swiper
             class="h-full w-full"
@@ -230,8 +248,12 @@ onMounted(() => {
                 class="h-full w-full object-cover"
                 mode="aspectFill"
               />
-              <view class="absolute inset-0 from-black/40 to-transparent bg-gradient-to-r" />
-              <view class="absolute left-[48rpx] top-1/2 transform text-white -translate-y-1/2">
+              <view
+                class="absolute inset-0 from-black/40 to-transparent bg-gradient-to-r"
+              />
+              <view
+                class="absolute left-[48rpx] top-1/2 transform text-white -translate-y-1/2"
+              >
                 <text class="mb-[16rpx] block text-[40rpx] font-bold">
                   {{ banner.title }}
                 </text>
@@ -246,14 +268,14 @@ onMounted(() => {
 
       <!-- 自助找车卡片 - 负边距实现覆盖效果 -->
       <view class="relative z-10 px-[40rpx] pb-[48rpx] -mt-[160rpx]">
-        <view class="rounded-[32rpx] p-[40rpx] shadow-lg" style="background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, rgba(255,255,255,1) 20%)">
+        <view
+          class="rounded-[32rpx] p-[40rpx] shadow-lg"
+          style="background: linear-gradient(to bottom,rgba(255, 255, 255, 0.6) 0%,rgba(255, 255, 255, 1) 20%);"
+        >
           <!-- 地点选择 -->
           <view class="mb-[48rpx] flex items-center justify-between">
             <view class="flex items-center">
-              <view
-                i-material-symbols:location-on
-                class="text-[36rpx] text-purple-600"
-              />
+              <view i-material-symbols:location-on class="text-[36rpx] text-purple-600" />
               <text class="ml-[16rpx] text-[36rpx] text-black font-medium">
                 {{ searchForm.city }}
               </text>
@@ -305,12 +327,12 @@ onMounted(() => {
           </view>
 
           <!-- 马上找车按钮 -->
-          <button
-            class="w-full rounded-full bg-purple-600 py-[24rpx] text-[28rpx] text-white font-medium"
+          <view
+            class="w-full rounded-full bg-purple-600 py-[24rpx] text-center text-[28rpx] text-white font-medium"
             @tap="searchVehicles"
           >
             马上找车
-          </button>
+          </view>
         </view>
       </view>
 
@@ -327,7 +349,9 @@ onMounted(() => {
                 i-material-symbols:calendar-month
                 class="text-[48rpx] text-orange-600"
               />
-              <text class="rounded-full bg-orange-100 px-[16rpx] py-[8rpx] text-[24rpx] text-orange-600">
+              <text
+                class="rounded-full bg-orange-100 px-[16rpx] py-[8rpx] text-[24rpx] text-orange-600"
+              >
                 HOT
               </text>
             </view>
@@ -349,7 +373,9 @@ onMounted(() => {
                 i-material-symbols:card-giftcard
                 class="text-[48rpx] text-purple-600"
               />
-              <text class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600">
+              <text
+                class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600"
+              >
                 NEW
               </text>
             </view>
@@ -367,11 +393,10 @@ onMounted(() => {
             @tap="goToRanking"
           >
             <view class="mb-[16rpx] flex items-center justify-between">
-              <view
-                i-material-symbols:trending-up
-                class="text-[48rpx] text-green-600"
-              />
-              <text class="rounded-full bg-green-100 px-[16rpx] py-[8rpx] text-[24rpx] text-green-600">
+              <view i-material-symbols:trending-up class="text-[48rpx] text-green-600" />
+              <text
+                class="rounded-full bg-green-100 px-[16rpx] py-[8rpx] text-[24rpx] text-green-600"
+              >
                 热门
               </text>
             </view>
@@ -393,7 +418,9 @@ onMounted(() => {
                 i-material-symbols:verified-user
                 class="text-[48rpx] text-purple-600"
               />
-              <text class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600">
+              <text
+                class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600"
+              >
                 认证
               </text>
             </view>

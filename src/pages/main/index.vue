@@ -20,9 +20,9 @@ onShareTimeline(() => {
   }
 })
 
-onLoad(() => {
+onLoad(async () => {
   // 恢复用户登录状态
-  userStore.restoreUserInfo()
+  await userStore.restoreUserInfo()
 })
 </script>
 

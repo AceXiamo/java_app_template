@@ -6,7 +6,7 @@ import type { OSSSTSCredential } from '@/api/alioss'
 import { getStsToken } from '@/api/alioss'
 import { useUserStore } from '@/store/user'
 
-const user = useUserStore()
+const { userInfo } = toRefs(useUserStore())
 const bucket = import.meta.env.VITE_OSS_BUCKET_NAME
 const region = import.meta.env.VITE_OSS_REGION
 const host = `https://${bucket}.oss-${region}.aliyuncs.com/`
@@ -41,9 +41,10 @@ interface UploadConfig {
  * @returns A promise that resolves to an object containing the host and formData for the upload.
  */
 async function getUploadConfig(): Promise<UploadConfig> {
+  console.log('userInfo', userInfo.value)
   let credentials: OSSSTSCredential = Storage.get('credentials')
   if (!credentials) {
-    const res = await getStsToken({ openId: user.user.openId! })
+    const res = await getStsToken({ openId: userInfo.value?.openId || '' })
     if (res.code === 200) {
       Storage.set({
         key: 'credentials',
@@ -54,6 +55,7 @@ async function getUploadConfig(): Promise<UploadConfig> {
     }
     else {
       logger.error('get sts token error!')
+      throw new Error('Failed to get STS token')
     }
   }
 

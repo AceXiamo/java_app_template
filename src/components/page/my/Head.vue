@@ -2,11 +2,8 @@
 </script>
 
 <template>
-  <HeadBar bg-color="#2E2E2E">
-    <view relative h-full flex items-center>
-      <text absolute left-0 right-0 text-center text-white>
-        我的
-      </text>
-    </view>
+  <!-- 个人中心页面头部占位组件 -->
+  <HeadBar bg-color="#8D30E0">
+    <!-- 空内容，仅作占位用途 -->
   </HeadBar>
 </template>

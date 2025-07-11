@@ -5,21 +5,6 @@
       "type": "home"
     },
     {
-      "path": "pages/activity/home",
-      "type": "page",
-      "layout": "home"
-    },
-    {
-      "path": "pages/activity/list",
-      "type": "page",
-      "layout": "home"
-    },
-    {
-      "path": "pages/activity/release",
-      "type": "page",
-      "layout": "home"
-    },
-    {
       "path": "pages/group/activity",
       "type": "page",
       "layout": "home"
@@ -35,12 +20,32 @@
       "layout": "home"
     },
     {
+      "path": "pages/monthly-rental/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/about",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/my/activity",
       "type": "page",
       "layout": "home"
     },
     {
+      "path": "pages/my/documents",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/my/member",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/notifications",
       "type": "page",
       "layout": "home"
     },
@@ -56,6 +61,31 @@
     },
     {
       "path": "pages/my/profile",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/wallet",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/mystery-box/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/owner-certification/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/ranking/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/search/index",
       "type": "page",
       "layout": "home"
     },
