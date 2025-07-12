@@ -50,6 +50,18 @@ const addressInfo = ref({
 const loading = ref(false)
 const confirming = ref(false)
 
+// 地图是否已准备好
+const mapReady = ref(false)
+
+// 监听地图ready状态，确保地图准备好后获取地址
+watch(mapReady, (ready) => {
+  if (ready && props.visible) {
+    setTimeout(() => {
+      getAddressFromLocation(currentLocation.value.latitude, currentLocation.value.longitude)
+    }, 100)
+  }
+})
+
 // 监听props变化
 watch(() => props.visible, (visible) => {
   if (visible) {
@@ -57,10 +69,15 @@ watch(() => props.visible, (visible) => {
       latitude: props.latitude,
       longitude: props.longitude,
     }
-    // 延迟获取地址，确保地图已加载
-    setTimeout(() => {
-      getAddressFromLocation(props.latitude, props.longitude)
-    }, 800)
+    // 重置地址信息
+    addressInfo.value.formattedAddress = '正在获取地址...'
+
+    // 如果地图已准备好，立即获取地址
+    if (mapReady.value) {
+      setTimeout(() => {
+        getAddressFromLocation(props.latitude, props.longitude)
+      }, 100)
+    }
   }
 })
 
@@ -68,11 +85,18 @@ watch(() => props.visible, (visible) => {
 function onMapReady() {
   console.log('地图初始化完成')
   mapContext.value = uni.createMapContext('addressPickerMap')
+  mapReady.value = true
 
-  // 延迟一下确保上下文创建完成
+  // 延迟一下确保上下文创建完成，然后获取当前地址
   setTimeout(() => {
+    // 地图ready后，如果弹窗是打开状态，立即获取地址
     if (props.visible) {
-      getAddressFromLocation(currentLocation.value.latitude, currentLocation.value.longitude)
+      if (!currentLocation.value.latitude || !currentLocation.value.longitude) {
+        backToCurrentLocation()
+      }
+      else {
+        getAddressFromLocation(currentLocation.value.latitude, currentLocation.value.longitude)
+      }
     }
   }, 300)
 }
@@ -84,11 +108,13 @@ function onMapMove(e: any) {
 
   // 只响应拖拽结束事件
   if (e.type === 'end' && e.causedBy === 'drag') {
-    // 防抖处理
+    // 防抖处理 - 延迟500ms获取中心点经纬度
     setTimeout(() => {
       if (mapContext.value) {
         mapContext.value.getCenterLocation({
           success: (res: any) => {
+            console.log('获取地图中心点成功', res)
+
             currentLocation.value = {
               latitude: res.latitude,
               longitude: res.longitude,
@@ -100,12 +126,15 @@ function onMapMove(e: any) {
           },
         })
       }
-    }, 300)
+    }, 500)
   }
 }
 
 // 根据经纬度获取地址信息
 async function getAddressFromLocation(latitude: number, longitude: number) {
+  if (!latitude || !longitude)
+    return
+
   try {
     loading.value = true
     addressInfo.value.formattedAddress = '正在获取地址...'
@@ -216,7 +245,7 @@ function backToCurrentLocation() {
           :show-compass="false"
           :enable-satellite="false"
           :enable-traffic="false"
-          @ready="onMapReady"
+          @updated="onMapReady"
           @regionchange="onMapMove"
         />
 
@@ -254,7 +283,7 @@ function backToCurrentLocation() {
             </text>
           </view>
 
-          <view class="min-h-[80rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]">
+          <view class="box-border min-h-[164rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]">
             <view v-if="loading" class="flex items-center">
               <view class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full" />
               <text class="text-[26rpx] text-gray-600">
@@ -278,7 +307,7 @@ function backToCurrentLocation() {
 
         <!-- 确认按钮 -->
         <view
-          class="w-full text-center rounded-[16rpx] py-[24rpx] text-[28rpx] font-medium"
+          class="w-full rounded-[16rpx] py-[24rpx] text-center text-[28rpx] font-medium"
           :class="loading || confirming
             ? 'bg-gray-300 text-gray-500'
             : 'bg-purple-600 text-white shadow-sm'"

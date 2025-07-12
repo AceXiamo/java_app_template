@@ -5,9 +5,9 @@ import PageBookingHead from '@/components/page/booking/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
-import { getVehicleDetail, type Vehicle } from '@/api/vehicle'
-import { getAvailableCoupons, applyCoupon, type Coupon } from '@/api/coupon'
-import { createBooking, calculateBookingPrice } from '@/api/booking'
+import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
+import { type Coupon, applyCoupon, getAvailableCoupons } from '@/api/coupon'
+import { calculateBookingPrice, createBooking } from '@/api/booking'
 
 // 页面参数
 interface BookingPageParams {
@@ -131,9 +131,9 @@ const vehicleOperationType = computed(() => {
 // 获取能源类型文本
 const energyTypeText = computed(() => {
   const energyMap: Record<string, string> = {
-    'gasoline': '汽油',
-    'electric': '电动',
-    'hybrid': '混动'
+    gasoline: '汽油',
+    electric: '电动',
+    hybrid: '混动',
   }
   return energyMap[vehicleInfo.value.energyType] || '燃油'
 })
@@ -143,7 +143,8 @@ const defaultStandardText = computed(() => {
   const energyType = vehicleInfo.value.energyType
   if (energyType === 'electric') {
     return '满电、车身整洁、车况良好'
-  } else {
+  }
+  else {
     return '满油、车身整洁、车况良好'
   }
 })
@@ -153,7 +154,8 @@ const returnRequirementText = computed(() => {
   const energyType = vehicleInfo.value.energyType
   if (energyType === 'electric') {
     return '归还时请保持满电、车身整洁状态'
-  } else {
+  }
+  else {
     return '归还时请保持满油、车身整洁状态'
   }
 })
@@ -254,7 +256,7 @@ onLoad(async () => {
 async function loadVehicleInfo() {
   try {
     loading.value = true
-    const vehicleId = parseInt(pageParams.value.vehicleId)
+    const vehicleId = Number.parseInt(pageParams.value.vehicleId)
     if (!vehicleId) {
       throw new Error('无效的车辆ID')
     }
@@ -262,7 +264,8 @@ async function loadVehicleInfo() {
     const response = await getVehicleDetail(vehicleId)
     if (response.code === 200 && response.data) {
       vehicleInfo.value = response.data
-    } else {
+    }
+    else {
       throw new Error(response.msg || '获取车辆信息失败')
     }
   }
@@ -525,7 +528,7 @@ function handleDateRangeConfirm(data: {
   bookingInfo.value.rentalDays = Math.ceil(timeDiff / (1000 * 3600 * 24))
 
   // 重新计算价格
-  await calculatePrice()
+  calculatePrice()
 }
 
 // 提交预订
@@ -562,7 +565,7 @@ async function submitBooking() {
     }
 
     const response = await createBooking(bookingData)
-    
+
     if (response.code === 200 && response.data) {
       uni.showToast({
         title: '预订成功',
@@ -575,7 +578,8 @@ async function submitBooking() {
           url: `/pages/payment/index?orderId=${response.data.orderId}`,
         })
       }, 1500)
-    } else {
+    }
+    else {
       throw new Error(response.msg || '预订失败')
     }
   }
