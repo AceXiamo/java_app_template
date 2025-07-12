@@ -945,7 +945,8 @@ function showBookingTerms() {
           </view>
 
           <!-- 增值服务选项（仅限平台自营车辆） -->
-          <view v-if="vehicleOperationType === 'platform'" class="space-y-[24rpx]">
+          <!-- <view v-if="vehicleOperationType === 'platform'" class="space-y-[24rpx]"> -->
+          <view v-if="false" class="space-y-[24rpx]">
             <view class="mb-[16rpx]">
               <text class="text-[26rpx] text-black font-medium">
                 增值服务
@@ -1013,7 +1014,7 @@ function showBookingTerms() {
           </view>
 
           <!-- 车主优选提示 -->
-          <view v-else class="rounded-[12rpx] bg-orange-50 p-[16rpx]">
+          <!-- <view v-else class="rounded-[12rpx] bg-orange-50 p-[16rpx]">
             <view class="flex items-start">
               <text class="i-material-symbols-star mr-[8rpx] mt-[2rpx] text-[20rpx] text-orange-500" />
               <view class="flex-1">
@@ -1022,7 +1023,7 @@ function showBookingTerms() {
                 </text>
               </view>
             </view>
-          </view>
+          </view> -->
         </view>
 
         <!-- 优惠券 -->

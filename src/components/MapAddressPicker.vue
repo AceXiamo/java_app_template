@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { reverseGeocode } from '@/api/map'
+import { debounce } from '@/utils/debounce'
 
 interface MapAddressPickerProps {
   visible: boolean
@@ -28,6 +29,8 @@ const props = withDefaults(defineProps<MapAddressPickerProps>(), {
 })
 
 const emit = defineEmits<MapAddressPickerEmits>()
+// 当前组件实例
+const instance = getCurrentInstance()
 
 // 地图相关状态
 const mapContext = ref<any>(null)
@@ -84,7 +87,7 @@ watch(() => props.visible, (visible) => {
 // 地图初始化
 function onMapReady() {
   console.log('地图初始化完成')
-  mapContext.value = uni.createMapContext('addressPickerMap')
+  mapContext.value = uni.createMapContext('addressPickerMap', instance)
   mapReady.value = true
 
   // 延迟一下确保上下文创建完成，然后获取当前地址
@@ -101,6 +104,25 @@ function onMapReady() {
   }, 300)
 }
 
+// 防抖处理的地图中心点获取函数
+const debouncedGetCenterLocation = debounce(() => {
+  if (mapContext.value) {
+    mapContext.value.getCenterLocation({
+      success: (res: any) => {
+        currentLocation.value = {
+          latitude: res.latitude,
+          longitude: res.longitude,
+        }
+
+        getAddressFromLocation(res.latitude, res.longitude)
+      },
+      fail: (error: any) => {
+        console.error('获取地图中心点失败:', error)
+      },
+    })
+  }
+}, 500)
+
 // 地图移动事件
 function onMapMove(e: any) {
   if (loading.value)
@@ -108,25 +130,8 @@ function onMapMove(e: any) {
 
   // 只响应拖拽结束事件
   if (e.type === 'end' && e.causedBy === 'drag') {
-    // 防抖处理 - 延迟500ms获取中心点经纬度
-    setTimeout(() => {
-      if (mapContext.value) {
-        mapContext.value.getCenterLocation({
-          success: (res: any) => {
-            console.log('获取地图中心点成功', res)
-
-            currentLocation.value = {
-              latitude: res.latitude,
-              longitude: res.longitude,
-            }
-            getAddressFromLocation(res.latitude, res.longitude)
-          },
-          fail: (error: any) => {
-            console.error('获取地图中心点失败:', error)
-          },
-        })
-      }
-    }, 500)
+    // 使用防抖函数处理
+    debouncedGetCenterLocation()
   }
 }
 
@@ -236,15 +241,6 @@ function backToCurrentLocation() {
           class="h-full w-full"
           :latitude="currentLocation.latitude"
           :longitude="currentLocation.longitude"
-          :show-location="false"
-          :enable-zoom="true"
-          :enable-scroll="true"
-          :enable-rotate="false"
-          :enable-overlooking="false"
-          :enable-3D="false"
-          :show-compass="false"
-          :enable-satellite="false"
-          :enable-traffic="false"
           @updated="onMapReady"
           @regionchange="onMapMove"
         />
@@ -283,7 +279,7 @@ function backToCurrentLocation() {
             </text>
           </view>
 
-          <view class="box-border min-h-[164rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]">
+          <view class="box-border min-h-[120rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]">
             <view v-if="loading" class="flex items-center">
               <view class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full" />
               <text class="text-[26rpx] text-gray-600">

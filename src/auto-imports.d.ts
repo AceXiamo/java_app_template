@@ -135,6 +135,7 @@ declare global {
   const testUploadAvatar: typeof import('./utils/upload-test')['testUploadAvatar']
   const testUploadIdCard: typeof import('./utils/upload-test')['testUploadIdCard']
   const testUploadMultipleFiles: typeof import('./utils/upload-test')['testUploadMultipleFiles']
+  const throttle: typeof import('./utils/debounce')['throttle']
   const throttledRef: typeof import('@vueuse/core')['throttledRef']
   const throttledWatch: typeof import('@vueuse/core')['throttledWatch']
   const toRaw: typeof import('vue')['toRaw']
@@ -486,6 +487,7 @@ declare module 'vue' {
     readonly testUploadAvatar: UnwrapRef<typeof import('./utils/upload-test')['testUploadAvatar']>
     readonly testUploadIdCard: UnwrapRef<typeof import('./utils/upload-test')['testUploadIdCard']>
     readonly testUploadMultipleFiles: UnwrapRef<typeof import('./utils/upload-test')['testUploadMultipleFiles']>
+    readonly throttle: UnwrapRef<typeof import('./utils/debounce')['throttle']>
     readonly throttledRef: UnwrapRef<typeof import('@vueuse/core')['throttledRef']>
     readonly throttledWatch: UnwrapRef<typeof import('@vueuse/core')['throttledWatch']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
