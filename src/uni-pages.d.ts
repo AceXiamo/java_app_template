@@ -20,6 +20,7 @@ interface NavigateToOptions {
        "/pages/my/profile" |
        "/pages/my/wallet" |
        "/pages/mystery-box/index" |
+       "/pages/order/detail" |
        "/pages/owner-certification/index" |
        "/pages/ranking/index" |
        "/pages/search/index" |

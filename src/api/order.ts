@@ -218,10 +218,53 @@ export function searchOrders(keyword: string): Promise<BaseRes<SearchOrderRespon
   })
 }
 
+// 订单详情数据
+export interface OrderDetail {
+  id: string | number
+  orderNumber: string
+  status: string
+  statusText: string
+  amount: number
+  finalAmount: number
+  discountAmount: number
+  deliveryFee: number
+  vehicle: {
+    id: number
+    name: string
+    brand: string
+    model: string
+    licensePlate: string
+    imageUrl: string
+    seats: number
+    energyType: string
+    carType: string
+    rating: number
+    ratingCount: number
+  }
+  rentPeriod: {
+    startTime: string
+    endTime: string
+    days: number
+  }
+  location: string
+  pickupMethod: 'self' | 'delivery'
+  deliveryAddress: string
+  pickupCode: string
+  remainingTime: string
+  paymentInfo: {
+    payTime: string
+    payMethod: string
+    transactionId: string
+  }
+  createTime: string
+  updateTime: string
+  remark: string
+}
+
 /**
  * 获取订单详情
  */
-export function getOrderDetail(orderId: number): Promise<BaseRes<OrderData>> {
+export function getOrderDetail(orderId: string | number): Promise<BaseRes<OrderDetail>> {
   return request.get({
     url: `${host}/api/orders/${orderId}/detail`,
   })
@@ -280,7 +323,7 @@ export function rebookOrder(orderId: number, newStartTime: string, newEndTime: s
 /**
  * 取消订单
  */
-export function cancelOrder(orderId: number, reason: string, description: string): Promise<BaseRes<CancelOrderResponse>> {
+export function cancelOrder(orderId: string | number, reason: string, description: string): Promise<BaseRes<CancelOrderResponse>> {
   return request.post({
     url: `${host}/api/orders/${orderId}/cancel`,
     data: {

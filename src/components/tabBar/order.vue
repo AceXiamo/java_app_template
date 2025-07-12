@@ -57,7 +57,7 @@ async function reOrder(orderId: number) {
 }
 
 function viewDetail(orderId: number) {
-  uni.navigateTo({ url: `/pages/order/detail?id=${orderId}` })
+  uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}` })
 }
 
 // 处理订单操作
@@ -138,9 +138,6 @@ onShow(() => {
           @tap="switchTab('all')"
         >
           全部订单
-          <text v-if="statusCounts.all" class="ml-1 text-[20rpx]">
-            ({{ statusCounts.all }})
-          </text>
         </view>
         <view
           class="flex-1 rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
@@ -148,9 +145,6 @@ onShow(() => {
           @tap="switchTab('ongoing')"
         >
           进行中
-          <text v-if="statusCounts.ongoing" class="ml-1 text-[20rpx]">
-            ({{ statusCounts.ongoing }})
-          </text>
         </view>
         <view
           class="flex-1 rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
@@ -158,23 +152,17 @@ onShow(() => {
           @tap="switchTab('cancelled')"
         >
           已取消
-          <text v-if="statusCounts.cancelled" class="ml-1 text-[20rpx]">
-            ({{ statusCounts.cancelled }})
-          </text>
         </view>
       </view>
     </view>
 
     <!-- 主要内容区域 -->
-    <view class="flex-1 overflow-y-auto bg-gray-50">
-      <!-- 订单列表 -->
-      <view class="p-[32rpx] space-y-[32rpx]">
+    <scroll-view scroll-y class="h-0 flex-1">
+      <view class="p-[24rpx] space-y-[24rpx]">
         <!-- 空状态 -->
         <view v-if="orderList.length === 0 && orderListStatus !== 'loading'" class="flex flex-col items-center justify-center py-[120rpx]">
-          <text class="mb-[24rpx] text-[48rpx] text-gray-400">
-            📋
-          </text>
-          <text class="mb-[16rpx] text-[28rpx] text-gray-500">
+          <text class="i-material-symbols-receipt-long mb-[24rpx] text-[96rpx] text-gray-300" />
+          <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
             暂无订单
           </text>
           <text class="text-[24rpx] text-gray-400">
@@ -186,107 +174,123 @@ onShow(() => {
         <view
           v-for="order in orderList"
           :key="order.id"
-          class="rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+          class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]"
+          @tap="viewDetail(order.id)"
         >
+          <!-- 订单状态和订单号 -->
           <view class="mb-[24rpx] flex items-center justify-between">
-            <view class="flex items-center space-x-[16rpx]">
+            <view class="flex items-center">
               <view
-                class="h-[16rpx] w-[16rpx] rounded-full"
+                class="mr-[12rpx] rounded-[8rpx] px-[12rpx] py-[4rpx] text-[22rpx] font-medium"
                 :class="{
-                  'bg-green-500': order.status === 'ongoing',
-                  'bg-gray-400': order.status === 'completed',
-                  'bg-red-400': order.status === 'cancelled',
+                  'bg-green-50 text-green-600': order.status === 'ongoing',
+                  'bg-gray-50 text-gray-600': order.status === 'completed',
+                  'bg-red-50 text-red-600': order.status === 'cancelled',
+                  'bg-orange-50 text-orange-600': order.status === 'pending',
                 }"
-              />
-              <text class="text-[28rpx] text-gray-900 font-medium">
+              >
                 {{ order.statusText }}
-              </text>
+              </view>
             </view>
-            <text class="text-[24rpx] text-gray-500">
-              订单号：{{ order.orderNumber }}
+            <text class="text-[22rpx] text-gray-500">
+              {{ order.orderNumber }}
             </text>
           </view>
 
-          <view class="mb-[32rpx] flex items-center space-x-[24rpx]">
-            <view class="h-[96rpx] w-[128rpx] overflow-hidden rounded-[16rpx]">
+          <!-- 车辆信息 -->
+          <view class="mb-[24rpx] flex">
+            <!-- 车辆图片 -->
+            <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
               <image
                 :src="order.vehicle.imageUrl"
-                class="h-full w-full object-cover"
                 mode="aspectFill"
+                class="h-full w-full rounded-[12rpx]"
               />
             </view>
-            <view class="flex-1">
-              <text class="block text-[32rpx] text-black font-semibold">
+
+            <!-- 车辆信息 -->
+            <view class="ml-[24rpx] flex flex-1 flex-col justify-center">
+              <text class="text-[28rpx] text-black font-semibold">
                 {{ order.vehicle.name }}
               </text>
-              <text class="text-[28rpx] text-gray-600">
-                {{ order.vehicle.type }}
-              </text>
+              <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
+                <text>{{ order.vehicle.licensePlate || '沪A·12345' }}</text>
+                <text>{{ order.vehicle.seats || 5 }}座</text>
+                <text>{{ order.vehicle.type }}</text>
+              </view>
+              <view class="mt-[8rpx] flex items-center">
+                <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
+                <text class="text-[20rpx] text-gray-600">
+                  {{ order.vehicle.rating || 4.8 }}({{ order.vehicle.ratingCount || 128 }})
+                </text>
+              </view>
             </view>
-            <view class="text-right">
-              <text class="block text-[32rpx] text-black font-semibold">
+
+            <!-- 价格信息 -->
+            <view class="ml-[16rpx] text-right">
+              <text class="text-[32rpx] text-purple-600 font-bold">
                 ¥{{ order.amount }}
               </text>
-              <text class="text-[24rpx] text-gray-600">
+              <text class="mt-[4rpx] block text-[22rpx] text-gray-500">
                 {{ order.rentPeriod.days }}天
               </text>
             </view>
           </view>
 
-          <view class="mb-[32rpx] rounded-[24rpx] bg-gray-50 p-[24rpx]">
-            <view class="mb-[16rpx] flex items-center justify-between">
-              <text class="text-[28rpx] text-gray-600">
-                用车时间
-              </text>
-              <text class="text-[28rpx] text-black">
-                {{ order.rentPeriod.startTime }} - {{ order.rentPeriod.endTime }}
-              </text>
+          <!-- 订单详情 -->
+          <view class="mb-[24rpx] rounded-[16rpx] bg-gray-50 p-[24rpx]">
+            <view class="mb-[16rpx] flex items-center">
+              <text class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-purple-600" />
+              <text class="text-[26rpx] text-black font-medium">用车时间</text>
             </view>
-            <view class="flex items-center justify-between">
-              <text class="text-[28rpx] text-gray-600">
-                取车地点
-              </text>
-              <text class="text-[28rpx] text-black">
-                {{ order.location }}
-              </text>
+            <text class="mb-[16rpx] block text-[24rpx] text-gray-700">
+              {{ order.rentPeriod.startTime }} - {{ order.rentPeriod.endTime }}
+            </text>
+            
+            <view class="flex items-center">
+              <text class="i-material-symbols-location-on mr-[12rpx] text-[24rpx] text-purple-600" />
+              <text class="text-[26rpx] text-black font-medium">取车地点</text>
             </view>
+            <text class="mt-[8rpx] block text-[24rpx] text-gray-700">
+              {{ order.location }}
+            </text>
           </view>
 
           <!-- 取车码区域 (仅进行中订单显示) -->
-          <view v-if="order.status === 'ongoing' && order.pickupCode" class="mb-[24rpx] flex items-center justify-between py-[32rpx]">
-            <view class="flex items-center space-x-[32rpx]">
+          <view v-if="order.status === 'ongoing' && order.pickupCode" class="mb-[24rpx] rounded-[16rpx] bg-purple-50 p-[24rpx]">
+            <view class="flex items-center justify-between">
               <view>
-                <view class="mb-[8rpx] flex items-center text-[24rpx] text-gray-600 space-x-[8rpx]">
-                  <text class="i-material-symbols-qr-code-scanner text-[24rpx] text-gray-600" />
-                  <text>取车码</text>
+                <view class="mb-[12rpx] flex items-center">
+                  <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[24rpx] text-purple-600" />
+                  <text class="text-[26rpx] text-purple-800 font-medium">取车码</text>
                 </view>
-                <text class="text-[72rpx] text-black font-bold tracking-wider">
+                <text class="text-[56rpx] text-purple-600 font-bold tracking-wider">
                   {{ order.pickupCode }}
                 </text>
               </view>
-            </view>
-            <view v-if="order.remainingTime" class="text-right">
-              <text class="mb-[8rpx] block text-[24rpx] text-gray-600">
-                剩余时间
-              </text>
-              <text class="text-[32rpx] text-red-500 font-bold font-mono">
-                {{ order.remainingTime }}
-              </text>
+              <view v-if="order.remainingTime" class="text-right">
+                <text class="mb-[8rpx] block text-[22rpx] text-gray-600">
+                  剩余时间
+                </text>
+                <text class="text-[28rpx] text-red-500 font-bold font-mono">
+                  {{ order.remainingTime }}
+                </text>
+              </view>
             </view>
           </view>
 
           <!-- 操作按钮 -->
-          <view v-if="order.actions && order.actions.length > 0" class="flex space-x-[24rpx]">
+          <view v-if="order.actions && order.actions.length > 0" class="flex space-x-[16rpx]">
             <view
               v-for="action in order.actions"
               :key="action.type"
-              class="flex-1 rounded-[16rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
+              class="flex-1 rounded-[20rpx] py-[20rpx] text-center text-[26rpx] font-medium transition-all duration-200 active:scale-95"
               :class="{
                 'bg-gray-100 text-gray-600': action.style === 'secondary',
                 'bg-purple-600 text-white': action.style === 'primary',
-                'bg-purple-50 text-purple-600': action.style === 'outline',
+                'bg-purple-50 text-purple-600 border border-purple-200': action.style === 'outline',
               }"
-              @tap="handleOrderAction(action.type, order.id)"
+              @tap.stop="handleOrderAction(action.type, order.id)"
             >
               {{ action.text }}
             </view>
@@ -295,7 +299,8 @@ onShow(() => {
 
         <!-- 加载状态 -->
         <view v-if="orderListStatus === 'loading'" class="flex items-center justify-center py-[80rpx]">
-          <text class="text-[28rpx] text-gray-500">
+          <text class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />
+          <text class="text-[26rpx] text-gray-600">
             加载中...
           </text>
         </view>
@@ -307,6 +312,6 @@ onShow(() => {
           </text>
         </view>
       </view>
-    </view>
+    </scroll-view>
   </view>
 </template>

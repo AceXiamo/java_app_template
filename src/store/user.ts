@@ -80,6 +80,10 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  function getUserOpenId() {
+    return userInfo.value?.openId || ''
+  }
+
   return {
     userInfo: readonly(userInfo),
     user: readonly(user),
@@ -90,5 +94,6 @@ export const useUserStore = defineStore('user', () => {
     logout,
     updateUserInfo,
     restoreUserInfo,
+    getUserOpenId,
   }
 })

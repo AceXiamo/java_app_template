@@ -80,6 +80,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/order/detail",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/owner-certification/index",
       "type": "page",
       "layout": "home"
