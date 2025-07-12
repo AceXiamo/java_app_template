@@ -1,32 +1,10 @@
 import type { WxUser } from './login'
 import { host, request } from '@/utils/request'
 
-
 // 用户基本信息（根据 wx_user 表结构）
 export interface UserInfo extends WxUser {
-  userId: number
-  username?: string
-  phone?: string
-  avatar?: string
-  email?: string
-  sex?: string // 0男 1女 2未知
-  nickname?: string
-  phoneVerified?: boolean
-  realName?: string
-  idNumber?: string
-  // 隐私设置
-  allowFindByPhone?: boolean
-  showOnlineStatus?: boolean
-  // 通知设置
-  notifications?: boolean
-  allowRecommendation?: boolean
-  // 认证状态
-  certificationStatus?: string
-  isOwner?: boolean
-  idCardVerified?: boolean
-  drivingLicenseVerified?: boolean
-  registerTime?: string
-  status?: string
+  // 继承所有WxUser字段，不需要重复定义
+  // 如需要额外字段，在此处添加
 }
 
 // 用户统计数据
@@ -62,7 +40,6 @@ export interface ServicesInfo {
   }
 }
 
-
 // 个人中心完整信息
 export interface ProfileData {
   userInfo: UserInfo
@@ -97,7 +74,6 @@ export function updateUserProfile(data: UpdateUserProfileRequest): Promise<BaseR
     data,
   })
 }
-
 
 // 上传头像 - 使用阿里云 OSS 直传
 export async function uploadAvatar(

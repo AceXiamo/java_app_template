@@ -4,11 +4,13 @@ import ProfileHead from '@/components/page/my/profile/Head.vue'
 import { uploadFileToOss } from '@/utils/alioss'
 import { getUserProfile, updateUserProfile, uploadAvatarUrl } from '@/api/profile'
 import type { ProfileData } from '@/api/profile'
+import { decryptPhoneNumber } from '@/api/documents'
 
 // 本地状态管理
 const profileData = ref<ProfileData | null>(null)
 const loading = ref(false)
 const saving = ref(false)
+const gettingPhone = ref(false)
 
 // 分离 userInfo 对象，避免 v-model 绑定 null 值（根据 wx_user 表结构）
 const userInfo = ref({
@@ -119,6 +121,53 @@ function syncGenderToPickerIndex() {
   const currentSex = userInfo.value.sex || '2'
   const index = genderOptions.findIndex(item => item.value === currentSex)
   genderPickerIndex.value = index >= 0 ? index : 2 // 默认为"未知"
+}
+
+// 处理获取手机号回调
+async function onGetPhoneNumber(event: any) {
+  const { detail } = event
+  if (detail.errMsg !== 'getPhoneNumber:ok') {
+    toastRef.value?.error('用户取消获取手机号')
+    return
+  }
+
+  if (!detail.code) {
+    toastRef.value?.error('获取手机号失败')
+    return
+  }
+
+  try {
+    gettingPhone.value = true
+
+    // 调用后端API解密手机号
+    const decryptResult = await decryptPhoneNumber(detail.code)
+
+    if (decryptResult.code === 200) {
+      userInfo.value.phone = decryptResult.data.phoneNumber
+      if (profileData.value?.userInfo) {
+        profileData.value.userInfo.phone = decryptResult.data.phoneNumber
+      }
+
+      toastRef.value?.success('手机号获取成功')
+
+      // 刷新用户数据
+      const response = await getUserProfile()
+      profileData.value = response.data
+      if (response.data?.userInfo) {
+        Object.assign(userInfo.value, response.data.userInfo)
+      }
+    }
+    else {
+      throw new Error(decryptResult.message || '解密手机号失败')
+    }
+  }
+  catch (error: any) {
+    console.error('获取手机号失败:', error)
+    toastRef.value?.error(error.message || '获取手机号失败')
+  }
+  finally {
+    gettingPhone.value = false
+  }
 }
 
 // 保存资料
@@ -293,9 +342,31 @@ onMounted(async () => {
                 <text class="text-[26rpx] text-gray-700">
                   {{ profileData?.userInfo?.phone || '未设置' }}
                 </text>
-                <text class="rounded-full bg-green-100 px-[12rpx] py-[4rpx] text-[20rpx] text-green-600">
+                <text
+                  v-if="profileData?.userInfo?.phone"
+                  class="rounded-full bg-green-100 px-[12rpx] py-[4rpx] text-[20rpx] text-green-600"
+                >
                   已验证
                 </text>
+                <view v-else class="flex items-center space-x-[8rpx]">
+                  <text class="rounded-full bg-gray-100 px-[12rpx] py-[4rpx] text-[20rpx] text-gray-500">
+                    未验证
+                  </text>
+                  <button
+                    class="rounded-full bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
+                    open-type="getPhoneNumber"
+                    :disabled="gettingPhone"
+                    @getphonenumber="onGetPhoneNumber"
+                  >
+                    <text v-if="gettingPhone" class="flex items-center space-x-[4rpx]">
+                      <text class="i-material-symbols-sync animate-spin text-[16rpx]" />
+                      <text>获取中</text>
+                    </text>
+                    <text v-else>
+                      获取手机号
+                    </text>
+                  </button>
+                </view>
               </view>
             </view>
 
@@ -353,17 +424,44 @@ onMounted(async () => {
         <view class="rounded-[32rpx] bg-white shadow-sm">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-verified text-[40rpx] text-green-600" />
+              <text
+                class="text-[40rpx]"
+                :class="{
+                  'i-material-symbols-verified text-green-600': profileData?.userInfo?.certificationStatus === 'certified',
+                  'i-material-symbols-pending text-orange-600': profileData?.userInfo?.certificationStatus === 'pending',
+                  'i-material-symbols-error text-red-600': profileData?.userInfo?.certificationStatus === 'rejected',
+                  'i-material-symbols-verified-user text-gray-500': !profileData?.userInfo?.certificationStatus || profileData?.userInfo?.certificationStatus === 'none',
+                }"
+              />
               <text class="text-[32rpx] text-black font-semibold">
                 实名信息
               </text>
-              <text class="rounded-full bg-green-100 px-[12rpx] py-[4rpx] text-[20rpx] text-green-600">
-                已认证
+              <text
+                class="rounded-full px-[12rpx] py-[4rpx] text-[20rpx] font-medium"
+                :class="{
+                  'bg-green-100 text-green-600': profileData?.userInfo?.certificationStatus === 'certified',
+                  'bg-orange-100 text-orange-600': profileData?.userInfo?.certificationStatus === 'pending',
+                  'bg-red-100 text-red-600': profileData?.userInfo?.certificationStatus === 'rejected',
+                  'bg-gray-100 text-gray-500': !profileData?.userInfo?.certificationStatus || profileData?.userInfo?.certificationStatus === 'none',
+                }"
+              >
+                {{ profileData?.userInfo?.certificationStatusText || '未认证' }}
               </text>
             </view>
           </view>
 
           <view class="p-[32rpx] space-y-[32rpx]">
+            <!-- 认证状态 -->
+            <view class="flex items-center justify-between">
+              <text class="text-[28rpx] text-black font-medium">
+                认证状态
+              </text>
+              <text class="text-[26rpx] text-gray-700">
+                {{ profileData?.userInfo?.certificationStatusText || '未认证' }}
+              </text>
+            </view>
+
+            <!-- 真实姓名 -->
             <view class="flex items-center justify-between">
               <text class="text-[28rpx] text-black font-medium">
                 真实姓名
@@ -373,13 +471,78 @@ onMounted(async () => {
               </text>
             </view>
 
+            <!-- 身份证号 -->
             <view class="flex items-center justify-between">
               <text class="text-[28rpx] text-black font-medium">
                 身份证号
               </text>
               <text class="text-[26rpx] text-gray-700">
-                {{ profileData?.userInfo?.idNumber || '未设置' }}
+                {{ profileData?.userInfo?.idCardNumber || '未设置' }}
               </text>
+            </view>
+
+            <!-- 驾驶证号 -->
+            <view class="flex items-center justify-between">
+              <text class="text-[28rpx] text-black font-medium">
+                驾驶证号
+              </text>
+              <text class="text-[26rpx] text-gray-700">
+                {{ profileData?.userInfo?.drivingLicenseNumber || '未设置' }}
+              </text>
+            </view>
+
+            <!-- 认证时间 -->
+            <view v-if="profileData?.userInfo?.certificationSubmitTime" class="flex items-center justify-between">
+              <text class="text-[28rpx] text-black font-medium">
+                提交时间
+              </text>
+              <text class="text-[26rpx] text-gray-700">
+                {{ profileData?.userInfo?.certificationSubmitTime }}
+              </text>
+            </view>
+
+            <view v-if="profileData?.userInfo?.certificationApproveTime" class="flex items-center justify-between">
+              <text class="text-[28rpx] text-black font-medium">
+                审核时间
+              </text>
+              <text class="text-[26rpx] text-gray-700">
+                {{ profileData?.userInfo?.certificationApproveTime }}
+              </text>
+            </view>
+
+            <!-- 拒绝原因 -->
+            <view v-if="profileData?.userInfo?.certificationStatus === 'rejected' && profileData?.userInfo?.certificationRejectReason" class="rounded-[12rpx] bg-red-50 p-[16rpx]">
+              <view class="mb-[8rpx] flex items-center space-x-[8rpx]">
+                <text class="i-material-symbols-error text-[20rpx] text-red-600" />
+                <text class="text-[24rpx] text-red-600 font-medium">
+                  审核未通过原因
+                </text>
+              </view>
+              <text class="text-[24rpx] text-red-700">
+                {{ profileData?.userInfo?.certificationRejectReason }}
+              </text>
+            </view>
+
+            <!-- 认证详情 -->
+            <view v-if="profileData?.userInfo?.certificationStatus === 'certified'" class="grid grid-cols-2 gap-[16rpx]">
+              <view class="flex items-center space-x-[8rpx]">
+                <text
+                  class="text-[20rpx]"
+                  :class="profileData?.userInfo?.idCardVerified ? 'i-material-symbols-check-circle text-green-600' : 'i-material-symbols-cancel text-gray-400'"
+                />
+                <text class="text-[24rpx] text-gray-700">
+                  身份证认证
+                </text>
+              </view>
+              <view class="flex items-center space-x-[8rpx]">
+                <text
+                  class="text-[20rpx]"
+                  :class="profileData?.userInfo?.drivingLicenseVerified ? 'i-material-symbols-check-circle text-green-600' : 'i-material-symbols-cancel text-gray-400'"
+                />
+                <text class="text-[24rpx] text-gray-700">
+                  驾驶证认证
+                </text>
+              </view>
             </view>
           </view>
         </view>

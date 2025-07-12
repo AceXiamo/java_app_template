@@ -8,13 +8,14 @@ import {
   getUserDocuments as apiGetUserDocuments,
   resubmitCertification as apiResubmitCertification,
   submitCertification as apiSubmitCertification,
+  decryptPhoneNumber,
 } from '@/api/documents'
 import { uploadFileToOss } from '@/utils/alioss'
 
 // 用户证件数据
 const userDocuments = ref<UserDocuments>({
-  certificationStatus: 'not_submitted',
-  certificationStatusText: '未提交认证',
+  certificationStatus: 'none',
+  certificationStatusText: '未认证',
   idCardVerified: false,
   drivingLicenseVerified: false,
   phoneVerified: false,
@@ -55,26 +56,33 @@ const tempImages = ref({
 // 真实姓名输入
 const realNameInput = ref('')
 
+// 身份证号输入
+const idCardNumberInput = ref('')
+
+// 驾驶证号输入
+const drivingLicenseNumberInput = ref('')
+
 const loading = ref(false)
 const uploading = ref(false)
 const submitting = ref(false)
+const gettingPhone = ref(false)
 
 // 计算属性：认证状态样式
 const certificationStatusStyle = computed(() => {
   const statusMap: Record<string, string> = {
-    not_submitted: 'text-gray-500 bg-gray-50',
+    none: 'text-gray-500 bg-gray-50',
     pending: 'text-orange-600 bg-orange-50',
-    approved: 'text-green-600 bg-green-50',
+    certified: 'text-green-600 bg-green-50',
     rejected: 'text-red-600 bg-red-50',
   }
-  return statusMap[userDocuments.value.certificationStatus] || statusMap.not_submitted
+  return statusMap[userDocuments.value.certificationStatus] || statusMap.none
 })
 
 // 计算属性：是否可以提交认证
 const canSubmitCertification = computed(() => {
   if (userDocuments.value.certificationStatus === 'pending')
     return false
-  if (userDocuments.value.certificationStatus === 'approved')
+  if (userDocuments.value.certificationStatus === 'certified')
     return false
 
   // 检查是否所有图片都已上传
@@ -86,21 +94,27 @@ const canSubmitCertification = computed(() => {
   // 检查是否填写了真实姓名
   const hasRealName = realNameInput.value.trim().length > 0
 
-  return hasAllImages && hasRealName
+  // 检查是否填写了身份证号
+  const hasIdCardNumber = idCardNumberInput.value.trim().length > 0
+
+  // 检查是否填写了驾驶证号
+  const hasDrivingLicenseNumber = drivingLicenseNumberInput.value.trim().length > 0
+
+  return hasAllImages && hasRealName && hasIdCardNumber && hasDrivingLicenseNumber
 })
 
 // 计算属性：获取当前有效的图片URL
-const getImageUrl = computed(() => (type: string) => {
+const getImageUrl = computed(() => (type: string): string => {
   const tempUrl = tempImages.value[type as keyof typeof tempImages.value]
   if (tempUrl)
     return tempUrl
 
   // 返回已保存的图片URL
   switch (type) {
-    case 'idCardFront': return userDocuments.value.idCardFrontUrl
-    case 'idCardBack': return userDocuments.value.idCardBackUrl
-    case 'drivingLicenseFront': return userDocuments.value.drivingLicenseFrontUrl
-    case 'drivingLicenseBack': return userDocuments.value.drivingLicenseBackUrl
+    case 'idCardFront': return userDocuments.value.idCardFrontUrl || ''
+    case 'idCardBack': return userDocuments.value.idCardBackUrl || ''
+    case 'drivingLicenseFront': return userDocuments.value.drivingLicenseFrontUrl || ''
+    case 'drivingLicenseBack': return userDocuments.value.drivingLicenseBackUrl || ''
     default: return ''
   }
 })
@@ -135,28 +149,19 @@ async function uploadImage(documentType: 'idCard' | 'drivingLicense', imageType:
         tempImages.value[key] = imageUrl
 
         uni.hideLoading()
-        uni.showToast({
-          title: '上传成功',
-          icon: 'success',
-        })
+        toastRef.value?.success('上传成功')
       }
       catch (error: any) {
         console.error('上传证件失败:', error)
         uni.hideLoading()
-        uni.showToast({
-          title: error.message || '上传失败，请重试',
-          icon: 'error',
-        })
+        toastRef.value?.error(error.message || '上传失败，请重试')
       }
       finally {
         uploading.value = false
       }
     },
     fail: () => {
-      uni.showToast({
-        title: '选择图片失败',
-        icon: 'error',
-      })
+      toastRef.value?.error('选择图片失败')
     },
   })
 }
@@ -164,10 +169,7 @@ async function uploadImage(documentType: 'idCard' | 'drivingLicense', imageType:
 // 预览图片
 function previewImage(imageUrl: string) {
   if (!imageUrl) {
-    uni.showToast({
-      title: '暂无图片',
-      icon: 'none',
-    })
+    toastRef.value?.error('暂无图片')
     return
   }
 
@@ -177,13 +179,51 @@ function previewImage(imageUrl: string) {
   })
 }
 
+// 处理获取手机号回调
+async function onGetPhoneNumber(event: any) {
+  const { detail } = event
+  if (detail.errMsg !== 'getPhoneNumber:ok') {
+    toastRef.value?.error('用户取消获取手机号')
+    return
+  }
+
+  if (!detail.code) {
+    toastRef.value?.error('获取手机号失败')
+    return
+  }
+
+  try {
+    gettingPhone.value = true
+
+    // 调用后端API解密手机号
+    const decryptResult = await decryptPhoneNumber(detail.code)
+
+    if (decryptResult.code === 200) {
+      userDocuments.value.phone = decryptResult.data.phoneNumber
+      userDocuments.value.phoneVerified = true
+
+      toastRef.value?.success('手机号获取成功')
+
+      // 刷新用户数据
+      await fetchUserDocuments()
+    }
+    else {
+      throw new Error(decryptResult.message || '解密手机号失败')
+    }
+  }
+  catch (error: any) {
+    console.error('获取手机号失败:', error)
+    toastRef.value?.error(error.message || '获取手机号失败')
+  }
+  finally {
+    gettingPhone.value = false
+  }
+}
+
 // 提交认证申请
 async function submitCertification() {
   if (!canSubmitCertification.value) {
-    uni.showToast({
-      title: '请完善所有证件信息',
-      icon: 'none',
-    })
+    toastRef.value?.error('请完善所有证件信息')
     return
   }
 
@@ -196,6 +236,8 @@ async function submitCertification() {
       drivingLicenseFrontUrl: tempImages.value.drivingLicenseFront || userDocuments.value.drivingLicenseFrontUrl || '',
       drivingLicenseBackUrl: tempImages.value.drivingLicenseBack || userDocuments.value.drivingLicenseBackUrl || '',
       realName: realNameInput.value.trim(),
+      idCardNumber: idCardNumberInput.value.trim(),
+      drivingLicenseNumber: drivingLicenseNumberInput.value.trim(),
     }
 
     const apiCall = userDocuments.value.certificationStatus === 'rejected'
@@ -205,10 +247,7 @@ async function submitCertification() {
     const result = await apiCall(params)
 
     if (result.code === 200) {
-      uni.showToast({
-        title: '提交成功，请等待审核',
-        icon: 'success',
-      })
+      toastRef.value?.success('提交成功，请等待审核')
 
       // 刷新页面数据
       await fetchUserDocuments()
@@ -227,10 +266,7 @@ async function submitCertification() {
   }
   catch (error: any) {
     console.error('提交认证失败:', error)
-    uni.showToast({
-      title: error.message || '提交失败，请重试',
-      icon: 'error',
-    })
+    toastRef.value?.error(error.message || '提交失败，请重试')
   }
   finally {
     submitting.value = false
@@ -243,10 +279,12 @@ async function fetchUserDocuments() {
     loading.value = true
     const result = await apiGetUserDocuments()
     console.log(result)
-    
+
     if (result.code === 200) {
       userDocuments.value = result.data
       realNameInput.value = result.data.realName || ''
+      idCardNumberInput.value = result.data.idCardNumber || ''
+      drivingLicenseNumberInput.value = result.data.drivingLicenseNumber || ''
     }
     else {
       // API 失败时使用默认数据，不阻塞页面
@@ -279,10 +317,7 @@ async function fetchHelpInfo() {
 // 刷新数据
 async function refreshData() {
   await fetchUserDocuments()
-  uni.showToast({
-    title: '刷新完成',
-    icon: 'success',
-  })
+  toastRef.value?.success('刷新完成')
 }
 
 // 页面加载时获取数据
@@ -313,14 +348,14 @@ onUnmounted(() => {
       <view class="p-[24rpx] space-y-[24rpx]">
         <!-- 认证状态概览 -->
         <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
+          <view class="flex items-center space-x-[16rpx]">
             <text
               class="i-material-symbols-verified-user text-[40rpx]"
               :class="{
-                'text-green-600': userDocuments.certificationStatus === 'approved',
+                'text-green-600': userDocuments.certificationStatus === 'certified',
                 'text-orange-600': userDocuments.certificationStatus === 'pending',
                 'text-red-600': userDocuments.certificationStatus === 'rejected',
-                'text-gray-500': userDocuments.certificationStatus === 'not_submitted',
+                'text-gray-500': userDocuments.certificationStatus === 'none',
               }"
             />
             <text class="text-[32rpx] text-gray-900 font-semibold">
@@ -335,14 +370,14 @@ onUnmounted(() => {
           </view>
 
           <!-- 认证状态描述 -->
-          <view class="mb-[24rpx] text-[26rpx] text-gray-700">
-            <text v-if="userDocuments.certificationStatus === 'not_submitted'">
+          <view class="mt-[24rpx] text-[26rpx] text-gray-700">
+            <text v-if="userDocuments.certificationStatus === 'none'">
               完成实名认证后，即可开始租车服务
             </text>
             <text v-else-if="userDocuments.certificationStatus === 'pending'">
               您的认证申请正在审核中，请耐心等待（1-3个工作日）
             </text>
-            <text v-else-if="userDocuments.certificationStatus === 'approved'">
+            <text v-else-if="userDocuments.certificationStatus === 'certified'">
               认证已通过，您可以正常使用租车服务
             </text>
             <text v-else-if="userDocuments.certificationStatus === 'rejected'">
@@ -351,7 +386,7 @@ onUnmounted(() => {
           </view>
 
           <!-- 时间信息 -->
-          <view v-if="userDocuments.certificationSubmitTime || userDocuments.certificationApproveTime" class="space-y-[12rpx]">
+          <view v-if="userDocuments.certificationSubmitTime || userDocuments.certificationApproveTime" class="mt-[24rpx] space-y-[12rpx]">
             <view v-if="userDocuments.certificationSubmitTime" class="flex justify-between text-[24rpx]">
               <text class="text-gray-600">
                 提交时间
@@ -385,49 +420,77 @@ onUnmounted(() => {
         </view>
 
         <!-- 个人信息 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols-person text-[36rpx] text-purple-600" />
-            <text class="text-[32rpx] text-gray-900 font-semibold">
-              个人信息
-            </text>
+        <view class="rounded-[24rpx] bg-white shadow-sm">
+          <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
+            <view class="flex items-center space-x-[16rpx]">
+              <text class="i-material-symbols-person text-[40rpx] text-purple-600" />
+              <text class="text-[32rpx] text-gray-900 font-semibold">
+                个人信息
+              </text>
+            </view>
           </view>
 
-          <view class="space-y-[24rpx]">
+          <view class="p-[32rpx] space-y-[32rpx]">
             <!-- 真实姓名 -->
-            <view>
-              <text class="mb-[12rpx] block text-[26rpx] text-gray-700">
-                真实姓名
-              </text>
-              <input
-                v-model="realNameInput"
-                class="w-full border border-gray-300 rounded-[12rpx] px-[24rpx] py-[16rpx] text-[26rpx]"
-                placeholder="请输入真实姓名"
-                :disabled="userDocuments.certificationStatus === 'approved'"
-              >
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  真实姓名
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  用于实名认证验证
+                </text>
+              </view>
+              <view class="flex items-center space-x-[16rpx]">
+                <input
+                  v-model="realNameInput"
+                  class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                  placeholder="请输入真实姓名"
+                  maxlength="20"
+                  :disabled="userDocuments.certificationStatus === 'certified'"
+                >
+              </view>
             </view>
 
             <!-- 手机号 -->
-            <view>
-              <text class="mb-[12rpx] block text-[26rpx] text-gray-700">
-                手机号码
-              </text>
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  手机号码
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  已验证的手机号
+                </text>
+              </view>
               <view class="flex items-center space-x-[16rpx]">
-                <text class="text-[26rpx] text-gray-900">
-                  {{ userDocuments.phone || '未绑定' }}
+                <text class="text-[26rpx] text-gray-700">
+                  {{ userDocuments.phone || '未设置' }}
                 </text>
                 <text
                   v-if="userDocuments.phoneVerified"
-                  class="rounded-[4rpx] bg-green-50 px-[8rpx] py-[4rpx] text-[22rpx] text-green-600"
+                  class="rounded-full bg-green-100 px-[12rpx] py-[4rpx] text-[20rpx] text-green-600"
                 >
                   已验证
                 </text>
-                <text
-                  v-else
-                  class="rounded-[4rpx] bg-gray-50 px-[8rpx] py-[4rpx] text-[22rpx] text-gray-500"
-                >
-                  未验证
-                </text>
+                <view v-else class="flex items-center space-x-[8rpx]">
+                  <text class="rounded-full bg-gray-100 px-[12rpx] py-[4rpx] text-[20rpx] text-gray-500">
+                    未验证
+                  </text>
+                  <button
+                    class="rounded-full bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
+                    open-type="getPhoneNumber"
+                    :disabled="gettingPhone"
+                    @getphonenumber="onGetPhoneNumber"
+                  >
+                    <text v-if="gettingPhone" class="flex items-center space-x-[4rpx]">
+                      <text class="i-material-symbols-sync animate-spin text-[16rpx]" />
+                      <text>获取中</text>
+                    </text>
+                    <text v-else>
+                      获取手机号
+                    </text>
+                  </button>
+                </view>
               </view>
             </view>
           </view>
@@ -454,14 +517,26 @@ onUnmounted(() => {
 
           <view class="p-[32rpx]">
             <!-- 身份证号码 -->
-            <view v-if="userDocuments.idCardNumber" class="mb-[24rpx]">
-              <view class="flex justify-between">
-                <text class="text-[26rpx] text-gray-700">
-                  证件号码
-                </text>
-                <text class="text-[26rpx] text-gray-900">
-                  {{ userDocuments.idCardNumber }}
-                </text>
+            <view class="mb-[24rpx]">
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    身份证号码
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    请输入18位身份证号码
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="idCardNumberInput"
+                    class="min-w-[300rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入身份证号码"
+                    maxlength="18"
+                    type="idcard"
+                    :disabled="userDocuments.certificationStatus === 'certified'"
+                  >
+                </view>
               </view>
             </view>
 
@@ -541,14 +616,25 @@ onUnmounted(() => {
 
           <view class="p-[32rpx]">
             <!-- 驾驶证号码 -->
-            <view v-if="userDocuments.drivingLicenseNumber" class="mb-[24rpx]">
-              <view class="flex justify-between">
-                <text class="text-[26rpx] text-gray-700">
-                  证件号码
-                </text>
-                <text class="text-[26rpx] text-gray-900">
-                  {{ userDocuments.drivingLicenseNumber }}
-                </text>
+            <view class="mb-[24rpx]">
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    驾驶证号码
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    请输入驾驶证号码
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="drivingLicenseNumberInput"
+                    class="min-w-[300rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入驾驶证号码"
+                    maxlength="20"
+                    :disabled="userDocuments.certificationStatus === 'certified'"
+                  >
+                </view>
               </view>
             </view>
 
@@ -609,7 +695,7 @@ onUnmounted(() => {
 
         <!-- 提交认证按钮 -->
         <view
-          v-if="userDocuments.certificationStatus !== 'approved' && userDocuments.certificationStatus !== 'pending'"
+          v-if="userDocuments.certificationStatus !== 'certified' && userDocuments.certificationStatus !== 'pending'"
           class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm"
         >
           <view
@@ -631,7 +717,7 @@ onUnmounted(() => {
           </view>
 
           <view v-if="!canSubmitCertification" class="mt-[16rpx] text-center text-[24rpx] text-gray-500">
-            请完善个人信息和证件照片后提交
+            请完善个人信息、证件号码和证件照片后提交
           </view>
         </view>
 

@@ -1,7 +1,7 @@
 import { host, request } from '@/utils/request'
 
-// 认证状态枚举
-export type CertificationStatus = 'pending' | 'approved' | 'rejected' | 'not_submitted'
+// 认证状态枚举 - 匹配数据库字段
+export type CertificationStatus = 'none' | 'pending' | 'certified' | 'rejected'
 
 // 用户证件信息接口
 export interface UserDocuments {
@@ -35,10 +35,12 @@ export interface CertificationSubmitParams {
   // 身份证信息
   idCardFrontUrl: string
   idCardBackUrl: string
+  idCardNumber: string
 
   // 驾驶证信息
   drivingLicenseFrontUrl: string
   drivingLicenseBackUrl: string
+  drivingLicenseNumber: string
 
   // 个人信息
   realName: string
@@ -103,5 +105,19 @@ export function resubmitCertification(params: CertificationSubmitParams): Promis
   return request.post({
     url: `${host}/api/user/documents/resubmit`,
     data: params,
+  })
+}
+
+/**
+ * 解密微信小程序手机号
+ */
+export function decryptPhoneNumber(code: string): Promise<ApiResponse<{
+  phoneNumber: string
+  purePhoneNumber: string
+  countryCode: string
+}>> {
+  return request.post({
+    url: `${host}/api/user/decrypt-phone`,
+    data: { code },
   })
 }
