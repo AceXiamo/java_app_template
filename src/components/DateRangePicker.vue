@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import BottomDrawer from '@/components/BottomDrawer.vue'
 
 interface DateRangePickerProps {
   visible: boolean

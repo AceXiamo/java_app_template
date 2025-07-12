@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import PageSearchHead from '@/components/page/search/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
+import DateRangePicker from '@/components/DateRangePicker.vue'
 import { getVehicleCategories, getVehicleFilters, getVehicleTagTypes, searchVehicles } from '@/api/vehicle'
 import type { Vehicle, VehicleCategory, VehicleFilterOptions, VehicleSearchParams, VehicleSearchResult, VehicleTagType } from '@/api/vehicle'
 
@@ -23,6 +24,7 @@ const total = ref(0)
 const loading = ref(false)
 const noMore = ref(false)
 const showFilters = ref(false)
+const showDatePicker = ref(false)
 const filterOptions = ref<VehicleFilterOptions>({
   brands: [],
   carTypes: [],
@@ -68,6 +70,44 @@ const selectedCategory = ref('all')
 const selectedTags = ref<string[]>([])
 const selectedPriceRange = ref<number[] | null>(null)
 
+// 时间相关数据
+const timeForm = ref({
+  startDate: '',
+  endDate: '',
+  startTime: '',
+  endTime: '',
+})
+
+// 格式化时间显示
+const displayTimeRange = computed(() => {
+  if (!searchParams.value.startTime || !searchParams.value.endTime) {
+    return '请选择时间'
+  }
+  
+  const start = new Date(searchParams.value.startTime)
+  const end = new Date(searchParams.value.endTime)
+  
+  const formatDate = (date: Date) => {
+    const today = new Date()
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+    
+    if (date.toDateString() === today.toDateString()) {
+      return '今天'
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return '明天'
+    } else {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
+    }
+  }
+  
+  const startDateText = formatDate(start)
+  const endDateText = formatDate(end)
+  const startTimeText = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`
+  const endTimeText = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`
+  
+  return `${startDateText} ${startTimeText} - ${endDateText} ${endTimeText}`
+})
+
 // 页面加载时获取参数
 onLoad(() => {
   // 使用 getJumpData 获取搜索参数
@@ -78,6 +118,17 @@ onLoad(() => {
     searchParams.value.keywords = jumpData.keywords || ''
     searchParams.value.startTime = jumpData.startTime
     searchParams.value.endTime = jumpData.endTime
+    
+    // 解析时间参数到timeForm
+    if (jumpData.startTime && jumpData.endTime) {
+      const startDateTime = new Date(jumpData.startTime)
+      const endDateTime = new Date(jumpData.endTime)
+      
+      timeForm.value.startDate = startDateTime.toISOString().split('T')[0]
+      timeForm.value.endDate = endDateTime.toISOString().split('T')[0]
+      timeForm.value.startTime = `${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`
+      timeForm.value.endTime = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`
+    }
   }
 
   loadFilterOptions()
@@ -317,6 +368,37 @@ function formatLicensePlate(plate: string) {
   return plate
 }
 
+// 计算月租折扣信息
+function getMonthlyDiscount(dailyPrice: number, monthlyPrice?: number) {
+  if (!monthlyPrice || monthlyPrice <= 0) {
+    return null
+  }
+
+  // 计算按日租30天的总价
+  const monthlyByDaily = dailyPrice * 30
+
+  // 计算折扣
+  const discount = monthlyPrice / monthlyByDaily
+
+  // 如果月租价格比日租30天还贵，就不显示折扣了
+  if (discount >= 0.95) { // 95%以上就不显示折扣了
+    return null
+  }
+
+  // 计算折扣百分比，四舍五入到整数
+  const discountPercent = Math.round(discount * 10)
+
+  // 计算节省金额
+  const savings = monthlyByDaily - monthlyPrice
+
+  return {
+    discountPercent,
+    savings,
+    originalPrice: monthlyByDaily,
+    monthlyPrice,
+  }
+}
+
 // 格式化时间范围
 function formatTimeRange() {
   if (!searchParams.value.startTime || !searchParams.value.endTime)
@@ -328,10 +410,45 @@ function formatTimeRange() {
 
 // 快速预订
 function quickBook(vehicleId: number) {
-  // 快速预订逻辑
+  // 使用 setJumpData 传递预订参数
+  const bookingData = {
+    vehicleId: vehicleId.toString(),
+    ...(searchParams.value.startTime && { startTime: searchParams.value.startTime }),
+    ...(searchParams.value.endTime && { endTime: searchParams.value.endTime }),
+  }
+  
+  setJumpData('bookingParams', bookingData)
+  
   uni.navigateTo({
-    url: `/pages/booking/index?vehicleId=${vehicleId}`,
+    url: '/pages/booking/index',
   })
+}
+
+// 显示时间选择器
+function showTimePicker() {
+  showDatePicker.value = true
+}
+
+// 处理时间选择确认
+function handleDateRangeConfirm(data: {
+  startDate: string
+  endDate: string
+  startTime: string
+  endTime: string
+  startDateTime: string
+  endDateTime: string
+}) {
+  timeForm.value.startDate = data.startDate
+  timeForm.value.endDate = data.endDate
+  timeForm.value.startTime = data.startTime
+  timeForm.value.endTime = data.endTime
+  
+  // 更新搜索参数
+  searchParams.value.startTime = data.startDateTime
+  searchParams.value.endTime = data.endDateTime
+  
+  // 重新搜索
+  searchVehicleList()
 }
 </script>
 
@@ -385,10 +502,10 @@ function quickBook(vehicleId: number) {
                 {{ searchParams.city }}
               </text>
             </view>
-            <view v-if="searchParams.startTime && searchParams.endTime" class="flex items-center">
+            <view class="flex items-center" @tap="showTimePicker">
               <text class="i-material-symbols-schedule mr-[8rpx] text-[24rpx] text-gray-500" />
               <text class="text-[24rpx] text-gray-600">
-                {{ formatTimeRange() }}
+                {{ displayTimeRange }}
               </text>
             </view>
           </view>
@@ -538,14 +655,22 @@ function quickBook(vehicleId: number) {
                       /天
                     </text>
                   </view>
-                  <view v-if="vehicle.monthlyPrice" class="mt-[4rpx] flex items-center">
-                    <text class="mr-[8rpx] text-[20rpx] text-gray-400 line-through">
-                      ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
-                    </text>
-                    <text class="text-[22rpx] text-red-500 font-medium">
-                      月租仅8折
-                    </text>
-                  </view>
+                  <template v-if="vehicle.monthlyPrice">
+                    <view
+                      v-if="getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)"
+                      class="mt-[4rpx] flex items-center"
+                    >
+                      <text class="mr-[8rpx] text-[20rpx] text-gray-400 line-through">
+                        ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
+                      </text>
+                      <text class="rounded-full bg-red-50 px-[8rpx] py-[2rpx] text-[20rpx] text-red-500 font-medium">
+                        月租{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.discountPercent }}折
+                      </text>
+                      <text class="ml-[8rpx] text-[18rpx] text-green-600">
+                        省{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.savings.toFixed(0) }}元
+                      </text>
+                    </view>
+                  </template>
                 </view>
 
                 <!-- 快速预订按钮 -->
@@ -670,6 +795,16 @@ function quickBook(vehicleId: number) {
         </scroll-view>
       </view>
     </BottomDrawer>
+
+    <!-- 时间范围选择器 -->
+    <DateRangePicker
+      v-model:visible="showDatePicker"
+      :start-date="timeForm.startDate"
+      :end-date="timeForm.endDate"
+      :start-time="timeForm.startTime"
+      :end-time="timeForm.endTime"
+      @confirm="handleDateRangeConfirm"
+    />
   </view>
 </template>
 

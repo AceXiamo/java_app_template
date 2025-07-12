@@ -5,6 +5,11 @@
       "type": "home"
     },
     {
+      "path": "pages/booking/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/group/activity",
       "type": "page",
       "layout": "home"
@@ -101,6 +106,11 @@
     },
     {
       "path": "pages/shop/order",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/vehicle/detail",
       "type": "page",
       "layout": "home"
     }

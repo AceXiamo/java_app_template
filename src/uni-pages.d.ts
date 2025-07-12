@@ -5,6 +5,7 @@
 
 interface NavigateToOptions {
   url: "/pages/main/index" |
+       "/pages/booking/index" |
        "/pages/group/activity" |
        "/pages/group/home" |
        "/pages/member/home" |
@@ -24,7 +25,8 @@ interface NavigateToOptions {
        "/pages/search/index" |
        "/pages/shop/cart" |
        "/pages/shop/home" |
-       "/pages/shop/order";
+       "/pages/shop/order" |
+       "/pages/vehicle/detail";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

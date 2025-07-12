@@ -1,5 +1,4 @@
 import { host, request } from '@/utils/request'
-import type { BaseRes } from '@/types/common'
 
 // 车辆相关 API
 export interface Vehicle {
@@ -34,6 +33,13 @@ export interface Vehicle {
     tagType: string
     tagColor: string
   }[]
+  // 预订相关字段
+  deliveryEnabled: boolean
+  deliveryBaseFee: number
+  deliveryFreeDistance: number
+  deliveryPricePerKm: number
+  maxDeliveryDistance: number
+  operationType: 'platform' | 'owner' // platform: 平台自营, owner: 车主优选
 }
 
 export interface VehicleSearchParams {
