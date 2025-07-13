@@ -4,10 +4,8 @@ import {
   type LocationInfo,
   type MonthlyRentalActivity,
   type MonthlyVehicle,
-  type PeriodOption,
   getActivityInfo,
   getMonthlyVehicles,
-  getPeriodOptions,
 } from '@/api/monthly-rental'
 import { getCurrentLocation } from '@/api/home'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
@@ -22,8 +20,12 @@ const selectedPeriod = ref(30)
 const activityInfo = ref<MonthlyRentalActivity | null>(null)
 const activityRules = ref<string[]>([])
 
-// 租期选项
-const periodOptions = ref<PeriodOption[]>([])
+// 租期选项 - 静态数据
+const periodOptions = ref([
+  { period: 30, label: '30天', discountRate: 0.8, discountText: '8折优惠', isRecommended: true },
+  { period: 60, label: '60天', discountRate: 0.75, discountText: '7.5折优惠', isRecommended: false },
+  { period: 90, label: '90天', discountRate: 0.7, discountText: '7折优惠', isRecommended: false },
+])
 
 // 推荐车辆列表
 const vehicles = ref<any[]>([])
@@ -62,8 +64,8 @@ const filters = ref({
   seats: [] as number[],
 })
 
-// 快捷标签
-const quickTags = ref([
+// 快捷标签（暂未使用，保留供后续功能扩展）
+const _quickTags = ref([
   { label: '平台自营', value: 'platform', color: '#3b82f6' },
   { label: '超值月租', value: 'monthly', color: '#ef4444' },
   { label: '新车上线', value: 'new', color: '#10b981' },
@@ -181,7 +183,7 @@ function getEnergyTypeText(energyType: string) {
     柴油: '柴油',
     电动: '纯电动',
   }
-  return energyTypeMap[energyType] || energyType
+  return energyTypeMap[energyType.toUpperCase()] || energyType
 }
 
 // 获取标签样式
@@ -295,21 +297,49 @@ function handleAddressConfirm(data: any) {
 
 // 点击车辆卡片
 function selectVehicle(vehicle: any) {
+  // 生成默认时间参数
+  const today = new Date()
+  const startTime = new Date(today)
+  startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
+  
+  const endTime = new Date(today)
+  endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
+  endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
+  
+  // 传递时间参数到车辆详情页
+  const vehicleDetailParams = {
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+  }
+  
+  setJumpData('vehicleDetailParams', vehicleDetailParams)
+  
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicle.vehicleId}`,
   })
 }
 
-// 快速预订
+// 快速预订 - 跳转到车辆详情页面
 function quickBook(vehicleId: number) {
-  const bookingData = {
-    vehicleId: vehicleId.toString(),
-    rentalType: 'monthly',
-    period: selectedPeriod.value,
+  // 生成默认时间参数
+  const today = new Date()
+  const startTime = new Date(today)
+  startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
+  
+  const endTime = new Date(today)
+  endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
+  endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
+  
+  // 传递时间参数到车辆详情页
+  const vehicleDetailParams = {
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
   }
-
+  
+  setJumpData('vehicleDetailParams', vehicleDetailParams)
+  
   uni.navigateTo({
-    url: `/pages/booking/index?data=${encodeURIComponent(JSON.stringify(bookingData))}`,
+    url: `/pages/vehicle/detail?id=${vehicleId}`,
   })
 }
 
@@ -351,18 +381,6 @@ function toggleArrayFilter(key: keyof typeof filters.value, value: any) {
   }
 }
 
-// 切换标签
-function toggleTag(tag: string) {
-  const index = selectedTags.value.indexOf(tag)
-  if (index > -1) {
-    selectedTags.value.splice(index, 1)
-  }
-  else {
-    selectedTags.value.push(tag)
-  }
-  fetchVehicles()
-}
-
 // 选择价格范围
 function selectPriceRange(range: number[]) {
   selectedPriceRange.value = range
@@ -399,28 +417,11 @@ async function fetchActivityInfo() {
   }
 }
 
-// 获取租期选项
-async function fetchPeriodOptions() {
-  try {
-    const result = await getPeriodOptions()
-    if (result.code === 200) {
-      periodOptions.value = result.data.options
-      // 设置默认选中第一个推荐选项
-      const recommended = periodOptions.value.find(option => option.isRecommended)
-      if (recommended) {
-        selectedPeriod.value = recommended.period
-      }
-    }
-  }
-  catch (error) {
-    console.error('获取租期选项失败:', error)
-    // 使用默认租期选项
-    periodOptions.value = [
-      { period: 30, label: '30天', discountRate: 0.8, discountText: '8折优惠', isRecommended: true, benefits: ['免费换车一次', '延期免手续费'] },
-      { period: 60, label: '60天', discountRate: 0.75, discountText: '7.5折优惠', isRecommended: false, benefits: ['免费换车两次', '延期免手续费', '专属客服'] },
-      { period: 90, label: '90天', discountRate: 0.7, discountText: '7折优惠', isRecommended: false, benefits: ['免费换车三次', '延期免手续费', '专属客服', '优先预订'] },
-      { period: 0, label: '自定义', discountRate: 0, discountText: '面议', isRecommended: false, benefits: ['个性化服务'] },
-    ]
+// 初始化租期选择 - 设置默认选中第一个推荐选项
+function initializePeriodSelection() {
+  const recommended = periodOptions.value.find(option => option.isRecommended)
+  if (recommended) {
+    selectedPeriod.value = recommended.period
   }
 }
 
@@ -464,11 +465,13 @@ async function fetchVehicles() {
 }
 
 onMounted(async () => {
+  // 初始化租期选择
+  initializePeriodSelection()
+
   // 并行获取初始数据
   await Promise.allSettled([
     getLocation(),
     fetchActivityInfo(),
-    fetchPeriodOptions(),
   ])
   // 获取位置后再获取车辆列表
   await fetchVehicles()
@@ -491,17 +494,26 @@ onMounted(async () => {
               class="text-[40rpx] text-orange-600"
             />
             <text class="text-[32rpx] text-black font-semibold">
-              {{ activityInfo?.title || '超值月租活动' }}
+              {{ activityInfo?.title || "超值月租活动" }}
             </text>
-            <text class="rounded-full bg-orange-100 px-[16rpx] py-[8rpx] text-[22rpx] text-orange-600">
-              {{ activityInfo?.badgeText || 'HOT' }}
+            <text
+              class="rounded-full bg-orange-100 px-[16rpx] py-[8rpx] text-[22rpx] text-orange-600"
+            >
+              {{ activityInfo?.badgeText || "HOT" }}
             </text>
           </view>
           <text class="mb-[16rpx] block text-[28rpx] text-gray-700">
-            {{ activityInfo?.subtitle || '30天起租，享受8折超值优惠' }}
+            {{ activityInfo?.subtitle || "30天起租，享受8折超值优惠" }}
           </text>
           <view class="flex items-center text-[24rpx] text-gray-600 space-x-[32rpx]">
-            <text v-for="benefit in (activityInfo?.benefits || ['免费换车一次', '延期免手续费', '24小时道路救援'])" :key="benefit">
+            <text
+              v-for="benefit in activityInfo?.benefits || [
+                '免费换车一次',
+                '延期免手续费',
+                '24小时道路救援',
+              ]"
+              :key="benefit"
+            >
               ✓ {{ benefit }}
             </text>
           </view>
@@ -516,10 +528,7 @@ onMounted(async () => {
             class="flex flex-1 items-center py-[24rpx] space-x-[16rpx]"
             @tap="showLocationSelector"
           >
-            <view
-              i-material-symbols:location-on
-              class="text-purple-600"
-            />
+            <view i-material-symbols:location-on class="text-purple-600" />
             <text class="text-[28rpx] text-gray-700">
               {{ displayLocation }}
             </text>
@@ -527,22 +536,24 @@ onMounted(async () => {
 
           <!-- 租期选择 -->
           <view>
-            <view class="mb-[16rpx] flex items-center justify-between">
-              <text class="text-[28rpx] text-gray-600">
+            <view class="mb-[12rpx] flex items-center justify-between">
+              <text class="text-[26rpx] text-gray-600">
                 选择租期
               </text>
-              <text class="text-[24rpx] text-gray-500">
+              <text class="text-[22rpx] text-gray-500">
                 30天起租
               </text>
             </view>
-            <view class="flex space-x-[16rpx]">
+            <view class="flex space-x-[12rpx]">
               <view
                 v-for="option in periodOptions"
                 :key="option.period"
-                class="rounded-[16rpx] px-[32rpx] py-[16rpx] text-[28rpx] transition-all"
-                :class="selectedPeriod === option.period
-                  ? 'bg-purple-50 text-purple-600 border border-purple-200 font-medium'
-                  : 'bg-gray-100 text-gray-600'"
+                class="rounded-[16rpx] px-[20rpx] py-[10rpx] text-[24rpx] transition-all"
+                :class="
+                  selectedPeriod === option.period
+                    ? 'bg-purple-50 text-purple-600 border border-purple-200 font-medium'
+                    : 'bg-gray-50 text-gray-600'
+                "
                 @tap="selectPeriod(option.period)"
               >
                 {{ option.label }}
@@ -553,62 +564,46 @@ onMounted(async () => {
       </view>
 
       <!-- 排序和筛选控制栏 -->
-      <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[40rpx] py-[24rpx]">
+      <view class="flex-shrink-0 bg-white px-[32rpx] py-[20rpx]">
         <view class="flex items-center justify-between">
-          <view class="flex items-center space-x-[16rpx]">
+          <view class="flex items-center space-x-[12rpx]">
             <!-- 排序选择 -->
             <picker
               mode="selector"
               :range="sortOptions"
               range-key="label"
-              :value="sortOptions.findIndex(item => item.value === sortBy)"
+              :value="sortOptions.findIndex((item) => item.value === sortBy)"
               @change="(e: any) => handleSortChange(sortOptions[e.detail.value].value)"
             >
-              <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]">
-                <text class="mr-[8rpx] text-[26rpx] text-gray-700">
-                  {{ sortOptions.find(item => item.value === sortBy)?.label }}
+              <view
+                class="flex items-center rounded-[20rpx] bg-purple-50 px-[16rpx] py-[10rpx]"
+              >
+                <text class="mr-[6rpx] text-[24rpx] text-purple-600 font-medium">
+                  {{ sortOptions.find((item) => item.value === sortBy)?.label }}
                 </text>
-                <text class="i-material-symbols-keyboard-arrow-down text-[28rpx] text-gray-400" />
+                <text
+                  class="i-material-symbols-expand-more text-[20rpx] text-purple-500"
+                />
               </view>
             </picker>
 
             <!-- 筛选按钮 -->
-            <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]" @tap="showFilters = true">
-              <text class="i-material-symbols-tune text-[26rpx] text-gray-700" />
-              <text class="ml-[8rpx] text-[26rpx] text-gray-700">
+            <view
+              class="flex items-center rounded-[20rpx] bg-gray-50 px-[16rpx] py-[10rpx] active:bg-gray-100"
+              @tap="showFilters = true"
+            >
+              <text class="i-material-symbols-tune text-[20rpx] text-gray-600" />
+              <text class="ml-[6rpx] text-[24rpx] text-gray-600 font-medium">
                 筛选
               </text>
             </view>
           </view>
 
           <!-- 搜索结果数量 -->
-          <text class="text-[24rpx] text-gray-500">
-            共{{ vehicleTotal }}辆车
+          <text class="text-[22rpx] text-gray-500">
+            共{{ vehicleTotal }}辆
           </text>
         </view>
-
-        <!-- 快捷标签栏 -->
-        <scroll-view
-          v-if="quickTags.length > 0"
-          scroll-x
-          class="mt-[24rpx]"
-          show-scrollbar="false"
-        >
-          <view class="flex px-[2rpx] space-x-[16rpx]">
-            <view
-              v-for="tag in quickTags"
-              :key="tag.value"
-              class="flex-shrink-0 whitespace-nowrap rounded-full px-[24rpx] py-[8rpx] text-[24rpx] transition-all"
-              :class="selectedTags.includes(tag.value)
-                ? 'text-white'
-                : 'bg-gray-100 text-gray-600'"
-              :style="selectedTags.includes(tag.value) ? { backgroundColor: tag.color } : {}"
-              @tap="toggleTag(tag.value)"
-            >
-              {{ tag.label }}
-            </view>
-          </view>
-        </scroll-view>
       </view>
 
       <!-- 车辆列表 - 参考搜索页面样式 -->
@@ -625,9 +620,15 @@ onMounted(async () => {
             <view class="flex">
               <!-- 车辆图片 -->
               <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
-                <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[24rpx]" />
+                <image
+                  :src="vehicle.imageUrl"
+                  mode="aspectFill"
+                  class="h-full w-full rounded-tl-[24rpx]"
+                />
                 <!-- 促销标签 -->
-                <view class="absolute left-[12rpx] top-[12rpx] flex flex-col space-y-[6rpx]">
+                <view
+                  class="absolute left-[12rpx] top-[12rpx] flex flex-col space-y-[6rpx]"
+                >
                   <view
                     v-for="tag in vehicle.tags.slice(0, 2)"
                     :key="tag.tagName"
@@ -646,7 +647,9 @@ onMounted(async () => {
                 </text>
 
                 <!-- 车牌和基本信息分两行显示 -->
-                <view class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600">
+                <view
+                  class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600"
+                >
                   <text class="flex-shrink-0">
                     {{ formatLicensePlate(vehicle.licensePlate) }}
                   </text>
@@ -663,19 +666,25 @@ onMounted(async () => {
                 <!-- 车辆特性 -->
                 <view class="mt-[12rpx] flex flex-wrap items-center gap-[16rpx]">
                   <view v-if="vehicle.rangeKm" class="flex items-center">
-                    <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
+                    <text
+                      class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500"
+                    />
                     <text class="text-[20rpx] text-gray-600">
                       {{ vehicle.rangeKm }}km
                     </text>
                   </view>
                   <view v-if="vehicle.distance" class="flex items-center">
-                    <text class="i-material-symbols-location-on mr-[6rpx] text-[20rpx] text-purple-500" />
+                    <text
+                      class="i-material-symbols-location-on mr-[6rpx] text-[20rpx] text-purple-500"
+                    />
                     <text class="text-[20rpx] text-gray-600">
                       {{ formatDistance(vehicle.distance) }}
                     </text>
                   </view>
                   <view class="flex items-center">
-                    <text class="i-material-symbols-star mr-[6rpx] text-[20rpx] text-yellow-500" />
+                    <text
+                      class="i-material-symbols-star mr-[6rpx] text-[20rpx] text-yellow-500"
+                    />
                     <text class="text-[20rpx] text-gray-600">
                       {{ vehicle.rating }}({{ vehicle.ratingCount }})
                     </text>
@@ -685,7 +694,9 @@ onMounted(async () => {
             </view>
 
             <!-- 下半部分：价格信息和预订按钮 -->
-            <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
+            <view
+              class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]"
+            >
               <view>
                 <view class="flex items-baseline">
                   <text class="text-[32rpx] text-purple-600 font-bold">
@@ -703,18 +714,31 @@ onMounted(async () => {
                     <text class="mr-[8rpx] text-[20rpx] text-gray-400 line-through">
                       ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
                     </text>
-                    <text class="rounded-full bg-red-50 px-[8rpx] py-[2rpx] text-[20rpx] text-red-500 font-medium">
-                      月租{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.discountPercent }}折
+                    <text
+                      class="rounded-full bg-red-50 px-[8rpx] py-[2rpx] text-[20rpx] text-red-500 font-medium"
+                    >
+                      月租{{
+                        getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)
+                          ?.discountPercent
+                      }}折
                     </text>
                     <text class="ml-[8rpx] text-[18rpx] text-green-600">
-                      省{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.savings.toFixed(0) }}元
+                      省{{
+                        getMonthlyDiscount(
+                          vehicle.dailyPrice,
+                          vehicle.monthlyPrice,
+                        )?.savings.toFixed(0)
+                      }}元
                     </text>
                   </view>
                 </template>
               </view>
 
               <!-- 快速预订按钮 -->
-              <view class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+              <view
+                class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]"
+                @tap.stop="quickBook(vehicle.vehicleId)"
+              >
                 <text class="text-[24rpx] text-white font-medium">
                   立即预订
                 </text>
@@ -723,17 +747,18 @@ onMounted(async () => {
           </view>
 
           <!-- 月租须知 -->
-          <view class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm">
-            <text class="mb-[24rpx] flex items-center text-[32rpx] text-black font-semibold">
-              <view
-                i-material-symbols:info
-                class="mr-[16rpx] text-orange-600"
-              />
+          <view
+            class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+          >
+            <text
+              class="mb-[24rpx] flex items-center text-[32rpx] text-black font-semibold"
+            >
+              <view i-material-symbols:info class="mr-[16rpx] text-orange-600" />
               月租须知
             </text>
             <view class="text-[28rpx] text-gray-600 space-y-[16rpx]">
               <view
-                v-for="rule in (activityRules.length > 0 ? activityRules : defaultRules)"
+                v-for="rule in activityRules.length > 0 ? activityRules : defaultRules"
                 :key="rule"
                 class="flex items-start space-x-[16rpx]"
               >
@@ -759,31 +784,45 @@ onMounted(async () => {
 
     <!-- 筛选弹窗 -->
     <BottomDrawer v-model:visible="showFilters" title="筛选条件">
-      <view class="mt-[32rpx]">
+      <view class="mt-[24rpx]">
         <!-- 操作按钮 -->
-        <view class="mb-[32rpx] flex items-center justify-end border-b border-gray-100 pb-[24rpx] space-x-[32rpx]">
-          <text class="text-[28rpx] text-gray-600" @tap="resetFilters">
-            重置
-          </text>
-          <text class="text-[28rpx] text-purple-600 font-medium" @tap="applyFilters">
-            确定
-          </text>
+        <view class="mb-[24rpx] flex items-center justify-end pb-[20rpx] space-x-[24rpx]">
+          <view
+            class="rounded-[20rpx] bg-gray-50 px-[20rpx] py-[10rpx] active:bg-gray-100"
+            @tap="resetFilters"
+          >
+            <text class="text-[26rpx] text-gray-600 font-medium">
+              重置
+            </text>
+          </view>
+          <view
+            class="rounded-[20rpx] bg-purple-600 px-[20rpx] py-[10rpx] active:bg-purple-700"
+            @tap="applyFilters"
+          >
+            <text class="text-[26rpx] text-white font-medium">
+              确定
+            </text>
+          </view>
         </view>
 
         <scroll-view scroll-y class="h-max">
           <!-- 价格范围 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
+          <view class="mb-[40rpx]">
+            <text class="mb-[20rpx] block text-[26rpx] text-black font-semibold">
               价格范围(月租)
             </text>
-            <view class="flex flex-wrap gap-[16rpx]">
+            <view class="flex flex-wrap gap-[12rpx]">
               <view
                 v-for="range in priceRanges"
                 :key="range.label"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="selectedPriceRange && selectedPriceRange[0] === range.value[0] && selectedPriceRange[1] === range.value[1]
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
+                class="rounded-[18rpx] px-[20rpx] py-[10rpx] text-[22rpx] font-medium transition-all active:scale-95"
+                :class="
+                  selectedPriceRange
+                    && selectedPriceRange[0] === range.value[0]
+                    && selectedPriceRange[1] === range.value[1]
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-600 border border-gray-200'
+                "
                 @tap="selectPriceRange(range.value)"
               >
                 {{ range.label }}
@@ -792,18 +831,20 @@ onMounted(async () => {
           </view>
 
           <!-- 车型筛选 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
+          <view class="mb-[40rpx]">
+            <text class="mb-[20rpx] block text-[26rpx] text-black font-semibold">
               车型
             </text>
-            <view class="flex flex-wrap gap-[16rpx]">
+            <view class="flex flex-wrap gap-[12rpx]">
               <view
                 v-for="type in filterOptions.carTypes"
                 :key="type"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.vehicleTypes.includes(type)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
+                class="rounded-[18rpx] px-[20rpx] py-[10rpx] text-[22rpx] font-medium transition-all active:scale-95"
+                :class="
+                  filters.vehicleTypes.includes(type)
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-600 border border-gray-200'
+                "
                 @tap="toggleArrayFilter('vehicleTypes', type)"
               >
                 {{ type }}
@@ -812,18 +853,20 @@ onMounted(async () => {
           </view>
 
           <!-- 能源类型 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
+          <view class="mb-[40rpx]">
+            <text class="mb-[20rpx] block text-[26rpx] text-black font-semibold">
               能源类型
             </text>
-            <view class="flex flex-wrap gap-[16rpx]">
+            <view class="flex flex-wrap gap-[12rpx]">
               <view
                 v-for="energy in filterOptions.energyTypes"
                 :key="energy"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.energyTypes.includes(energy)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
+                class="rounded-[18rpx] px-[20rpx] py-[10rpx] text-[22rpx] font-medium transition-all active:scale-95"
+                :class="
+                  filters.energyTypes.includes(energy)
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-600 border border-gray-200'
+                "
                 @tap="toggleArrayFilter('energyTypes', energy)"
               >
                 {{ energy }}
@@ -832,18 +875,20 @@ onMounted(async () => {
           </view>
 
           <!-- 座位数 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
+          <view class="mb-[40rpx]">
+            <text class="mb-[20rpx] block text-[26rpx] text-black font-semibold">
               座位数
             </text>
-            <view class="flex flex-wrap gap-[16rpx]">
+            <view class="flex flex-wrap gap-[12rpx]">
               <view
                 v-for="seat in filterOptions.seats"
                 :key="seat"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.seats.includes(seat)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
+                class="rounded-[18rpx] px-[20rpx] py-[10rpx] text-[22rpx] font-medium transition-all active:scale-95"
+                :class="
+                  filters.seats.includes(seat)
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-600 border border-gray-200'
+                "
                 @tap="toggleArrayFilter('seats', seat)"
               >
                 {{ seat }}座
@@ -857,5 +902,5 @@ onMounted(async () => {
 </template>
 
 <route lang="yaml">
-  layout: home
+layout: home
 </route>

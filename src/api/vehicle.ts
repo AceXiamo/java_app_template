@@ -101,8 +101,49 @@ export function searchVehicles(params: VehicleSearchParams): Promise<BaseRes<Veh
   })
 }
 
+// 车辆详情接口返回的数据结构
+export interface VehicleDetail {
+  vehicleId: number
+  name: string
+  brand: string
+  model: string
+  licensePlate: string
+  carType: string
+  energyType: string
+  seats: number
+  dailyPrice: number
+  monthlyPrice?: number
+  imageUrl: string
+  images: string[]
+  rangeKm: number
+  rating: number
+  ratingCount: number
+  isMonthlyRental: boolean
+  distance?: number
+  isHot?: boolean
+  isNew?: boolean
+  location: {
+    address: string
+    city: string
+    district: string
+    latitude?: number
+    longitude?: number
+  }
+  tags: {
+    tagName: string
+    tagType: string
+    tagColor: string
+  }[]
+  deliveryEnabled: boolean
+  deliveryBaseFee: number
+  deliveryFreeDistance: number
+  deliveryPricePerKm: number
+  maxDeliveryDistance: number
+  operationType: 'platform' | 'owner'
+}
+
 // 获取车辆详情
-export function getVehicleDetail(vehicleId: number): Promise<BaseRes<Vehicle>> {
+export function getVehicleDetail(vehicleId: number): Promise<BaseRes<VehicleDetail>> {
   return request.get({
     url: `${host}/api/vehicles/${vehicleId}`,
   })

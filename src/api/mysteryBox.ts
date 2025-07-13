@@ -96,6 +96,14 @@ export interface MysteryBoxOrder {
     exchangeTimeLimit: number
   }
   features: string[]
+  payData?: {
+    appId: string
+    timeStamp: string
+    nonceStr: string
+    package: string
+    signType: string
+    paySign: string
+  }
 }
 
 // 盲盒配置（通用接口）
@@ -133,7 +141,6 @@ export function getMysteryBoxOptions() {
 export function getMysteryBoxPricing(params: {
   energyType: string
   carType: string
-  rentalDays: number
   location: {
     latitude: number
     longitude: number
@@ -154,8 +161,6 @@ export function createMysteryBoxOrder(params: {
   }
   rentalInfo: {
     startTime: string
-    endTime: string
-    rentalDays: number
   }
   location: {
     latitude: number

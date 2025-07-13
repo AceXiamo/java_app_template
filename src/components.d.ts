@@ -19,6 +19,7 @@ declare module '@vue/runtime-core' {
     ClickButton: typeof import('./components/ClickButton.vue')['default']
     Confirm: typeof import('./components/Confirm.vue')['default']
     DateRangePicker: typeof import('./components/DateRangePicker.vue')['default']
+    DateTimePicker: typeof import('./components/DateTimePicker.vue')['default']
     FormDate: typeof import('./components/form/Date.vue')['default']
     FormImage: typeof import('./components/form/Image.vue')['default']
     FormInput: typeof import('./components/form/Input.vue')['default']
