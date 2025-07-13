@@ -19,6 +19,10 @@ export interface VehicleInfo {
   name: string
   imageUrl: string
   type: string
+  licensePlate?: string
+  seats?: number
+  rating?: number
+  ratingCount?: number
 }
 
 // 租期信息
@@ -32,6 +36,16 @@ export interface RentPeriod {
 export interface CancelInfo {
   reason: string
   cancelTime: string
+}
+
+// 盲盒信息
+export interface MysteryBoxInfo {
+  energyType: string
+  energyTypeName: string
+  carType: string
+  carTypeName: string
+  isRevealed: boolean
+  revealMessage: string
 }
 
 // 订单操作按钮
@@ -48,8 +62,10 @@ export interface OrderData {
   status: string
   statusText: string
   statusColor: string
-  vehicle: VehicleInfo
-  rentPeriod: RentPeriod
+  orderType?: string
+  vehicle?: VehicleInfo
+  mysteryBox?: MysteryBoxInfo
+  rentPeriod?: RentPeriod
   location: string
   amount: number
   pickupCode?: string
@@ -224,6 +240,7 @@ export interface OrderDetail {
   orderNumber: string
   status: string
   statusText: string
+  orderType?: string
   amount: number
   finalAmount: number
   discountAmount: number
@@ -240,6 +257,15 @@ export interface OrderDetail {
     carType: string
     rating: number
     ratingCount: number
+  }
+  mysteryBox?: {
+    energyType: string
+    energyTypeName: string
+    carType: string
+    carTypeName: string
+    isRevealed: boolean
+    revealMessage: string
+    pickupCodeVerified?: boolean
   }
   rentPeriod: {
     startTime: string

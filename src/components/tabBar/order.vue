@@ -6,7 +6,7 @@ import OrderHead from '@/components/page/order/Head.vue'
 
 // 使用 order store
 const orderStore = useOrderStore()
-const { orderList, orderListStatus, statusCounts, activeTab } = storeToRefs(orderStore)
+const { orderList, orderListStatus, activeTab } = storeToRefs(orderStore)
 
 const countdownTime = ref('23:45:32')
 
@@ -16,7 +16,7 @@ function switchTab(tab: string) {
 }
 
 // 订单操作
-async function contactOwner(orderId: number) {
+async function contactOwner(orderId: string) {
   try {
     await orderStore.handleContactOwner(orderId, '用户主动联系')
     uni.showToast({ title: '已联系车主', icon: 'success' })
@@ -26,7 +26,7 @@ async function contactOwner(orderId: number) {
   }
 }
 
-async function renewOrder(orderId: number) {
+async function renewOrder(orderId: string) {
   try {
     await orderStore.handleRenewOrder(orderId, 1, '2024-12-17 14:00')
     uni.showToast({ title: '续租成功', icon: 'success' })
@@ -36,7 +36,7 @@ async function renewOrder(orderId: number) {
   }
 }
 
-async function rateOrder(orderId: number) {
+async function rateOrder(orderId: string) {
   try {
     await orderStore.handleReviewOrder(orderId, 5, '服务很好', ['准时', '车况良好'])
     uni.showToast({ title: '评价成功', icon: 'success' })
@@ -46,7 +46,7 @@ async function rateOrder(orderId: number) {
   }
 }
 
-async function reOrder(orderId: number) {
+async function reOrder(orderId: string) {
   try {
     await orderStore.handleRebookOrder(orderId, '2024-12-20 14:00', '2024-12-21 14:00')
     uni.showToast({ title: '预订成功', icon: 'success' })
@@ -56,12 +56,12 @@ async function reOrder(orderId: number) {
   }
 }
 
-function viewDetail(orderId: number) {
+function viewDetail(orderId: string) {
   uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}` })
 }
 
 // 处理订单操作
-function handleOrderAction(actionType: string, orderId: number) {
+function handleOrderAction(actionType: string, orderId: string) {
   switch (actionType) {
     case 'contact':
       contactOwner(orderId)
@@ -191,6 +191,11 @@ onShow(() => {
               >
                 {{ order.statusText }}
               </view>
+              <!-- 盲盒徽章 -->
+              <view v-if="order.orderType === 'mystery_box'" class="rounded-[8rpx] bg-purple-100 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-700 font-medium">
+                <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx]" />
+                神秘盲盒
+              </view>
             </view>
             <text class="text-[22rpx] text-gray-500">
               {{ order.orderNumber }}
@@ -199,31 +204,73 @@ onShow(() => {
 
           <!-- 车辆信息 -->
           <view class="mb-[24rpx] flex">
-            <!-- 车辆图片 -->
-            <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
+            <!-- 盲盒订单特殊显示 -->
+            <view v-if="order.orderType === 'mystery_box'" class="h-[120rpx] w-[160rpx] flex-shrink-0">
+              <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-purple-100 via-purple-200 to-pink-100 bg-gradient-to-br">
+                <!-- 装饰背景 -->
+                <view class="absolute inset-0">
+                  <view class="absolute left-[8rpx] top-[8rpx] h-[20rpx] w-[20rpx] rounded-full bg-purple-300 opacity-50" />
+                  <view class="absolute right-[12rpx] top-[20rpx] h-[12rpx] w-[12rpx] rounded-full bg-pink-300 opacity-60" />
+                  <view class="absolute bottom-[12rpx] left-[20rpx] h-[16rpx] w-[16rpx] rounded-full bg-blue-300 opacity-50" />
+                  <view class="absolute bottom-[8rpx] right-[8rpx] h-[10rpx] w-[10rpx] rounded-full bg-yellow-300 opacity-60" />
+                </view>
+                <!-- 盲盒图标 -->
+                <text class="i-material-symbols-card-giftcard relative z-10 text-[48rpx] text-purple-600" />
+              </view>
+            </view>
+
+            <!-- 普通车辆图片 -->
+            <view v-else class="h-[120rpx] w-[160rpx] flex-shrink-0">
               <image
+                v-if="order.vehicle && order.vehicle.imageUrl"
                 :src="order.vehicle.imageUrl"
                 mode="aspectFill"
                 class="h-full w-full rounded-[12rpx]"
               />
+              <view v-else class="h-full w-full flex items-center justify-center rounded-[12rpx] bg-gray-100">
+                <text class="i-material-symbols-directions-car text-[48rpx] text-gray-400" />
+              </view>
             </view>
 
             <!-- 车辆信息 -->
             <view class="ml-[24rpx] flex flex-1 flex-col justify-center">
-              <text class="text-[28rpx] text-black font-semibold">
-                {{ order.vehicle.name }}
-              </text>
-              <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
-                <text>{{ order.vehicle.licensePlate || '沪A·12345' }}</text>
-                <text>{{ order.vehicle.seats || 5 }}座</text>
-                <text>{{ order.vehicle.type }}</text>
-              </view>
-              <view class="mt-[8rpx] flex items-center">
-                <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
-                <text class="text-[20rpx] text-gray-600">
-                  {{ order.vehicle.rating || 4.8 }}({{ order.vehicle.ratingCount || 128 }})
+              <!-- 盲盒订单显示 -->
+              <template v-if="order.orderType === 'mystery_box'">
+                <text class="text-[28rpx] text-black font-semibold">
+                  神秘盲盒
                 </text>
-              </view>
+                <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
+                  <text>{{ order.mysteryBox?.energyTypeName || '纯电动' }}</text>
+                  <text>{{ order.mysteryBox?.carTypeName || 'SUV' }}</text>
+                  <text class="text-purple-600 font-medium">
+                    取车揭晓
+                  </text>
+                </view>
+                <view class="mt-[8rpx] flex items-center">
+                  <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[20rpx] text-purple-500" />
+                  <text class="text-[20rpx] text-purple-600 font-medium">
+                    惊喜车型等你解锁
+                  </text>
+                </view>
+              </template>
+
+              <!-- 普通订单显示 -->
+              <template v-else>
+                <text class="text-[28rpx] text-black font-semibold">
+                  {{ order.vehicle?.name || '暂无车辆信息' }}
+                </text>
+                <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
+                  <text>{{ order.vehicle?.licensePlate || '沪A·****' }}</text>
+                  <text>{{ order.vehicle?.seats || 5 }}座</text>
+                  <text>{{ order.vehicle?.type || '轿车' }}</text>
+                </view>
+                <view class="mt-[8rpx] flex items-center">
+                  <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
+                  <text class="text-[20rpx] text-gray-600">
+                    {{ order.vehicle?.rating || 4.8 }}({{ order.vehicle?.ratingCount || 128 }})
+                  </text>
+                </view>
+              </template>
             </view>
 
             <!-- 价格信息 -->
@@ -232,8 +279,14 @@ onShow(() => {
                 ¥{{ order.amount }}
               </text>
               <text class="mt-[4rpx] block text-[22rpx] text-gray-500">
-                {{ order.rentPeriod.days }}天
+                {{ order.rentPeriod?.days || 1 }}天
               </text>
+              <!-- 盲盒标识 -->
+              <view v-if="order.orderType === 'mystery_box'" class="mt-[8rpx]">
+                <text class="rounded-[8rpx] bg-purple-50 px-[8rpx] py-[4rpx] text-[20rpx] text-purple-500">
+                  盲盒
+                </text>
+              </view>
             </view>
           </view>
 
@@ -241,15 +294,19 @@ onShow(() => {
           <view class="mb-[24rpx] rounded-[16rpx] bg-gray-50 p-[24rpx]">
             <view class="mb-[16rpx] flex items-center">
               <text class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-purple-600" />
-              <text class="text-[26rpx] text-black font-medium">用车时间</text>
+              <text class="text-[26rpx] text-black font-medium">
+                用车时间
+              </text>
             </view>
             <text class="mb-[16rpx] block text-[24rpx] text-gray-700">
               {{ order.rentPeriod.startTime }} - {{ order.rentPeriod.endTime }}
             </text>
-            
+
             <view class="flex items-center">
               <text class="i-material-symbols-location-on mr-[12rpx] text-[24rpx] text-purple-600" />
-              <text class="text-[26rpx] text-black font-medium">取车地点</text>
+              <text class="text-[26rpx] text-black font-medium">
+                取车地点
+              </text>
             </view>
             <text class="mt-[8rpx] block text-[24rpx] text-gray-700">
               {{ order.location }}
@@ -262,7 +319,9 @@ onShow(() => {
               <view>
                 <view class="mb-[12rpx] flex items-center">
                   <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[24rpx] text-purple-600" />
-                  <text class="text-[26rpx] text-purple-800 font-medium">取车码</text>
+                  <text class="text-[26rpx] text-purple-800 font-medium">
+                    取车码
+                  </text>
                 </view>
                 <text class="text-[56rpx] text-purple-600 font-bold tracking-wider">
                   {{ order.pickupCode }}

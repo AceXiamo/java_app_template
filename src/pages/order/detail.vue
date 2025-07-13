@@ -67,6 +67,14 @@ const isMysteryBoxOrder = computed(() => {
   return pageParams.value.type === 'mystery_box' || orderDetail.value.orderType === 'mystery_box'
 })
 
+// 判断盲盒是否已揭晓（根据取车码核验状态）
+const isMysteryBoxRevealed = computed(() => {
+  if (!isMysteryBoxOrder.value) return false
+  // 如果取车码已核验或订单状态为 picked/returned/completed，则认为已揭晓
+  return orderDetail.value.mysteryBox?.pickupCodeVerified === true || 
+         ['picked', 'returned', 'completed'].includes(orderDetail.value.status)
+})
+
 // 页面加载
 onLoad((options: any) => {
   if (options.orderId) {
@@ -336,43 +344,52 @@ function getStatusColor(status: string) {
             </text>
           </view>
 
-          <!-- 盲盒特殊效果 -->
-          <view v-if="isMysteryBoxOrder" class="relative h-[200rpx] flex items-center justify-center">
+          <!-- 盲盒未揭晓状态 -->
+          <view v-if="isMysteryBoxOrder && !isMysteryBoxRevealed" class="relative h-[200rpx] flex items-center justify-center">
             <!-- 模糊背景 -->
             <view class="absolute inset-0 rounded-[16rpx] bg-gradient-to-br from-purple-100 via-purple-200 to-pink-100 opacity-80">
-              <!-- 装饰图案 -->
-              <view class="absolute top-[20rpx] left-[20rpx] h-[40rpx] w-[40rpx] rounded-full bg-purple-300 opacity-50 animate-pulse" />
-              <view class="absolute top-[40rpx] right-[30rpx] h-[24rpx] w-[24rpx] rounded-full bg-pink-300 opacity-60 animate-pulse" style="animation-delay: 0.5s" />
-              <view class="absolute bottom-[30rpx] left-[40rpx] h-[32rpx] w-[32rpx] rounded-full bg-blue-300 opacity-50 animate-pulse" style="animation-delay: 1s" />
-              <view class="absolute bottom-[20rpx] right-[20rpx] h-[20rpx] w-[20rpx] rounded-full bg-yellow-300 opacity-60 animate-pulse" style="animation-delay: 1.5s" />
+              <!-- 装饰图案（移除动画） -->
+              <view class="absolute top-[20rpx] left-[20rpx] h-[40rpx] w-[40rpx] rounded-full bg-purple-300 opacity-50" />
+              <view class="absolute top-[40rpx] right-[30rpx] h-[24rpx] w-[24rpx] rounded-full bg-pink-300 opacity-60" />
+              <view class="absolute bottom-[30rpx] left-[40rpx] h-[32rpx] w-[32rpx] rounded-full bg-blue-300 opacity-50" />
+              <view class="absolute bottom-[20rpx] right-[20rpx] h-[20rpx] w-[20rpx] rounded-full bg-yellow-300 opacity-60" />
             </view>
             
             <!-- 中心内容 -->
             <view class="relative z-10 text-center">
               <text class="i-material-symbols-card-giftcard text-[80rpx] text-purple-600 block mb-[16rpx]" />
               <text class="text-[32rpx] text-purple-800 font-bold block mb-[8rpx]">惊喜盲盒</text>
-              <text class="text-[24rpx] text-purple-600">取车时揭晓</text>
+              <text class="text-[24rpx] text-purple-600">
+                {{ orderDetail.status === 'pending' ? '支付后可查看取车码' : '取车时揭晓' }}
+              </text>
+              <!-- 显示盲盒偏好 -->
+              <view v-if="orderDetail.mysteryBox" class="mt-[16rpx]">
+                <text class="text-[22rpx] text-purple-500 block">
+                  {{ orderDetail.mysteryBox.energyTypeName }} · {{ orderDetail.mysteryBox.carTypeName }}
+                </text>
+              </view>
             </view>
-            
-            <!-- 闪烁效果 -->
-            <view class="absolute inset-0 rounded-[16rpx] bg-white opacity-20 animate-ping" style="animation-duration: 3s" />
           </view>
 
-          <!-- 普通车辆信息 -->
+          <!-- 盲盒已揭晓或普通车辆信息 -->
           <view v-else class="flex">
             <!-- 车辆图片 -->
             <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
               <image
+                v-if="orderDetail.vehicle.imageUrl"
                 :src="orderDetail.vehicle.imageUrl"
                 mode="aspectFill"
                 class="h-full w-full rounded-[12rpx]"
               />
+              <view v-else class="h-full w-full rounded-[12rpx] bg-gray-100 flex items-center justify-center">
+                <text class="i-material-symbols-directions-car text-[48rpx] text-gray-400" />
+              </view>
             </view>
 
             <!-- 车辆信息 -->
             <view class="ml-[24rpx] flex flex-1 flex-col justify-center">
               <text class="text-[28rpx] text-black font-semibold">
-                {{ orderDetail.vehicle.name }}
+                {{ isMysteryBoxOrder && isMysteryBoxRevealed ? '🎊 ' : '' }}{{ orderDetail.vehicle.name }}
               </text>
               <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
                 <text>{{ orderDetail.vehicle.licensePlate }}</text>
@@ -383,6 +400,12 @@ function getStatusColor(status: string) {
                 <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
                 <text class="text-[20rpx] text-gray-600">
                   {{ orderDetail.vehicle.rating }}({{ orderDetail.vehicle.ratingCount }})
+                </text>
+              </view>
+              <!-- 盲盒揭晓提示 -->
+              <view v-if="isMysteryBoxOrder && isMysteryBoxRevealed" class="mt-[8rpx]">
+                <text class="text-[20rpx] text-green-600 bg-green-50 px-[8rpx] py-[4rpx] rounded-[8rpx]">
+                  🎉 盲盒已揭晓
                 </text>
               </view>
             </view>

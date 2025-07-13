@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import type { DailyRankingResponse, MonthlyRankingResponse, RankingVehicle } from '@/api/ranking'
-import { getDailyRanking, getMonthlyRanking, getFullRanking } from '@/api/ranking'
+import { onMounted, onUnmounted, ref } from 'vue'
+import type { DailyRankingResponse, MonthlyRankingResponse } from '@/api/ranking'
+import { getDailyRanking, getMonthlyRanking } from '@/api/ranking'
 import RankingHead from '@/components/page/ranking/Head.vue'
 
 // 当前激活的tab
@@ -17,57 +17,23 @@ function switchTab(tab: 'daily' | 'monthly') {
   activeTab.value = tab
 }
 
-// 获取排行榜角标类型对应的样式
-function getRankBadgeStyle(rankBadge: RankingVehicle['rankBadge']) {
-  const baseClasses = 'absolute -top-[8rpx] -right-[8rpx] w-[48rpx] h-[48rpx] rounded-full flex items-center justify-center shadow-lg border-2 border-white'
-  
-  switch (rankBadge.type) {
-    case 'champion':
-      return `${baseClasses} bg-gradient-to-br from-yellow-400 to-yellow-600`
-    case 'runner_up':
-      return `${baseClasses} bg-gradient-to-br from-gray-400 to-gray-600`
-    case 'third_place':
-      return `${baseClasses} bg-gradient-to-br from-orange-400 to-orange-600`
-    default:
-      return `${baseClasses} bg-gray-200`
+// 获取排名样式
+function getRankStyle(rank: number) {
+  if (rank <= 3) {
+    const colors = {
+      1: 'bg-yellow-500 text-white',
+      2: 'bg-gray-400 text-white',
+      3: 'bg-orange-500 text-white',
+    }
+    return colors[rank as keyof typeof colors] || 'bg-purple-100 text-purple-600'
   }
-}
-
-// 获取badge样式
-function getBadgeStyle(badge: RankingVehicle['badge']) {
-  const colorMap: Record<string, string> = {
-    'green': 'text-green-600 bg-green-100',
-    'tech-purple': 'text-purple-600 bg-purple-100',
-    'blue': 'text-blue-600 bg-blue-100',
-    'red': 'text-red-600 bg-red-100',
-  }
-  
-  return colorMap[badge.color] || 'text-gray-600 bg-gray-100'
+  return 'bg-purple-100 text-purple-600'
 }
 
 // 获取车辆详情
 function goToVehicleDetail(vehicleId: number) {
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicleId}`,
-  })
-}
-
-// 查看完整榜单
-function viewFullRanking() {
-  getFullRanking({
-    type: activeTab.value,
-    period: activeTab.value === 'daily' ? 'day' : 'month',
-  }).then((res) => {
-    uni.showModal({
-      title: '完整榜单',
-      content: `共有 ${res.pagination?.total || 0} 个车型参与排行`,
-      showCancel: false,
-    })
-  }).catch(() => {
-    uni.showToast({
-      title: '获取失败',
-      icon: 'error',
-    })
   })
 }
 
@@ -123,7 +89,6 @@ function refreshData() {
 onMounted(() => {
   loadDailyRanking()
   loadMonthlyRanking()
-  
   // 监听头部组件的刷新事件
   uni.$on('rankingRefresh', refreshData)
 })
@@ -140,261 +105,158 @@ onUnmounted(() => {
     <RankingHead />
 
     <!-- 榜单切换栏 -->
-    <view class="px-[40rpx] py-[32rpx] bg-white border-b border-gray-100 flex-shrink-0">
-      <view class="flex space-x-[8rpx] bg-gray-100 rounded-xl p-[8rpx]">
+    <view class="flex-shrink-0 bg-white px-[24rpx] py-[20rpx]">
+      <view class="flex rounded-[16rpx] bg-gray-100 p-[6rpx]">
         <view
-          class="flex-1 py-[16rpx] px-[32rpx] rounded-lg text-[28rpx] font-medium transition-all duration-200 text-center cursor-pointer"
+          class="flex-1 rounded-[12rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-150"
           :class="activeTab === 'daily' ? 'bg-purple-600 text-white' : 'text-gray-600'"
           @tap="switchTab('daily')"
         >
           日租排行
         </view>
         <view
-          class="flex-1 py-[16rpx] px-[32rpx] rounded-lg text-[28rpx] font-medium transition-all duration-200 text-center cursor-pointer"
+          class="flex-1 rounded-[12rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-150"
           :class="activeTab === 'monthly' ? 'bg-purple-600 text-white' : 'text-gray-600'"
           @tap="switchTab('monthly')"
         >
           月租排行
         </view>
       </view>
-      <text class="text-center text-[24rpx] text-gray-500 mt-[16rpx] block">
-        数据每日更新，按{{ activeTab === 'daily' ? '日' : '月' }}销量排序
-      </text>
     </view>
 
     <!-- 主要内容区域 -->
-    <view class="flex-1 overflow-y-auto">
+    <scroll-view scroll-y class="h-0 flex-1">
       <!-- 日租排行内容 -->
-      <view v-if="activeTab === 'daily'" class="p-[32rpx] space-y-[24rpx]">
-        <!-- 排行榜头部 -->
-        <view class="bg-white rounded-2xl p-[32rpx] border border-gray-200">
-          <view class="flex items-center space-x-[16rpx] mb-[16rpx]">
-            <text class="i-material-symbols-trending-up text-green-600 text-[40rpx]" />
-            <text class="text-black font-semibold text-[32rpx]">
-              {{ dailyRanking?.periodText || '本周热门日租车型' }}
-            </text>
-            <text class="text-green-600 text-[22rpx] bg-green-100 px-[16rpx] py-[8rpx] rounded-full">
-              实时更新
-            </text>
-          </view>
-          <text class="text-gray-700 text-[28rpx]">
-            数据统计：{{ dailyRanking?.statisticsDate || '加载中...' }}
-          </text>
-        </view>
-
-        <!-- 前三名详细展示 -->
-        <view v-if="dailyRanking" class="space-y-[24rpx]">
+      <view v-if="activeTab === 'daily'" class="p-[20rpx]">
+        <!-- 排行榜列表 -->
+        <view v-if="dailyRanking" class="space-y-[12rpx]">
           <view
-            v-for="(vehicle, index) in dailyRanking.rankings.slice(0, 3)"
+            v-for="vehicle in dailyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-[40rpx] cursor-pointer relative"
+            class="bg-white rounded-[16rpx] p-[20rpx] transition-all duration-150 active:scale-[0.98]"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
-            <!-- 排名角标 -->
-            <view
-              v-if="vehicle.rankBadge.icon"
-              :class="getRankBadgeStyle(vehicle.rankBadge)"
-            >
-              <text
-                :class="`i-material-symbols-${vehicle.rankBadge.icon} text-white text-[36rpx]`"
-              />
-            </view>
-
-            <!-- 车辆图片 -->
-            <view class="w-full h-[192rpx] rounded-xl mb-[32rpx] overflow-hidden">
-              <image
-                :src="vehicle.imageUrl"
-                class="w-full h-full object-cover"
-                mode="aspectFill"
-                :alt="vehicle.name"
-              />
-            </view>
-
-            <!-- 车辆信息 -->
-            <view class="space-y-[24rpx]">
-              <view class="flex items-center justify-between">
-                <view>
-                  <text class="text-black font-semibold text-[36rpx]">{{ vehicle.name }}</text>
-                  <text class="text-gray-600 text-[26rpx] block mt-[8rpx]">
-                    {{ vehicle.energyType }} · {{ vehicle.carType }}
-                  </text>
-                </view>
-                <view class="text-right">
-                  <text class="text-red-500 font-bold text-[40rpx]">¥{{ vehicle.dailyPrice }}</text>
-                  <text class="text-gray-500 text-[24rpx] block">日租</text>
-                </view>
+            <view class="flex items-center space-x-[16rpx]">
+              <!-- 排名 -->
+              <view class="w-[44rpx] h-[44rpx] rounded-full flex items-center justify-center flex-shrink-0"
+                    :class="getRankStyle(vehicle.rank)">
+                <text class="text-[20rpx] font-bold">{{ vehicle.rank }}</text>
               </view>
 
-              <view class="flex items-center justify-between py-[16rpx] border-t border-gray-100">
-                <view class="flex items-center space-x-[32rpx] text-[28rpx]">
-                  <view class="flex items-center space-x-[8rpx] text-red-600">
-                    <text class="i-material-symbols-local-fire-department text-[32rpx]" />
-                    <text>{{ vehicle.rentalCountText }}</text>
-                  </view>
-                  <view class="flex items-center space-x-[8rpx] text-orange-500">
-                    <text class="i-material-symbols-star text-[32rpx]" />
-                    <text>{{ vehicle.rating }}分</text>
-                  </view>
-                </view>
-                <text
-                  class="text-[22rpx] px-[24rpx] py-[8rpx] rounded-full font-medium"
-                  :class="getBadgeStyle(vehicle.badge)"
-                >
-                  {{ vehicle.badge.text }}
-                </text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 第4-10名简化展示 -->
-        <view v-if="dailyRanking && dailyRanking.rankings.length > 3" class="space-y-[24rpx]">
-          <view
-            v-for="vehicle in dailyRanking.rankings.slice(3, 10)"
-            :key="vehicle.vehicleId"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-[32rpx] cursor-pointer"
-            @tap="goToVehicleDetail(vehicle.vehicleId)"
-          >
-            <view class="flex items-center space-x-[24rpx]">
-              <text class="w-[56rpx] h-[56rpx] bg-gray-200 rounded-full flex items-center justify-center text-[24rpx] font-bold text-gray-600">
-                {{ vehicle.rank }}
-              </text>
-              <view class="w-[112rpx] h-[80rpx] rounded-md flex-shrink-0 overflow-hidden">
+              <!-- 车辆图片 -->
+              <view class="w-[80rpx] h-[60rpx] rounded-[8rpx] overflow-hidden bg-gray-100 flex-shrink-0">
                 <image
                   :src="vehicle.imageUrl"
                   class="w-full h-full object-cover"
                   mode="aspectFill"
+                  lazy-load
                   :alt="vehicle.name"
                 />
               </view>
-              <view class="flex-1">
-                <view class="flex items-center justify-between">
-                  <text class="text-black font-medium text-[30rpx]">{{ vehicle.name }}</text>
-                  <text class="text-red-500 font-bold text-[32rpx]">¥{{ vehicle.dailyPrice }}</text>
+
+              <!-- 车辆信息 -->
+              <view class="flex-1 min-w-0">
+                <view class="flex items-center justify-between mb-[4rpx]">
+                  <text class="text-[28rpx] font-semibold text-gray-900 truncate flex-1 mr-[12rpx]">
+                    {{ vehicle.name }}
+                  </text>
+                  <text class="text-[26rpx] font-bold text-purple-600 flex-shrink-0">
+                    ¥{{ vehicle.dailyPrice }}
+                  </text>
                 </view>
-                <view class="flex items-center justify-between text-[24rpx] text-gray-600 mt-[8rpx]">
-                  <text>{{ vehicle.rentalCountText }}</text>
-                  <text>⭐ {{ vehicle.rating }}</text>
+
+                <view class="flex items-center justify-between text-[22rpx]">
+                  <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
+                    {{ vehicle.energyType }} · {{ vehicle.carType }}
+                  </text>
+                  <view class="flex items-center space-x-[4rpx] flex-shrink-0">
+                    <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
+                    <text class="text-gray-600">{{ vehicle.rating }}</text>
+                  </view>
                 </view>
               </view>
-            </view>
-          </view>
-
-          <!-- 查看更多 -->
-          <view class="text-center py-[32rpx]">
-            <view
-              class="text-purple-600 text-[28rpx] font-medium flex items-center justify-center space-x-[8rpx] cursor-pointer"
-              @tap="viewFullRanking"
-            >
-              <text>查看完整榜单</text>
-              <text class="i-material-symbols-keyboard-arrow-down" />
             </view>
           </view>
         </view>
       </view>
 
       <!-- 月租排行内容 -->
-      <view v-if="activeTab === 'monthly'" class="p-[32rpx] space-y-[24rpx]">
-        <!-- 排行榜头部 -->
-        <view class="bg-white rounded-2xl p-[32rpx] border border-gray-200">
-          <view class="flex items-center space-x-[16rpx] mb-[16rpx]">
-            <text class="i-material-symbols-calendar-month text-purple-600 text-[40rpx]" />
-            <text class="text-black font-semibold text-[32rpx]">
-              {{ monthlyRanking?.periodText || '本月热门月租车型' }}
-            </text>
-            <text class="text-purple-600 text-[22rpx] bg-purple-100 px-[16rpx] py-[8rpx] rounded-full">
-              月度统计
-            </text>
-          </view>
-          <text class="text-gray-700 text-[28rpx]">
-            数据统计：{{ monthlyRanking?.statisticsDate || '加载中...' }}
-          </text>
-        </view>
-
-        <!-- 月租前三名 -->
-        <view v-if="monthlyRanking" class="space-y-[24rpx]">
+      <view v-if="activeTab === 'monthly'" class="p-[20rpx]">
+        <!-- 排行榜列表 -->
+        <view v-if="monthlyRanking" class="space-y-[12rpx]">
           <view
-            v-for="vehicle in monthlyRanking.rankings.slice(0, 3)"
+            v-for="vehicle in monthlyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 p-[40rpx] cursor-pointer relative"
+            class="bg-white rounded-[16rpx] p-[20rpx] transition-all duration-150 active:scale-[0.98]"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
-            <!-- 排名角标 -->
-            <view
-              v-if="vehicle.rankBadge.icon"
-              :class="getRankBadgeStyle(vehicle.rankBadge)"
-            >
-              <text
-                :class="`i-material-symbols-${vehicle.rankBadge.icon} text-white text-[36rpx]`"
-              />
-            </view>
+            <view class="flex items-center space-x-[16rpx]">
+              <!-- 排名 -->
+              <view class="w-[44rpx] h-[44rpx] rounded-full flex items-center justify-center flex-shrink-0"
+                    :class="getRankStyle(vehicle.rank)">
+                <text class="text-[20rpx] font-bold">{{ vehicle.rank }}</text>
+              </view>
 
-            <!-- 车辆图片 -->
-            <view class="w-full h-[192rpx] rounded-xl mb-[32rpx] overflow-hidden">
-              <image
-                :src="vehicle.imageUrl"
-                class="w-full h-full object-cover"
-                mode="aspectFill"
-                :alt="vehicle.name"
-              />
-            </view>
+              <!-- 车辆图片 -->
+              <view class="w-[80rpx] h-[60rpx] rounded-[8rpx] overflow-hidden bg-gray-100 flex-shrink-0">
+                <image
+                  :src="vehicle.imageUrl"
+                  class="w-full h-full object-cover"
+                  mode="aspectFill"
+                  lazy-load
+                  :alt="vehicle.name"
+                />
+              </view>
 
-            <!-- 车辆信息 -->
-            <view class="space-y-[24rpx]">
-              <view class="flex items-center justify-between">
-                <view>
-                  <text class="text-black font-semibold text-[36rpx]">{{ vehicle.name }}</text>
-                  <text class="text-gray-600 text-[26rpx] block mt-[8rpx]">
-                    {{ vehicle.energyType }} · {{ vehicle.carType }}
+              <!-- 车辆信息 -->
+              <view class="flex-1 min-w-0">
+                <view class="flex items-center justify-between mb-[4rpx]">
+                  <text class="text-[28rpx] font-semibold text-gray-900 truncate flex-1 mr-[12rpx]">
+                    {{ vehicle.name }}
+                  </text>
+                  <text class="text-[26rpx] font-bold text-purple-600 flex-shrink-0">
+                    ¥{{ vehicle.monthlyPrice }}
                   </text>
                 </view>
-                <view class="text-right">
-                  <text class="text-red-500 font-bold text-[40rpx]">¥{{ vehicle.monthlyPrice }}</text>
-                  <text class="text-gray-500 text-[24rpx] block">月租</text>
-                </view>
-              </view>
 
-              <view class="flex items-center justify-between py-[16rpx] border-t border-gray-100">
-                <view class="flex items-center space-x-[32rpx] text-[28rpx]">
-                  <view class="flex items-center space-x-[8rpx] text-red-600">
-                    <text class="i-material-symbols-local-fire-department text-[32rpx]" />
-                    <text>{{ vehicle.rentalCountText }}</text>
-                  </view>
-                  <view class="flex items-center space-x-[8rpx] text-green-600">
-                    <text class="i-material-symbols-savings text-[32rpx]" />
-                    <text>{{ vehicle.savingsText }}</text>
+                <view class="flex items-center justify-between text-[22rpx]">
+                  <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
+                    {{ vehicle.energyType }} · {{ vehicle.carType }}
+                  </text>
+                  <view class="flex items-center space-x-[4rpx] flex-shrink-0">
+                    <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
+                    <text class="text-gray-600">{{ vehicle.rating }}</text>
                   </view>
                 </view>
-                <text
-                  class="text-[22rpx] px-[24rpx] py-[8rpx] rounded-full font-medium"
-                  :class="getBadgeStyle(vehicle.badge)"
-                >
-                  {{ vehicle.badge.text }}
-                </text>
               </view>
             </view>
-          </view>
-        </view>
-
-        <!-- 查看更多月租 -->
-        <view class="text-center py-[48rpx]">
-          <view
-            class="text-purple-600 text-[28rpx] font-medium flex items-center justify-center space-x-[8rpx] cursor-pointer"
-            @tap="viewFullRanking"
-          >
-            <text>查看完整月租榜单</text>
-            <text class="i-material-symbols-keyboard-arrow-down" />
           </view>
         </view>
       </view>
 
       <!-- 加载状态 -->
-      <view v-if="loading" class="flex items-center justify-center py-[80rpx]">
-        <text class="text-gray-500 text-[28rpx]">加载中...</text>
+      <view v-if="loading" class="flex items-center justify-center py-[100rpx]">
+        <view class="flex flex-col items-center space-y-[16rpx]">
+          <text class="i-material-symbols-sync animate-spin text-[48rpx] text-purple-600" />
+          <text class="text-[24rpx] text-gray-500">加载中...</text>
+        </view>
       </view>
-    </view>
+
+      <!-- 空状态 -->
+      <view v-if="!loading && activeTab === 'daily' && !dailyRanking?.rankings?.length" class="flex flex-col items-center justify-center py-[120rpx] px-[40rpx]">
+        <text class="i-material-symbols-trending-up text-[80rpx] text-gray-300 mb-[20rpx]" />
+        <text class="text-[26rpx] text-gray-500 font-medium mb-[8rpx]">暂无排行数据</text>
+        <text class="text-[22rpx] text-gray-400 text-center">当前暂无日租车辆排行信息</text>
+      </view>
+
+      <view v-if="!loading && activeTab === 'monthly' && !monthlyRanking?.rankings?.length" class="flex flex-col items-center justify-center py-[120rpx] px-[40rpx]">
+        <text class="i-material-symbols-calendar-month text-[80rpx] text-gray-300 mb-[20rpx]" />
+        <text class="text-[26rpx] text-gray-500 font-medium mb-[8rpx]">暂无排行数据</text>
+        <text class="text-[22rpx] text-gray-400 text-center">当前暂无月租车辆排行信息</text>
+      </view>
+    </scroll-view>
   </view>
-</template> 
+</template>
 
 <route lang="yaml">
   layout: home
