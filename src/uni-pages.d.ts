@@ -27,7 +27,9 @@ interface NavigateToOptions {
        "/pages/shop/cart" |
        "/pages/shop/home" |
        "/pages/shop/order" |
-       "/pages/vehicle/detail";
+       "/pages/vehicle/detail" |
+       "/pages/vehicle-affiliation-records/index" |
+       "/pages/vehicle-rental-request/index";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

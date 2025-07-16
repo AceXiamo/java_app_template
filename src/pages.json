@@ -118,6 +118,16 @@
       "path": "pages/vehicle/detail",
       "type": "page",
       "layout": "home"
+    },
+    {
+      "path": "pages/vehicle-affiliation-records/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/vehicle-rental-request/index",
+      "type": "page",
+      "layout": "home"
     }
   ],
   "globalStyle": {

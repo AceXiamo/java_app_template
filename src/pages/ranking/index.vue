@@ -30,6 +30,49 @@ function getRankStyle(rank: number) {
   return 'bg-purple-100 text-purple-600'
 }
 
+// 能源类型显示中文
+function getEnergyTypeText(energyType: string) {
+  const energyTypeMap: Record<string, string> = {
+    ELECTRIC: '纯电动',
+    HYBRID: '混合动力',
+    GASOLINE: '汽油',
+    DIESEL: '柴油',
+    electric: '纯电动',
+    hybrid: '混合动力',
+    gasoline: '汽油',
+    diesel: '柴油',
+    纯电动: '纯电动',
+    混合动力: '混合动力',
+    汽油: '汽油',
+    柴油: '柴油',
+    电动: '纯电动',
+  }
+  return energyTypeMap[energyType] || energyType
+}
+
+// 车型类型显示中文
+function getCarTypeText(carType: string) {
+  const carTypeMap: Record<string, string> = {
+    SEDAN: '轿车',
+    SUV: 'SUV',
+    MPV: 'MPV',
+    SPORTS: '跑车',
+    HATCHBACK: '两厢车',
+    PICKUP: '皮卡',
+    sedan: '轿车',
+    suv: 'SUV',
+    mpv: 'MPV',
+    sports: '跑车',
+    hatchback: '两厢车',
+    pickup: '皮卡',
+    轿车: '轿车',
+    跑车: '跑车',
+    两厢车: '两厢车',
+    皮卡: '皮卡',
+  }
+  return carTypeMap[carType] || carType
+}
+
 // 获取车辆详情
 function goToVehicleDetail(vehicleId: number) {
   uni.navigateTo({
@@ -156,18 +199,15 @@ onUnmounted(() => {
 
               <!-- 车辆信息 -->
               <view class="flex-1 min-w-0">
-                <view class="flex items-center justify-between mb-[4rpx]">
-                  <text class="text-[28rpx] font-semibold text-gray-900 truncate flex-1 mr-[12rpx]">
+                <view class="mb-[8rpx]">
+                  <text class="text-[28rpx] font-semibold text-gray-900">
                     {{ vehicle.name }}
-                  </text>
-                  <text class="text-[26rpx] font-bold text-purple-600 flex-shrink-0">
-                    ¥{{ vehicle.dailyPrice }}
                   </text>
                 </view>
 
                 <view class="flex items-center justify-between text-[22rpx]">
                   <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
-                    {{ vehicle.energyType }} · {{ vehicle.carType }}
+                    {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
                   </text>
                   <view class="flex items-center space-x-[4rpx] flex-shrink-0">
                     <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
@@ -210,18 +250,15 @@ onUnmounted(() => {
 
               <!-- 车辆信息 -->
               <view class="flex-1 min-w-0">
-                <view class="flex items-center justify-between mb-[4rpx]">
-                  <text class="text-[28rpx] font-semibold text-gray-900 truncate flex-1 mr-[12rpx]">
+                <view class="mb-[8rpx]">
+                  <text class="text-[28rpx] font-semibold text-gray-900">
                     {{ vehicle.name }}
-                  </text>
-                  <text class="text-[26rpx] font-bold text-purple-600 flex-shrink-0">
-                    ¥{{ vehicle.monthlyPrice }}
                   </text>
                 </view>
 
                 <view class="flex items-center justify-between text-[22rpx]">
                   <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
-                    {{ vehicle.energyType }} · {{ vehicle.carType }}
+                    {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
                   </text>
                   <view class="flex items-center space-x-[4rpx] flex-shrink-0">
                     <text class="i-material-symbols-star text-[18rpx] text-orange-500" />

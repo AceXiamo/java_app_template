@@ -42,8 +42,7 @@ const filters = ref({
   seats: [] as number[],
 })
 
-// 分类选项
-const categoryOptions = ref<VehicleCategory[]>([])
+// 已移除分类选项
 
 // 快捷标签
 const quickTags = ref<VehicleTagType[]>([])
@@ -60,13 +59,11 @@ const priceRanges = ref([
 // 排序选项
 const sortOptions = [
   { label: '综合排序', value: 'hot' },
-  { label: '价格最低', value: 'price' },
-  { label: '评分最高', value: 'rating' },
   { label: '距离最近', value: 'distance' },
+  { label: '高配优先', value: 'price' },
 ]
 
 // 选中状态
-const selectedCategory = ref('all')
 const selectedTags = ref<string[]>([])
 const selectedPriceRange = ref<number[] | null>(null)
 
@@ -132,7 +129,6 @@ onLoad(() => {
   }
 
   loadFilterOptions()
-  loadCategories()
   loadTagTypes()
   searchVehicleList()
 })
@@ -211,27 +207,7 @@ async function loadFilterOptions() {
   }
 }
 
-// 加载分类选项
-async function loadCategories() {
-  try {
-    const response = await getVehicleCategories()
-    if (response.code === 200 && response.data) {
-      // 添加全部选项
-      const allCategory: VehicleCategory = {
-        categoryId: 0,
-        categoryName: '全部',
-        categoryCode: 'all',
-        minPrice: 99,
-        sortOrder: 0,
-        isActive: true,
-      }
-      categoryOptions.value = [allCategory, ...response.data]
-    }
-  }
-  catch (error) {
-    console.error('获取分类失败:', error)
-  }
-}
+// 已移除分类加载功能
 
 // 加载标签类型
 async function loadTagTypes() {
@@ -248,7 +224,7 @@ async function loadTagTypes() {
 
 // 排序切换
 function handleSortChange(sortBy: string) {
-  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'distance' | 'rating'
+  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'distance'
   searchVehicleList()
 }
 
@@ -307,18 +283,7 @@ function toggleArrayFilter(key: keyof typeof filters.value, value: any) {
   }
 }
 
-// 选择分类
-function selectCategory(categoryCode: string) {
-  selectedCategory.value = categoryCode
-  if (categoryCode !== 'all') {
-    // 根据分类过滤车辆
-    searchParams.value.categoryId = categoryOptions.value.find(cat => cat.categoryCode === categoryCode)?.categoryId
-  }
-  else {
-    searchParams.value.categoryId = undefined
-  }
-  searchVehicleList()
-}
+// 已移除分类选择功能
 
 // 切换标签
 function toggleTag(tag: string) {
@@ -366,6 +331,16 @@ function formatLicensePlate(plate: string) {
     return `${plate.substring(0, 2)}·${plate.substring(2, 5)}***`
   }
   return plate
+}
+
+// 获取车辆显示名称
+function getVehicleDisplayName(vehicle: Vehicle) {
+  // 如果是车主自运营且有车主昵称，显示"xxx的Model3"格式
+  if (vehicle.operationType === 'owner' && vehicle.ownerNickname) {
+    return `${vehicle.ownerNickname}的${vehicle.model || vehicle.name}`
+  }
+  // 否则直接显示车辆名称
+  return vehicle.name
 }
 
 // 计算月租折扣信息
@@ -458,40 +433,7 @@ function handleDateRangeConfirm(data: {
     <PageSearchHead />
 
     <!-- 主要内容区域 -->
-    <view class="flex flex-1 overflow-hidden">
-      <!-- 左侧分类导航 -->
-      <view class="w-[200rpx] border-r border-gray-100 bg-white">
-        <scroll-view scroll-y class="h-full">
-          <view class="py-[16rpx]">
-            <view
-              v-for="category in categoryOptions"
-              :key="category.categoryCode"
-              class="relative border-b border-gray-50 px-[24rpx] py-[24rpx]"
-              :class="selectedCategory === category.categoryCode ? 'bg-purple-50' : ''"
-              @tap="selectCategory(category.categoryCode)"
-            >
-              <!-- 选中指示条 -->
-              <view
-                v-if="selectedCategory === category.categoryCode"
-                class="absolute bottom-0 left-0 top-0 w-[6rpx] bg-purple-600"
-              />
-
-              <text
-                class="block text-[26rpx] font-medium"
-                :class="selectedCategory === category.categoryCode ? 'text-purple-600' : 'text-gray-800'"
-              >
-                {{ category.categoryName }}
-              </text>
-              <text class="mt-[8rpx] block text-[20rpx] text-gray-500">
-                ¥{{ category.minPrice }}起
-              </text>
-            </view>
-          </view>
-        </scroll-view>
-      </view>
-
-      <!-- 右侧内容区域 -->
-      <view class="flex flex-1 flex-col overflow-hidden">
+    <view class="flex flex-1 flex-col overflow-hidden">
         <!-- 搜索条件栏 -->
         <view class="border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
           <!-- 地址和时间信息 -->
@@ -602,7 +544,7 @@ function handleDateRangeConfirm(data: {
                 <!-- 车辆基本信息 -->
                 <view class="flex flex-1 flex-col justify-center p-[20rpx]">
                   <text class="block text-[28rpx] text-black font-semibold leading-[40rpx]">
-                    {{ vehicle.name }}
+                    {{ getVehicleDisplayName(vehicle) }}
                   </text>
 
                   <!-- 车牌和基本信息分两行显示 -->
@@ -696,7 +638,6 @@ function handleDateRangeConfirm(data: {
             </view>
           </view>
         </scroll-view>
-      </view>
     </view>
 
     <!-- 筛选弹窗 -->

@@ -40,6 +40,7 @@ export interface Vehicle {
   deliveryPricePerKm: number
   maxDeliveryDistance: number
   operationType: 'platform' | 'owner' // platform: 平台自营, owner: 车主优选
+  ownerNickname?: string // 车主昵称（仅当operationType为owner时有值）
 }
 
 export interface VehicleSearchParams {
@@ -52,7 +53,7 @@ export interface VehicleSearchParams {
   minPrice?: number
   maxPrice?: number
   seats?: number[]
-  sortBy?: 'price' | 'distance' | 'rating' | 'hot'
+  sortBy?: 'price' | 'distance' | 'hot'
   page?: number
   limit?: number
   latitude?: number
@@ -140,6 +141,7 @@ export interface VehicleDetail {
   deliveryPricePerKm: number
   maxDeliveryDistance: number
   operationType: 'platform' | 'owner'
+  ownerNickname?: string // 车主昵称（仅当operationType为owner时有值）
 }
 
 // 获取车辆详情

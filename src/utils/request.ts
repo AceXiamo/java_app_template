@@ -13,7 +13,7 @@ if (mode === 'development') {
   // host = `https://${domain}`
 }
 else {
-  domain = 'future.xiamoqwq.com'
+  domain = 'car-dev.zeabur.app'
   host = `https://${domain}`
 }
 

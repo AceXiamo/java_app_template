@@ -7,21 +7,12 @@ import type {
   VehicleRentalRequest,
 } from '@/api/vehicle-rental-request'
 import {
-  getAgreement,
-  getCurrentStatus,
   getOperationPackages,
   submitRentalRequest,
+  getCurrentStatus,
+  getAgreement,
 } from '@/api/vehicle-rental-request'
 import { uploadFileToOss } from '@/utils/alioss'
-import { useUserStore } from '@/store/user'
-import OwnerCertificationHead from '@/components/page/owner-certification/Head.vue'
-import MapAddressPicker from '@/components/MapAddressPicker.vue'
-
-// Toast 引用
-const toastRef = ref()
-
-// 用户 store
-const userStore = useUserStore()
 
 // 页面状态
 const loading = ref(false)
@@ -57,19 +48,10 @@ const uploadStatus = ref({
   inspectionCert: false,
 })
 
-// 地址选择器状态
-const addressPickerVisible = ref(false)
-const currentLocation = ref({
-  latitude: 31.230416,
-  longitude: 121.473701,
+// 计算选中的套餐配置
+const selectedPackage = computed(() => {
+  return packageConfigs.value.find(config => config.packageCode === formData.value.operationMode)
 })
-
-// 初始化手机号
-const initPhoneNumber = () => {
-  if (userStore.user?.phone) {
-    formData.value.contactPhone = userStore.user.phone
-  }
-}
 
 // 表单验证
 const canSubmit = computed(() => {
@@ -95,20 +77,19 @@ function selectOperationMode(packageCode: string) {
 
 // 选择地址
 function selectAddress() {
-  addressPickerVisible.value = true
-}
-
-// 地址选择确认
-function onAddressConfirm(data: {
-  latitude: number
-  longitude: number
-  address: string
-  formattedAddress: string
-  poiName?: string
-}) {
-  formData.value.contactAddress = data.formattedAddress
-  formData.value.contactLongitude = data.longitude
-  formData.value.contactLatitude = data.latitude
+  uni.chooseLocation({
+    success: (res) => {
+      formData.value.contactAddress = res.address
+      formData.value.contactLongitude = res.longitude
+      formData.value.contactLatitude = res.latitude
+    },
+    fail: () => {
+      uni.showToast({
+        title: '选择地址失败',
+        icon: 'none',
+      })
+    },
+  })
 }
 
 // 文件上传
@@ -151,19 +132,28 @@ async function uploadDocument(type: string) {
         }
 
         uni.hideLoading()
-        toastRef.value?.success('上传成功')
+        uni.showToast({
+          title: '上传成功',
+          icon: 'success',
+        })
       }
       catch (error) {
         console.error('文档上传失败:', error)
         uni.hideLoading()
-        toastRef.value?.error('上传失败')
+        uni.showToast({
+          title: '上传失败',
+          icon: 'error',
+        })
       }
       finally {
         status[type] = false
       }
     },
     fail: () => {
-      toastRef.value?.error('选择图片失败')
+      uni.showToast({
+        title: '选择图片失败',
+        icon: 'error',
+      })
     },
   })
 }
@@ -178,11 +168,13 @@ function toggleAgreement() {
   formData.value.agreementAgreed = !formData.value.agreementAgreed
 }
 
-
 // 提交申请
 async function submitForm() {
   if (!canSubmit.value) {
-    toastRef.value?.error('请完善所有必填信息')
+    uni.showToast({
+      title: '请完善所有必填信息',
+      icon: 'none',
+    })
     return
   }
 
@@ -196,7 +188,10 @@ async function submitForm() {
 
     if (response.code === 200) {
       uni.hideLoading()
-      toastRef.value?.success('申请提交成功')
+      uni.showToast({
+        title: '提交成功',
+        icon: 'success',
+      })
 
       // 延迟跳转到记录页面
       setTimeout(() => {
@@ -212,7 +207,10 @@ async function submitForm() {
   catch (error: any) {
     console.error('提交申请失败:', error)
     uni.hideLoading()
-    toastRef.value?.error(error.message || '提交失败')
+    uni.showToast({
+      title: error.message || '提交失败',
+      icon: 'error',
+    })
   }
   finally {
     submitting.value = false
@@ -229,7 +227,6 @@ async function loadCurrentStatus() {
   }
   catch (error) {
     console.error('获取申请状态失败:', error)
-    toastRef.value?.error('获取申请状态失败')
   }
 }
 
@@ -239,7 +236,7 @@ async function loadPackageConfigs() {
     const response = await getOperationPackages()
     if (response.code === 200) {
       packageConfigs.value = response.data
-
+      
       // 默认选中套餐A
       if (packageConfigs.value.length > 0) {
         formData.value.operationMode = packageConfigs.value[0].packageCode
@@ -269,9 +266,6 @@ async function loadAgreement() {
 onMounted(async () => {
   loading.value = true
   try {
-    // 初始化手机号
-    initPhoneNumber()
-    
     await Promise.all([
       loadCurrentStatus(),
       loadPackageConfigs(),
@@ -280,7 +274,10 @@ onMounted(async () => {
   }
   catch (error) {
     console.error('页面初始化失败:', error)
-    toastRef.value?.error('页面加载失败')
+    uni.showToast({
+      title: '页面加载失败',
+      icon: 'error',
+    })
   }
   finally {
     loading.value = false
@@ -291,7 +288,14 @@ onMounted(async () => {
 <template>
   <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
     <!-- 头部导航 -->
-    <OwnerCertificationHead />
+    <view class="flex-shrink-0 bg-white border-b border-gray-100 px-[32rpx] py-[24rpx]">
+      <view class="flex items-center space-x-[24rpx]">
+        <text class="i-material-symbols-arrow-back text-[48rpx] text-gray-600" @tap="uni.navigateBack()" />
+        <text class="text-[36rpx] text-black font-semibold">
+          车辆出租申请
+        </text>
+      </view>
+    </view>
 
     <!-- 主要内容区域 -->
     <view class="flex-1 overflow-y-auto">
@@ -389,7 +393,7 @@ onMounted(async () => {
 
             <!-- 联系地址 -->
             <view class="flex items-center justify-between">
-              <view flex-none w-max>
+              <view>
                 <text class="block text-[28rpx] text-black font-medium">
                   联系地址
                 </text>
@@ -546,7 +550,7 @@ onMounted(async () => {
                   添加保险单
                 </view>
               </view>
-
+              
               <view v-if="formData.insurancePolicyUrls.length > 0" class="grid grid-cols-3 gap-[16rpx]">
                 <view
                   v-for="(url, index) in formData.insurancePolicyUrls"
@@ -682,15 +686,6 @@ onMounted(async () => {
         加载中...
       </text>
     </view>
-
-    <!-- 地址选择器 -->
-    <MapAddressPicker
-      v-model:visible="addressPickerVisible"
-      title="选择联系地址"
-      :latitude="currentLocation.latitude"
-      :longitude="currentLocation.longitude"
-      @confirm="onAddressConfirm"
-    />
   </view>
 </template>
 
