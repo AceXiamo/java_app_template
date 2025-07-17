@@ -1,5 +1,7 @@
 // 首页相关 API
 import { host, request } from '@/utils/request'
+import { reverseGeocode } from '@/api/map'
+import type { AddressInfo } from '@/api/map'
 
 export interface Banner {
   id: number
@@ -11,13 +13,6 @@ export interface Banner {
   isActive: boolean
 }
 
-export interface LocationInfo {
-  address: string
-  city: string
-  district: string
-  isServiceAvailable: boolean
-  nearbyVehicleCount: number
-}
 
 export interface HomeData {
   banners: Banner[]
@@ -30,13 +25,12 @@ export function getHomeBanners(): Promise<BaseRes<HomeData>> {
   })
 }
 
-// 根据经纬度获取位置信息
+// 兼容性函数：根据经纬度获取位置信息
+// 内部调用 map.ts 的 reverseGeocode 接口
 export function getCurrentLocation(params: {
   latitude: number
   longitude: number
-}): Promise<BaseRes<LocationInfo>> {
-  return request.post({
-    url: `${host}/api/home/location/current`,
-    data: params,
-  })
+}): Promise<BaseRes<AddressInfo>> {
+  return reverseGeocode(params)
 }
+

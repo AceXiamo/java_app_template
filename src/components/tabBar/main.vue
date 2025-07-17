@@ -2,16 +2,22 @@
 import { computed, onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import { getCurrentLocation, getHomeBanners } from '@/api/home'
-import type { Banner, LocationInfo } from '@/api/home'
+import type { Banner } from '@/api/home'
+import type { AddressInfo } from '@/api/map'
 import DateRangePicker from '@/components/DateRangePicker.vue'
+import MapAddressPicker from '@/components/MapAddressPicker.vue'
 
 // 数据状态
 const banners = ref<Banner[]>([])
-const currentLocation = ref<LocationInfo | null>(null)
+const currentLocation = ref<AddressInfo | null>(null)
 const loading = ref(false)
 const showDatePicker = ref(false)
+const showMapPicker = ref(false)
 const searchForm = ref({
   city: '上海',
+  address: '上海', // 显示的地址
+  latitude: undefined as number | undefined,
+  longitude: undefined as number | undefined,
   startDate: dayjs().format('YYYY-MM-DD'),
   endDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
   startTime: '09:00',
@@ -140,6 +146,9 @@ async function getLocation() {
     if (response.code === 200 && response.data) {
       currentLocation.value = response.data
       searchForm.value.city = response.data.city
+      searchForm.value.address = response.data.formattedAddress || response.data.city
+      searchForm.value.latitude = response.data.latitude
+      searchForm.value.longitude = response.data.longitude
     }
     else {
       throw new Error(`位置API返回错误: ${response.msg || '未知错误'}`)
@@ -156,6 +165,7 @@ async function getLocation() {
     })
 
     searchForm.value.city = '上海'
+    searchForm.value.address = '上海'
   }
 }
 
@@ -167,6 +177,9 @@ function searchVehicles() {
   // 使用 setJumpData 传递搜索参数
   const searchData = {
     city: searchForm.value.city,
+    address: searchForm.value.address,
+    latitude: searchForm.value.latitude,
+    longitude: searchForm.value.longitude,
     keywords: searchForm.value.keywords || '',
     startTime: startDateTime,
     endTime: endDateTime,
@@ -214,6 +227,25 @@ function handleDateRangeConfirm(data: {
   searchForm.value.endDate = data.endDate
   searchForm.value.startTime = data.startTime
   searchForm.value.endTime = data.endTime
+}
+
+// 显示地址选择器
+function showAddressPicker() {
+  showMapPicker.value = true
+}
+
+// 处理地址选择确认
+function handleAddressConfirm(data: {
+  latitude: number
+  longitude: number
+  address: string
+  formattedAddress: string
+  poiName?: string
+}) {
+  searchForm.value.latitude = data.latitude
+  searchForm.value.longitude = data.longitude
+  searchForm.value.address = data.formattedAddress || data.address
+  showMapPicker.value = false
 }
 
 onMounted(() => {
@@ -273,16 +305,17 @@ onMounted(() => {
           style="background: linear-gradient(to bottom,rgba(255, 255, 255, 0.6) 0%,rgba(255, 255, 255, 1) 20%);"
         >
           <!-- 地点选择 -->
-          <view class="mb-[48rpx] flex items-center justify-between">
-            <view class="flex items-center">
+          <view class="mb-[48rpx] flex items-center justify-between" @tap="showAddressPicker">
+            <view class="flex items-center flex-1 min-w-0">
               <view i-material-symbols:location-on class="text-[36rpx] text-purple-600" />
-              <text class="ml-[16rpx] text-[36rpx] text-black font-medium">
-                {{ searchForm.city }}
+              <text class="ml-[16rpx] text-[36rpx] text-black font-medium truncate">
+                {{ searchForm.address }}
               </text>
             </view>
-            <text class="text-[24rpx] text-gray-500">
-              请点击获取您的地理位置
-            </text>
+            <view class="flex items-center text-[24rpx] text-gray-500">
+              <text class="mr-[8rpx]">选择地址</text>
+              <view i-material-symbols:chevron-right class="text-[20rpx]" />
+            </view>
           </view>
 
           <!-- 时间选择区域 -->
@@ -443,6 +476,14 @@ onMounted(() => {
       :start-time="searchForm.startTime"
       :end-time="searchForm.endTime"
       @confirm="handleDateRangeConfirm"
+    />
+
+    <!-- 地址选择器 -->
+    <MapAddressPicker
+      v-model:visible="showMapPicker"
+      :latitude="searchForm.latitude"
+      :longitude="searchForm.longitude"
+      @confirm="handleAddressConfirm"
     />
   </view>
 </template>

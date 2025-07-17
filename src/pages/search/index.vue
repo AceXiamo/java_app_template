@@ -4,6 +4,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import PageSearchHead from '@/components/page/search/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
+import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import { getVehicleCategories, getVehicleFilters, getVehicleTagTypes, searchVehicles } from '@/api/vehicle'
 import type { Vehicle, VehicleCategory, VehicleFilterOptions, VehicleSearchParams, VehicleSearchResult, VehicleTagType } from '@/api/vehicle'
 
@@ -16,7 +17,12 @@ const searchParams = ref<VehicleSearchParams>({
   page: 1,
   limit: 20,
   sortBy: 'hot',
+  latitude: undefined,
+  longitude: undefined,
 })
+
+// 当前地址显示
+const currentAddress = ref('上海')
 
 // 数据状态
 const vehicles = ref<Vehicle[]>([])
@@ -25,6 +31,7 @@ const loading = ref(false)
 const noMore = ref(false)
 const showFilters = ref(false)
 const showDatePicker = ref(false)
+const showMapPicker = ref(false)
 const filterOptions = ref<VehicleFilterOptions>({
   brands: [],
   carTypes: [],
@@ -55,6 +62,7 @@ const priceRanges = ref([
   { label: '300-500', value: [300, 500] },
   { label: '500以上', value: [500, 9999] },
 ])
+
 
 // 排序选项
 const sortOptions = [
@@ -111,10 +119,17 @@ onLoad(() => {
   const jumpData = getJumpData('searchParams')
 
   if (jumpData) {
-    searchParams.value.city = jumpData.city || '上海'
+    searchParams.value.city = '上海' // 固定上海区域
     searchParams.value.keywords = jumpData.keywords || ''
     searchParams.value.startTime = jumpData.startTime
     searchParams.value.endTime = jumpData.endTime
+    searchParams.value.latitude = jumpData.latitude
+    searchParams.value.longitude = jumpData.longitude
+    
+    // 更新地址显示
+    if (jumpData.address) {
+      currentAddress.value = jumpData.address
+    }
     
     // 解析时间参数到timeForm
     if (jumpData.startTime && jumpData.endTime) {
@@ -126,6 +141,11 @@ onLoad(() => {
       timeForm.value.startTime = `${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`
       timeForm.value.endTime = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`
     }
+  }
+
+  // 如果没有位置信息，尝试获取当前位置
+  if (!searchParams.value.latitude || !searchParams.value.longitude) {
+    getCurrentLocation()
   }
 
   loadFilterOptions()
@@ -425,6 +445,49 @@ function handleDateRangeConfirm(data: {
   // 重新搜索
   searchVehicleList()
 }
+
+// 获取当前位置
+function getCurrentLocation() {
+  uni.getLocation({
+    type: 'gcj02',
+    success: (res) => {
+      searchParams.value.latitude = res.latitude
+      searchParams.value.longitude = res.longitude
+      
+      // 获取位置成功后重新搜索
+      searchVehicleList()
+    },
+    fail: (err) => {
+      console.warn('获取位置失败:', err)
+      // 使用默认位置（上海市中心）
+      searchParams.value.latitude = 31.2304
+      searchParams.value.longitude = 121.4737
+    }
+  })
+}
+
+// 显示地图选择器
+function showMapSelector() {
+  showMapPicker.value = true
+}
+
+// 处理地址选择确认
+function handleAddressConfirm(data: {
+  latitude: number
+  longitude: number
+  address: string
+  formattedAddress: string
+  poiName?: string
+}) {
+  searchParams.value.latitude = data.latitude
+  searchParams.value.longitude = data.longitude
+  
+  // 更新地址显示
+  currentAddress.value = data.formattedAddress || data.address
+  
+  // 重新搜索
+  searchVehicleList()
+}
 </script>
 
 <template>
@@ -438,11 +501,12 @@ function handleDateRangeConfirm(data: {
         <view class="border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
           <!-- 地址和时间信息 -->
           <view class="mb-[24rpx] flex items-center justify-between">
-            <view class="flex items-center">
+            <view class="flex items-center cursor-pointer min-w-0 flex-1" @tap="showMapSelector">
               <text class="i-material-symbols-location-on mr-[8rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-medium">
-                {{ searchParams.city }}
+              <text class="text-[28rpx] text-black font-medium truncate">
+                {{ currentAddress }}
               </text>
+              <text class="i-material-symbols-keyboard-arrow-down ml-[4rpx] text-[24rpx] text-gray-400" />
             </view>
             <view class="flex items-center" @tap="showTimePicker">
               <text class="i-material-symbols-schedule mr-[8rpx] text-[24rpx] text-gray-500" />
@@ -745,6 +809,15 @@ function handleDateRangeConfirm(data: {
       :start-time="timeForm.startTime"
       :end-time="timeForm.endTime"
       @confirm="handleDateRangeConfirm"
+    />
+
+    <!-- 地址选择器 -->
+    <MapAddressPicker
+      v-model:visible="showMapPicker"
+      :latitude="searchParams.latitude"
+      :longitude="searchParams.longitude"
+      title="选择位置"
+      @confirm="handleAddressConfirm"
     />
   </view>
 </template>

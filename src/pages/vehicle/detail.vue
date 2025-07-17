@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import PageVehicleDetailHead from '@/components/page/vehicle/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import { getVehicleDetail } from '@/api/vehicle'
+import { getVehicleDetail, getVehicleReviews } from '@/api/vehicle'
 import type { VehicleDetail } from '@/api/vehicle'
+import { getJumpData, setJumpData } from '@/utils/index'
+import PageVehicleHead from '@/components/page/vehicle/Head.vue'
 
 // 页面参数
 const vehicleId = ref('')
@@ -35,11 +36,11 @@ const timeForm = ref({
 })
 
 // 评价列表
-const reviews = ref([])
+const reviews = ref<any[]>([])
 const showAllReviews = ref(false)
 
 // 相似车辆
-const similarVehicles = ref([])
+const similarVehicles = ref<any[]>([])
 
 // 页面加载
 onLoad((options: any) => {
@@ -182,12 +183,23 @@ async function loadSimilarVehicles() {
 
 // 加载评价
 async function loadReviews() {
-  try {
-    // TODO: 调用评价API
-    // const response = await getVehicleReviews(vehicleId.value)
-    // reviews.value = response.data
+  if (!vehicleId.value) {
+    return
+  }
 
-    // 模拟数据
+  try {
+    const response = await getVehicleReviews(Number(vehicleId.value))
+
+    if (response.code === 200 && response.data) {
+      reviews.value = response.data
+    }
+    else {
+      throw new Error(response.msg || '获取评价失败')
+    }
+  }
+  catch (error) {
+    console.error('加载评价失败:', error)
+    // 如果API调用失败，使用占位数据以便开发调试
     reviews.value = [
       {
         reviewId: 1,
@@ -208,9 +220,6 @@ async function loadReviews() {
         images: [],
       },
     ]
-  }
-  catch (error) {
-    console.error('加载评价失败:', error)
   }
 }
 
@@ -352,7 +361,7 @@ function handleDateRangeConfirm(data: {
 <template>
   <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
     <!-- 头部导航 -->
-    <PageVehicleDetailHead
+    <PageVehicleHead
       @favorite="toggleFavorite"
       @share="shareVehicle"
     />
@@ -392,22 +401,6 @@ function handleDateRangeConfirm(data: {
             <text class="text-[24rpx] text-white">
               {{ currentImageIndex + 1 }}/{{ vehicleDetail.images.length }}
             </text>
-          </view>
-
-          <!-- 标签 -->
-          <view class="absolute left-[24rpx] top-[24rpx] flex flex-col space-y-[8rpx]">
-            <view
-              v-for="tag in vehicleDetail.tags.slice(0, 3)"
-              :key="tag.tagName"
-              class="inline-flex items-center rounded-full px-[16rpx] py-[8rpx] text-[22rpx] font-medium backdrop-blur-sm"
-              :style="{
-                backgroundColor: `${tag.tagColor}20`,
-                color: tag.tagColor,
-                border: `1px solid ${tag.tagColor}40`,
-              }"
-            >
-              {{ tag.tagName }}
-            </view>
           </view>
         </view>
 

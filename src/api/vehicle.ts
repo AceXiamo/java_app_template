@@ -94,6 +94,26 @@ export interface VehicleTagType {
   color: string
 }
 
+export interface VehicleReview {
+  reviewId: number
+  orderId: number
+  vehicleId: number
+  userId: number
+  rating: number
+  content: string
+  images: string[]
+  tags: string[]
+  isAnonymous: boolean
+  status: string
+  helpfulCount: number
+  replyContent?: string
+  replyTime?: string
+  createTime: string
+  updateTime: string
+  userName?: string
+  userAvatar?: string
+}
+
 // 搜索车辆
 export function searchVehicles(params: VehicleSearchParams): Promise<BaseRes<VehicleSearchResult>> {
   return request.post({
@@ -169,5 +189,16 @@ export function getVehicleCategories(): Promise<BaseRes<VehicleCategory[]>> {
 export function getVehicleTagTypes(): Promise<BaseRes<VehicleTagType[]>> {
   return request.get({
     url: `${host}/api/vehicles/tag-types`,
+  })
+}
+
+// 获取车辆评价列表
+export function getVehicleReviews(vehicleId: number, pageNum: number = 1, pageSize: number = 10): Promise<BaseRes<any[]>> {
+  return request.get({
+    url: `${host}/api/vehicles/${vehicleId}/reviews`,
+    params: {
+      pageNum,
+      pageSize,
+    },
   })
 }

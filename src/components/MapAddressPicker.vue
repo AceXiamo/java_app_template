@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { debounce } from 'lodash'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { reverseGeocode } from '@/api/map'
-import { debounce } from '@/utils/debounce'
 
 interface MapAddressPickerProps {
   visible: boolean
@@ -24,8 +24,8 @@ interface MapAddressPickerEmits {
 
 const props = withDefaults(defineProps<MapAddressPickerProps>(), {
   title: '选择位置',
-  latitude: 31.230416,
-  longitude: 121.473701,
+  latitude: undefined,
+  longitude: undefined,
 })
 
 const emit = defineEmits<MapAddressPickerEmits>()
@@ -35,8 +35,8 @@ const instance = getCurrentInstance()
 // 地图相关状态
 const mapContext = ref<any>(null)
 const currentLocation = ref({
-  latitude: props.latitude,
-  longitude: props.longitude,
+  latitude: props.latitude || 31.230416, // 上海默认坐标
+  longitude: props.longitude || 121.473701,
 })
 
 // 地址信息
@@ -56,30 +56,27 @@ const confirming = ref(false)
 // 地图是否已准备好
 const mapReady = ref(false)
 
-// 监听地图ready状态，确保地图准备好后获取地址
-watch(mapReady, (ready) => {
-  if (ready && props.visible) {
-    setTimeout(() => {
-      getAddressFromLocation(currentLocation.value.latitude, currentLocation.value.longitude)
-    }, 100)
-  }
-})
+// 是否已经初始化过地址
+const addressInitialized = ref(false)
 
 // 监听props变化
 watch(() => props.visible, (visible) => {
   if (visible) {
-    currentLocation.value = {
-      latitude: props.latitude,
-      longitude: props.longitude,
-    }
-    // 重置地址信息
-    addressInfo.value.formattedAddress = '正在获取地址...'
+    // 重置初始化状态
+    addressInitialized.value = false
 
-    // 如果地图已准备好，立即获取地址
-    if (mapReady.value) {
-      setTimeout(() => {
-        getAddressFromLocation(props.latitude, props.longitude)
-      }, 100)
+    // 如果传入了坐标则使用传入的坐标
+    if (props.latitude && props.longitude) {
+      currentLocation.value = {
+        latitude: props.latitude,
+        longitude: props.longitude,
+      }
+      // 重置地址信息
+      addressInfo.value.formattedAddress = '正在获取地址...'
+    }
+    else {
+      // 如果没有传入坐标，自动获取当前位置
+      backToCurrentLocation()
     }
   }
 })
@@ -92,47 +89,18 @@ function onMapReady() {
 
   // 延迟一下确保上下文创建完成，然后获取当前地址
   setTimeout(() => {
-    // 地图ready后，如果弹窗是打开状态，立即获取地址
-    if (props.visible) {
-      if (!currentLocation.value.latitude || !currentLocation.value.longitude) {
-        backToCurrentLocation()
+    // 地图ready后，如果弹窗是打开状态且尚未初始化地址，才获取地址
+    if (props.visible && !addressInitialized.value) {
+      addressInitialized.value = true
+      // 如果传入了坐标则使用传入的坐标，否则获取当前位置
+      if (props.latitude && props.longitude) {
+        getAddressFromLocation(props.latitude, props.longitude)
       }
       else {
-        getAddressFromLocation(currentLocation.value.latitude, currentLocation.value.longitude)
+        backToCurrentLocation()
       }
     }
   }, 300)
-}
-
-// 防抖处理的地图中心点获取函数
-const debouncedGetCenterLocation = debounce(() => {
-  if (mapContext.value) {
-    mapContext.value.getCenterLocation({
-      success: (res: any) => {
-        currentLocation.value = {
-          latitude: res.latitude,
-          longitude: res.longitude,
-        }
-
-        getAddressFromLocation(res.latitude, res.longitude)
-      },
-      fail: (error: any) => {
-        console.error('获取地图中心点失败:', error)
-      },
-    })
-  }
-}, 500)
-
-// 地图移动事件
-function onMapMove(e: any) {
-  if (loading.value)
-    return
-
-  // 只响应拖拽结束事件
-  if (e.type === 'end' && e.causedBy === 'drag') {
-    // 使用防抖函数处理
-    debouncedGetCenterLocation()
-  }
 }
 
 // 根据经纬度获取地址信息
@@ -168,6 +136,40 @@ async function getAddressFromLocation(latitude: number, longitude: number) {
   }
   finally {
     loading.value = false
+  }
+}
+
+// 防抖处理的地址获取函数
+const debouncedGetAddressFromLocation = debounce(getAddressFromLocation, 300)
+
+// 防抖处理的地图中心点获取函数
+const debouncedGetCenterLocation = debounce(() => {
+  if (mapContext.value) {
+    mapContext.value.getCenterLocation({
+      success: (res: any) => {
+        currentLocation.value = {
+          latitude: res.latitude,
+          longitude: res.longitude,
+        }
+
+        debouncedGetAddressFromLocation(res.latitude, res.longitude)
+      },
+      fail: (error: any) => {
+        console.error('获取地图中心点失败:', error)
+      },
+    })
+  }
+}, 500)
+
+// 地图移动事件
+function onMapMove(e: any) {
+  if (loading.value)
+    return
+
+  // 只响应拖拽结束事件
+  if (e.type === 'end' && e.causedBy === 'drag') {
+    // 使用防抖函数处理
+    debouncedGetCenterLocation()
   }
 }
 
@@ -215,7 +217,9 @@ function backToCurrentLocation() {
         })
       }
 
-      getAddressFromLocation(res.latitude, res.longitude)
+      // 标记地址已初始化，避免重复调用
+      addressInitialized.value = true
+      debouncedGetAddressFromLocation(res.latitude, res.longitude)
     },
     fail: () => {
       uni.showToast({
