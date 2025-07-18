@@ -1,14 +1,13 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { onReachBottom, onShow } from '@dcloudio/uni-app'
+import { onReachBottom } from '@dcloudio/uni-app'
 import { useOrderStore } from '@/store/order'
 import OrderHead from '@/components/page/order/Head.vue'
 
 // 使用 order store
 const orderStore = useOrderStore()
 const { orderList, orderListStatus, activeTab } = storeToRefs(orderStore)
-
-const countdownTime = ref('23:45:32')
 
 // 切换订单状态tab
 function switchTab(tab: string) {
@@ -18,7 +17,7 @@ function switchTab(tab: string) {
 // 订单操作
 async function contactOwner(orderId: string) {
   try {
-    await orderStore.handleContactOwner(orderId, '用户主动联系')
+    await orderStore.handleContactOwner(Number(orderId), '用户主动联系')
     uni.showToast({ title: '已联系车主', icon: 'success' })
   }
   catch {
@@ -28,7 +27,7 @@ async function contactOwner(orderId: string) {
 
 async function renewOrder(orderId: string) {
   try {
-    await orderStore.handleRenewOrder(orderId, 1, '2024-12-17 14:00')
+    await orderStore.handleRenewOrder(Number(orderId), 1, '2024-12-17 14:00')
     uni.showToast({ title: '续租成功', icon: 'success' })
   }
   catch {
@@ -38,7 +37,7 @@ async function renewOrder(orderId: string) {
 
 async function rateOrder(orderId: string) {
   try {
-    await orderStore.handleReviewOrder(orderId, 5, '服务很好', ['准时', '车况良好'])
+    await orderStore.handleReviewOrder(Number(orderId), 5, '服务很好', ['准时', '车况良好'])
     uni.showToast({ title: '评价成功', icon: 'success' })
   }
   catch {
@@ -48,7 +47,7 @@ async function rateOrder(orderId: string) {
 
 async function reOrder(orderId: string) {
   try {
-    await orderStore.handleRebookOrder(orderId, '2024-12-20 14:00', '2024-12-21 14:00')
+    await orderStore.handleRebookOrder(Number(orderId), '2024-12-20 14:00', '2024-12-21 14:00')
     uni.showToast({ title: '预订成功', icon: 'success' })
   }
   catch {
@@ -97,31 +96,22 @@ onReachBottom(() => {
   orderStore.loadMoreOrders()
 })
 
-// 倒计时更新
-onShow(() => {
-  setInterval(() => {
-    // 简单的倒计时逻辑
-    const parts = countdownTime.value.split(':').map(Number)
-    let hours = parts[0]
-    let minutes = parts[1]
-    let seconds = parts[2]
+// 格式化时间显示
+function formatTime(timeStr: string) {
+  if (!timeStr)
+    return ''
+  const date = new Date(timeStr)
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
 
-    if (seconds > 0) {
-      seconds--
-    }
-    else if (minutes > 0) {
-      minutes--
-      seconds = 59
-    }
-    else if (hours > 0) {
-      hours--
-      minutes = 59
-      seconds = 59
-    }
-
-    countdownTime.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }, 1000)
-})
+// 检查取车截止时间是否已过期
+function isPickupExpired(pickupDeadline: string) {
+  if (!pickupDeadline)
+    return false
+  const now = new Date().getTime()
+  const deadline = new Date(pickupDeadline).getTime()
+  return deadline < now
+}
 </script>
 
 <template>
@@ -195,6 +185,11 @@ onShow(() => {
               <view v-if="order.orderType === 'mystery_box'" class="rounded-[8rpx] bg-purple-100 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-700 font-medium">
                 <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx]" />
                 神秘盲盒
+              </view>
+              <!-- 超时提示 -->
+              <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] rounded-[8rpx] bg-red-100 px-[12rpx] py-[4rpx] text-[20rpx] text-red-700 font-medium">
+                <text class="i-material-symbols-warning mr-[4rpx] text-[16rpx]" />
+                已超时
               </view>
             </view>
             <text class="text-[22rpx] text-gray-500">
@@ -299,7 +294,7 @@ onShow(() => {
               </text>
             </view>
             <text class="mb-[16rpx] block text-[24rpx] text-gray-700">
-              {{ order.rentPeriod.startTime }} - {{ order.rentPeriod.endTime }}
+              {{ order.rentPeriod?.startTime }} - {{ order.rentPeriod?.endTime }}
             </text>
 
             <view class="flex items-center">
@@ -311,28 +306,60 @@ onShow(() => {
             <text class="mt-[8rpx] block text-[24rpx] text-gray-700">
               {{ order.location }}
             </text>
+
+            <!-- 取车截止时间 -->
+            <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status)" class="mt-[16rpx]">
+              <view class="flex items-center">
+                <text class="i-material-symbols-alarm mr-[12rpx] text-[24rpx] text-orange-600" />
+                <text class="text-[26rpx] text-black font-medium">
+                  取车截止时间
+                </text>
+              </view>
+              <text class="mt-[8rpx] block text-[24rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-600 font-medium' : 'text-gray-700'">
+                {{ formatTime(order.pickupDeadline) }}
+                <text v-if="isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] text-[20rpx] text-red-500">
+                  （已超时）
+                </text>
+              </text>
+            </view>
           </view>
 
-          <!-- 取车码区域 (仅进行中订单显示) -->
-          <view v-if="order.status === 'ongoing' && order.pickupCode" class="mb-[24rpx] rounded-[16rpx] bg-purple-50 p-[24rpx]">
+          <!-- 超时警告 -->
+          <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="mb-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
+            <view class="flex items-center">
+              <text class="i-material-symbols-warning mr-[12rpx] text-[24rpx] text-red-600" />
+              <text class="text-[24rpx] text-red-800 font-medium">
+                {{ (order.originalStatus || order.status) === 'paid' ? '取车时间已超时，请尽快联系客服' : '订单已超时，请尽快还车' }}
+              </text>
+            </view>
+          </view>
+
+          <!-- 取车码区域 -->
+          <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status) && order.pickupCode" class="mb-[24rpx] rounded-[16rpx] bg-purple-50 p-[20rpx]">
             <view class="flex items-center justify-between">
-              <view>
-                <view class="mb-[12rpx] flex items-center">
-                  <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[24rpx] text-purple-600" />
-                  <text class="text-[26rpx] text-purple-800 font-medium">
+              <view class="flex-1">
+                <view class="mb-[8rpx] flex items-center">
+                  <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[20rpx] text-purple-600" />
+                  <text class="text-[24rpx] text-purple-800 font-medium">
                     取车码
                   </text>
+                  <text v-if="(order.originalStatus || order.status) === 'picked'" class="ml-[8rpx] rounded-[6rpx] bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">
+                    已使用
+                  </text>
                 </view>
-                <text class="text-[56rpx] text-purple-600 font-bold tracking-wider">
+                <text class="text-[40rpx] text-purple-600 font-bold tracking-wider">
                   {{ order.pickupCode }}
                 </text>
               </view>
-              <view v-if="order.remainingTime" class="text-right">
-                <text class="mb-[8rpx] block text-[22rpx] text-gray-600">
-                  剩余时间
+              <view v-if="order.pickupDeadline" class="text-right">
+                <text class="mb-[4rpx] block text-[20rpx] text-gray-500">
+                  {{ (order.originalStatus || order.status) === 'paid' ? '取车截止' : '截止时间' }}
                 </text>
-                <text class="text-[28rpx] text-red-500 font-bold font-mono">
-                  {{ order.remainingTime }}
+                <text class="text-[22rpx] font-medium" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
+                  {{ formatTime(order.pickupDeadline) }}
+                </text>
+                <text v-if="isPickupExpired(order.pickupDeadline)" class="mt-[2rpx] block text-[16rpx] text-red-500">
+                  已超时
                 </text>
               </view>
             </view>

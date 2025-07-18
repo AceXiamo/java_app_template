@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import BottomDrawer from '@/components/BottomDrawer.vue'
+// import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import { getVehicleDetail, getVehicleReviews } from '@/api/vehicle'
+import { getSimilarVehicles, getVehicleDetail, getVehicleReviews } from '@/api/vehicle'
 import type { VehicleDetail } from '@/api/vehicle'
 import { getJumpData, setJumpData } from '@/utils/index'
 import PageVehicleHead from '@/components/page/vehicle/Head.vue'
@@ -37,7 +37,8 @@ const timeForm = ref({
 
 // 评价列表
 const reviews = ref<any[]>([])
-const showAllReviews = ref(false)
+const reviewsTotal = ref(0)
+// const showAllReviews = ref(false)
 
 // 相似车辆
 const similarVehicles = ref<any[]>([])
@@ -151,33 +152,29 @@ async function loadVehicleDetail() {
 
 // 加载相似车辆
 async function loadSimilarVehicles() {
-  try {
-    // TODO: 调用相似车辆API
-    // const response = await getSimilarVehicles(vehicleId.value)
-    // similarVehicles.value = response.data
+  if (!vehicleId.value) {
+    return
+  }
 
-    // 模拟数据
-    similarVehicles.value = [
-      {
-        vehicleId: 2,
-        name: '特斯拉 Model Y',
-        imageUrl: 'https://images.unsplash.com/photo-1561580125-028ee3bd62eb',
-        dailyPrice: 450,
-        rating: 4.8,
-        distance: 1.5,
-      },
-      {
-        vehicleId: 3,
-        name: '蔚来 ES6',
-        imageUrl: 'https://images.unsplash.com/photo-1502877338535-766e1452684a',
-        dailyPrice: 420,
-        rating: 4.7,
-        distance: 3.2,
-      },
-    ]
+  try {
+    const response = await getSimilarVehicles(Number(vehicleId.value), 2)
+    if (response.code === 200 && response.data) {
+      similarVehicles.value = response.data.map((vehicle: any) => ({
+        vehicleId: vehicle.vehicleId,
+        name: vehicle.name,
+        imageUrl: vehicle.imageUrl,
+        dailyPrice: vehicle.dailyPrice,
+        rating: vehicle.rating,
+        distance: vehicle.distance,
+      }))
+    }
+    else {
+      similarVehicles.value = []
+    }
   }
   catch (error) {
     console.error('加载相似车辆失败:', error)
+    similarVehicles.value = []
   }
 }
 
@@ -188,38 +185,27 @@ async function loadReviews() {
   }
 
   try {
-    const response = await getVehicleReviews(Number(vehicleId.value))
+    const response = await getVehicleReviews(Number(vehicleId.value), 1, 5)
 
     if (response.code === 200 && response.data) {
-      reviews.value = response.data
+      if (Array.isArray(response.data)) {
+        reviews.value = response.data
+        reviewsTotal.value = response.data.length
+      }
+      else if (response.data && typeof response.data === 'object' && 'records' in response.data) {
+        reviews.value = (response.data as any).records || []
+        reviewsTotal.value = (response.data as any).total || 0
+      }
     }
     else {
-      throw new Error(response.msg || '获取评价失败')
+      reviews.value = []
+      reviewsTotal.value = 0
     }
   }
   catch (error) {
     console.error('加载评价失败:', error)
-    // 如果API调用失败，使用占位数据以便开发调试
-    reviews.value = [
-      {
-        reviewId: 1,
-        userName: '张**',
-        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
-        rating: 5,
-        content: '车况很好，车主很好沟通，推荐！',
-        createTime: '2024-07-01',
-        images: [],
-      },
-      {
-        reviewId: 2,
-        userName: '王**',
-        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-        rating: 4,
-        content: '电车很安静，续航也够用，就是充电有点麻烦。',
-        createTime: '2024-06-28',
-        images: [],
-      },
-    ]
+    reviews.value = []
+    reviewsTotal.value = 0
   }
 }
 
@@ -326,6 +312,59 @@ function bookNow() {
 function viewSimilarVehicle(vehicle: any) {
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicle.vehicleId}`,
+  })
+}
+
+// 查看全部评价
+function viewAllReviews() {
+  uni.navigateTo({
+    url: `/pages/vehicle/reviews?vehicleId=${vehicleId.value}&vehicleName=${encodeURIComponent(vehicleDetail.value?.name || '')}`,
+  })
+}
+
+// 格式化时间
+function formatDate(dateString: string) {
+  const date = new Date(dateString)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+}
+
+// 打开地图导航
+function openNavigation() {
+  if (!vehicleDetail.value?.location) {
+    uni.showToast({
+      title: '位置信息不可用',
+      icon: 'none',
+    })
+    return
+  }
+
+  const location = vehicleDetail.value.location
+  // 检查是否有经纬度信息
+  if (!location.latitude || !location.longitude) {
+    uni.showToast({
+      title: '位置信息不完整',
+      icon: 'none',
+    })
+    return
+  }
+
+  // 使用 uni.openLocation 打开地图导航
+  uni.openLocation({
+    latitude: location.latitude,
+    longitude: location.longitude,
+    name: vehicleDetail.value.name,
+    address: location.address,
+    scale: 18,
+    success: () => {
+      console.log('打开地图成功')
+    },
+    fail: (error) => {
+      console.error('打开地图失败:', error)
+      uni.showToast({
+        title: '打开地图失败',
+        icon: 'none',
+      })
+    },
   })
 }
 
@@ -512,7 +551,7 @@ function handleDateRangeConfirm(data: {
               </text>
             </view>
 
-            <view class="flex items-center justify-between">
+            <view class="flex items-center justify-between" @tap="openNavigation">
               <view class="flex-1">
                 <text class="block text-[26rpx] text-black">
                   {{ vehicleDetail.location.address }}
@@ -556,32 +595,33 @@ function handleDateRangeConfirm(data: {
                   用户评价
                 </text>
                 <text class="ml-[12rpx] text-[24rpx] text-gray-600">
-                  ({{ vehicleDetail.ratingCount }})
+                  ({{ reviewsTotal }})
                 </text>
               </view>
               <text
-                v-if="reviews.length > 2"
+                v-if="reviewsTotal > 5"
                 class="text-[24rpx] text-purple-600"
-                @tap="showAllReviews = true"
+                @tap="viewAllReviews"
               >
                 查看全部
               </text>
             </view>
 
-            <view class="space-y-[24rpx]">
+            <!-- 评价列表 -->
+            <view v-if="reviews.length > 0" class="space-y-[24rpx]">
               <view
-                v-for="review in reviews.slice(0, 2)"
+                v-for="review in reviews.slice(0, 5)"
                 :key="review.reviewId"
                 class="border-b border-gray-100 pb-[24rpx] last:border-b-0 last:pb-0"
               >
                 <view class="mb-[12rpx] flex items-center">
                   <image
-                    :src="review.userAvatar"
+                    :src="review.userAvatar || '/static/images/default-avatar.png'"
                     class="h-[60rpx] w-[60rpx] rounded-full"
                   />
                   <view class="ml-[16rpx] flex-1">
                     <text class="block text-[24rpx] text-black font-medium">
-                      {{ review.userName }}
+                      {{ review.userName || '匿名用户' }}
                     </text>
                     <view class="mt-[4rpx] flex items-center">
                       <view class="mr-[12rpx] flex">
@@ -593,7 +633,7 @@ function handleDateRangeConfirm(data: {
                         />
                       </view>
                       <text class="text-[20rpx] text-gray-500">
-                        {{ review.createTime }}
+                        {{ formatDate(review.createTime) }}
                       </text>
                     </view>
                   </view>
@@ -602,6 +642,16 @@ function handleDateRangeConfirm(data: {
                   {{ review.content }}
                 </text>
               </view>
+            </view>
+            <!-- 暂无评价状态 -->
+            <view v-else class="flex flex-col items-center py-[60rpx]">
+              <text class="i-lets-icons-chat-plus-duotone text-[80rpx] text-slate-400" />
+              <text class="mt-[16rpx] text-[24rpx] text-gray-500">
+                暂无评价
+              </text>
+              <text class="mt-[8rpx] text-[20rpx] text-gray-400">
+                快来成为第一个评价的用户吧~
+              </text>
             </view>
           </view>
 

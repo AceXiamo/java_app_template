@@ -60,6 +60,7 @@ export interface OrderData {
   id: string
   orderNumber: string
   status: string
+  originalStatus?: string  // 原始数据库状态，用于取车码展示等逻辑
   statusText: string
   statusColor: string
   orderType?: string
@@ -69,6 +70,7 @@ export interface OrderData {
   location: string
   amount: number
   pickupCode?: string
+  pickupDeadline?: string
   remainingTime?: string
   cancelInfo?: CancelInfo
   actions: OrderAction[]
@@ -245,6 +247,53 @@ export interface OrderDetail {
   finalAmount: number
   discountAmount: number
   deliveryFee: number
+
+  // 时间信息
+  actualStartTime?: string
+  actualEndTime?: string
+  pickupDeadline?: string
+  cancelTime?: string
+
+  // 费用信息
+  dailyPrice?: number
+  monthlyPrice?: number
+  totalAmount?: number
+  latePickupFee?: number
+  overtimeHours?: number
+  overtimeFee?: number
+  cancelFee?: number
+  deliveryServicesFee?: number
+
+  // 退款信息
+  refundNo?: string
+  refundAmount?: number
+  refundStatus?: string
+  refundTime?: string
+  refundReason?: string
+
+  // 取消信息
+  cancelReason?: string
+
+  // 位置信息
+  pickupLocation?: string
+  returnLocation?: string
+  deliveryDistance?: number
+  deliveryLatitude?: number
+  deliveryLongitude?: number
+  deliveryServices?: string
+
+  // 验证信息
+  pickupVerificationPhotos?: string
+  returnVerificationPhotos?: string
+
+  // 争议信息
+  disputeStatus?: string
+  disputeReason?: string
+
+  // 其他信息
+  couponId?: number
+  isRenewable?: boolean
+
   vehicle: {
     id: number
     name: string
@@ -276,6 +325,7 @@ export interface OrderDetail {
   pickupMethod: 'self' | 'delivery'
   deliveryAddress: string
   pickupCode: string
+  returnCode?: string
   remainingTime: string
   paymentInfo: {
     payTime: string

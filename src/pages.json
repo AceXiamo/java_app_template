@@ -120,6 +120,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/vehicle/reviews",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/vehicle-affiliation-records/index",
       "type": "page",
       "layout": "home"

@@ -202,3 +202,13 @@ export function getVehicleReviews(vehicleId: number, pageNum: number = 1, pageSi
     },
   })
 }
+
+// 获取相似车辆推荐
+export function getSimilarVehicles(vehicleId: number, limit: number = 2): Promise<BaseRes<Vehicle[]>> {
+  return request.get({
+    url: `${host}/api/vehicles/${vehicleId}/similar`,
+    params: {
+      limit,
+    },
+  })
+}

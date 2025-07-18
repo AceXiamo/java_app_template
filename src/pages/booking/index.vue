@@ -266,7 +266,7 @@ async function loadVehicleInfo() {
 
     const response = await getVehicleDetail(vehicleId)
     if (response.code === 200 && response.data) {
-      vehicleInfo.value = response.data
+      vehicleInfo.value = response.data as Vehicle
     }
     else {
       throw new Error(response.msg || '获取车辆信息失败')
@@ -593,7 +593,7 @@ async function submitBooking() {
         // 跳转到订单详情页面
         setTimeout(() => {
           uni.redirectTo({
-            url: `/pages/order/detail?orderId=${orderId}`,
+            url: `/pages/order/detail?orderId=${orderNo}`,
           })
         }, 1500)
       }

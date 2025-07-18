@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import HeadBar from '@/components/HeadBar.vue'
 import { type OrderDetail, cancelOrder, getOrderDetail } from '@/api/order'
@@ -62,6 +62,17 @@ const orderDetail = ref<OrderDetail>({
 const loading = ref(false)
 const toastRef = ref()
 
+// 倒计时相关状态
+const countdown = ref({
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+  isExpired: false,
+  totalSeconds: 0,
+})
+const countdownTimer = ref<NodeJS.Timeout | null>(null)
+
 // 判断是否为盲盒订单
 const isMysteryBoxOrder = computed(() => {
   return pageParams.value.type === 'mystery_box' || orderDetail.value.orderType === 'mystery_box'
@@ -69,10 +80,11 @@ const isMysteryBoxOrder = computed(() => {
 
 // 判断盲盒是否已揭晓（根据取车码核验状态）
 const isMysteryBoxRevealed = computed(() => {
-  if (!isMysteryBoxOrder.value) return false
+  if (!isMysteryBoxOrder.value)
+    return false
   // 如果取车码已核验或订单状态为 picked/returned/completed，则认为已揭晓
-  return orderDetail.value.mysteryBox?.pickupCodeVerified === true || 
-         ['picked', 'returned', 'completed'].includes(orderDetail.value.status)
+  return orderDetail.value.mysteryBox?.pickupCodeVerified === true
+    || ['picked', 'returned', 'completed'].includes(orderDetail.value.status)
 })
 
 // 页面加载
@@ -94,10 +106,17 @@ async function loadOrderDetail() {
       throw new Error('无效的订单ID')
     }
 
+    console.log(orderId)
+    console.log(pageParams.value)
     const response = await getOrderDetail(orderId)
 
     if (response.code === 200 && response.data) {
       orderDetail.value = response.data
+
+      // 如果是已支付状态且有取车截止时间，启动倒计时
+      if (['paid', 'picked'].includes(orderDetail.value.status) && orderDetail.value.pickupDeadline) {
+        startCountdown()
+      }
     }
     else {
       throw new Error(response.message || '获取订单详情失败')
@@ -106,51 +125,6 @@ async function loadOrderDetail() {
   catch (error) {
     console.error('加载订单详情失败:', error)
     toastRef.value?.error('加载失败')
-
-    // 如果API失败，显示模拟数据用于开发测试
-    if (process.env.NODE_ENV === 'development') {
-      orderDetail.value = {
-        id: pageParams.value.orderId,
-        orderNumber: pageParams.value.orderId,
-        status: 'ongoing',
-        statusText: '进行中',
-        amount: 598,
-        finalAmount: 568,
-        discountAmount: 30,
-        deliveryFee: 0,
-        vehicle: {
-          id: 1,
-          name: '特斯拉 Model 3',
-          brand: '特斯拉',
-          model: 'Model 3',
-          licensePlate: '沪A·88888',
-          imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-          seats: 5,
-          energyType: 'electric',
-          carType: '轿车',
-          rating: 4.9,
-          ratingCount: 256,
-        },
-        rentPeriod: {
-          startTime: '2025-07-12 09:00',
-          endTime: '2025-07-13 18:00',
-          days: 1,
-        },
-        location: '上海市浦东新区陆家嘴环路1000号',
-        pickupMethod: 'self',
-        deliveryAddress: '',
-        pickupCode: '8888',
-        remainingTime: '23:45:32',
-        paymentInfo: {
-          payTime: '2025-07-12 08:30:15',
-          payMethod: '微信支付',
-          transactionId: '4200001234567890123456789',
-        },
-        createTime: '2025-07-12 08:30:00',
-        updateTime: '2025-07-12 08:30:15',
-        remark: '',
-      }
-    }
   }
   finally {
     loading.value = false
@@ -256,16 +230,143 @@ function formatTime(timeStr: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
+// 计算倒计时
+function calculateCountdown() {
+  if (!orderDetail.value.pickupDeadline) {
+    countdown.value.isExpired = true
+    return
+  }
+
+  const now = new Date().getTime()
+  const deadline = new Date(orderDetail.value.pickupDeadline).getTime()
+  const diff = deadline - now
+
+  if (diff <= 0) {
+    countdown.value = {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isExpired: true,
+      totalSeconds: 0,
+    }
+    return
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+  countdown.value = {
+    days,
+    hours,
+    minutes,
+    seconds,
+    isExpired: false,
+    totalSeconds: Math.floor(diff / 1000),
+  }
+}
+
+// 启动倒计时
+function startCountdown() {
+  // 清除之前的定时器
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value)
+  }
+
+  // 立即计算一次
+  calculateCountdown()
+
+  // 如果已经过期，不启动定时器
+  if (countdown.value.isExpired) {
+    return
+  }
+
+  // 每秒更新一次
+  countdownTimer.value = setInterval(() => {
+    calculateCountdown()
+
+    // 如果倒计时结束，清除定时器
+    if (countdown.value.isExpired) {
+      clearInterval(countdownTimer.value!)
+      countdownTimer.value = null
+    }
+  }, 1000)
+}
+
+// 停止倒计时
+function stopCountdown() {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value)
+    countdownTimer.value = null
+  }
+}
+
+// 格式化倒计时显示
+function formatCountdown() {
+  if (countdown.value.isExpired) {
+    return '已超时'
+  }
+
+  const { days, hours, minutes, seconds } = countdown.value
+
+  if (days > 0) {
+    return `${days}天${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
+
+// 获取倒计时颜色
+function getCountdownColor() {
+  if (countdown.value.isExpired) {
+    return 'text-red-500'
+  }
+
+  const totalHours = countdown.value.totalSeconds / 3600
+
+  if (totalHours <= 1) {
+    return 'text-red-500' // 1小时内，红色
+  }
+  else if (totalHours <= 6) {
+    return 'text-orange-500' // 6小时内，橙色
+  }
+  else {
+    return 'text-green-500' // 超过6小时，绿色
+  }
+}
+
 // 获取状态颜色
 function getStatusColor(status: string) {
   const colorMap: Record<string, string> = {
     pending: 'bg-orange-50 text-orange-600',
-    ongoing: 'bg-green-50 text-green-600',
-    completed: 'bg-gray-50 text-gray-600',
+    paid: 'bg-blue-50 text-blue-600',
+    picked: 'bg-green-50 text-green-600',
+    returned: 'bg-purple-50 text-purple-600',
     cancelled: 'bg-red-50 text-red-600',
+    completed: 'bg-gray-50 text-gray-600',
   }
   return colorMap[status] || 'bg-gray-50 text-gray-600'
 }
+
+// 获取状态文本
+function getStatusText(status: string) {
+  const statusMap: Record<string, string> = {
+    pending: '待支付',
+    paid: '已支付',
+    picked: '已取车',
+    returned: '已还车',
+    cancelled: '已取消',
+    completed: '已完成',
+  }
+  return statusMap[status] || status
+}
+
+// 页面销毁时清理定时器
+onUnmounted(() => {
+  stopCountdown()
+})
 </script>
 
 <template>
@@ -302,15 +403,15 @@ function getStatusColor(status: string) {
               class="rounded-[8rpx] px-[12rpx] py-[4rpx] text-[22rpx] font-medium"
               :class="getStatusColor(orderDetail.status)"
             >
-              {{ orderDetail.statusText }}
+              {{ getStatusText(orderDetail.status) }}
             </view>
             <text class="text-[22rpx] text-gray-500">
               {{ orderDetail.orderNumber }}
             </text>
           </view>
 
-          <!-- 取车码 (进行中订单显示) -->
-          <view v-if="orderDetail.status === 'ongoing' && orderDetail.pickupCode" class="rounded-[16rpx] bg-purple-50 p-[24rpx] mt-[24rpx]">
+          <!-- 取车码显示 -->
+          <view v-if="orderDetail.pickupCode && ['paid', 'picked', 'returned', 'completed'].includes(orderDetail.status)" class="mt-[24rpx] rounded-[16rpx] bg-purple-50 p-[24rpx]">
             <view class="flex items-center justify-between">
               <view>
                 <view class="mb-[12rpx] flex items-center">
@@ -318,19 +419,48 @@ function getStatusColor(status: string) {
                   <text class="text-[26rpx] text-purple-800 font-medium">
                     取车码
                   </text>
+                  <text v-if="orderDetail.status === 'picked'" class="ml-[8rpx] rounded-[6rpx] bg-green-100 px-[8rpx] py-[2rpx] text-[20rpx] text-green-600">
+                    已使用
+                  </text>
                 </view>
                 <text class="text-[56rpx] text-purple-600 font-bold tracking-wider">
                   {{ orderDetail.pickupCode }}
                 </text>
               </view>
-              <view v-if="orderDetail.remainingTime" class="text-right">
+              <view v-if="orderDetail.pickupDeadline && ['paid', 'picked'].includes(orderDetail.status)" class="text-right">
                 <text class="mb-[8rpx] block text-[22rpx] text-gray-600">
-                  剩余时间
+                  {{ orderDetail.status === 'paid' ? '取车截止' : '剩余时间' }}
                 </text>
-                <text class="text-[28rpx] text-red-500 font-bold font-mono">
-                  {{ orderDetail.remainingTime }}
+                <text class="text-[28rpx] font-bold font-mono" :class="getCountdownColor()">
+                  {{ formatCountdown() }}
+                </text>
+                <text v-if="!countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-gray-500">
+                  {{ formatTime(orderDetail.pickupDeadline) }}
+                </text>
+                <text v-if="countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-red-500">
+                  已超过截止时间
                 </text>
               </view>
+            </view>
+          </view>
+
+          <!-- 待支付提示 -->
+          <view v-if="orderDetail.status === 'pending'" class="mt-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
+            <view class="flex items-center">
+              <text class="i-material-symbols-schedule mr-[8rpx] text-[24rpx] text-orange-600" />
+              <text class="text-[26rpx] text-orange-800 font-medium">
+                请尽快完成支付，支付后即可查看取车码
+              </text>
+            </view>
+          </view>
+
+          <!-- 取车超时警告 -->
+          <view v-if="['paid', 'picked'].includes(orderDetail.status) && countdown.isExpired" class="mt-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
+            <view class="flex items-center">
+              <text class="i-material-symbols-warning mr-[8rpx] text-[24rpx] text-red-600" />
+              <text class="text-[26rpx] text-red-800 font-medium">
+                {{ orderDetail.status === 'paid' ? '取车时间已超时，请尽快联系客服' : '订单已超时，请尽快还车' }}
+              </text>
             </view>
           </view>
         </view>
@@ -347,24 +477,30 @@ function getStatusColor(status: string) {
           <!-- 盲盒未揭晓状态 -->
           <view v-if="isMysteryBoxOrder && !isMysteryBoxRevealed" class="relative h-[200rpx] flex items-center justify-center">
             <!-- 模糊背景 -->
-            <view class="absolute inset-0 rounded-[16rpx] bg-gradient-to-br from-purple-100 via-purple-200 to-pink-100 opacity-80">
-              <!-- 装饰图案（移除动画） -->
-              <view class="absolute top-[20rpx] left-[20rpx] h-[40rpx] w-[40rpx] rounded-full bg-purple-300 opacity-50" />
-              <view class="absolute top-[40rpx] right-[30rpx] h-[24rpx] w-[24rpx] rounded-full bg-pink-300 opacity-60" />
+            <view class="absolute inset-0 rounded-[16rpx] from-purple-100 via-purple-200 to-pink-100 bg-gradient-to-br opacity-80">
+              <!-- 装饰图案 -->
+              <view class="absolute left-[20rpx] top-[20rpx] h-[40rpx] w-[40rpx] rounded-full bg-purple-300 opacity-50" />
+              <view class="absolute right-[30rpx] top-[40rpx] h-[24rpx] w-[24rpx] rounded-full bg-pink-300 opacity-60" />
               <view class="absolute bottom-[30rpx] left-[40rpx] h-[32rpx] w-[32rpx] rounded-full bg-blue-300 opacity-50" />
               <view class="absolute bottom-[20rpx] right-[20rpx] h-[20rpx] w-[20rpx] rounded-full bg-yellow-300 opacity-60" />
             </view>
-            
+
             <!-- 中心内容 -->
             <view class="relative z-10 text-center">
-              <text class="i-material-symbols-card-giftcard text-[80rpx] text-purple-600 block mb-[16rpx]" />
-              <text class="text-[32rpx] text-purple-800 font-bold block mb-[8rpx]">惊喜盲盒</text>
+              <text class="i-material-symbols-card-giftcard mb-[16rpx] block text-[80rpx] text-purple-600" />
+              <text class="mb-[8rpx] block text-[32rpx] text-purple-800 font-bold">
+                惊喜盲盒
+              </text>
               <text class="text-[24rpx] text-purple-600">
-                {{ orderDetail.status === 'pending' ? '支付后可查看取车码' : '取车时揭晓' }}
+                {{
+                  orderDetail.status === 'pending' ? '支付后可查看取车码'
+                  : orderDetail.status === 'paid' ? '已支付，取车时揭晓'
+                    : '取车时揭晓'
+                }}
               </text>
               <!-- 显示盲盒偏好 -->
               <view v-if="orderDetail.mysteryBox" class="mt-[16rpx]">
-                <text class="text-[22rpx] text-purple-500 block">
+                <text class="block text-[22rpx] text-purple-500">
                   {{ orderDetail.mysteryBox.energyTypeName }} · {{ orderDetail.mysteryBox.carTypeName }}
                 </text>
               </view>
@@ -381,7 +517,7 @@ function getStatusColor(status: string) {
                 mode="aspectFill"
                 class="h-full w-full rounded-[12rpx]"
               />
-              <view v-else class="h-full w-full rounded-[12rpx] bg-gray-100 flex items-center justify-center">
+              <view v-else class="h-full w-full flex items-center justify-center rounded-[12rpx] bg-gray-100">
                 <text class="i-material-symbols-directions-car text-[48rpx] text-gray-400" />
               </view>
             </view>
@@ -404,8 +540,11 @@ function getStatusColor(status: string) {
               </view>
               <!-- 盲盒揭晓提示 -->
               <view v-if="isMysteryBoxOrder && isMysteryBoxRevealed" class="mt-[8rpx]">
-                <text class="text-[20rpx] text-green-600 bg-green-50 px-[8rpx] py-[4rpx] rounded-[8rpx]">
+                <text class="rounded-[8rpx] bg-green-50 px-[8rpx] py-[4rpx] text-[20rpx] text-green-600">
                   🎉 盲盒已揭晓
+                </text>
+                <text v-if="orderDetail.mysteryBox?.revealMessage" class="ml-[8rpx] text-[20rpx] text-purple-600">
+                  {{ orderDetail.mysteryBox.revealMessage }}
                 </text>
               </view>
             </view>
@@ -422,14 +561,49 @@ function getStatusColor(status: string) {
           </view>
 
           <view class="space-y-[16rpx]">
+            <!-- 计划时间 -->
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
-                用车时间
+                计划用车时间
               </text>
               <text class="text-[24rpx] text-black">
                 {{ formatTime(orderDetail.rentPeriod.startTime) }} - {{ formatTime(orderDetail.rentPeriod.endTime) }}
               </text>
             </view>
+
+            <!-- 实际时间 -->
+            <view v-if="orderDetail.actualStartTime" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                实际开始时间
+              </text>
+              <text class="text-[24rpx] text-green-600">
+                {{ formatTime(orderDetail.actualStartTime) }}
+              </text>
+            </view>
+            <view v-if="orderDetail.actualEndTime" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                实际结束时间
+              </text>
+              <text class="text-[24rpx] text-green-600">
+                {{ formatTime(orderDetail.actualEndTime) }}
+              </text>
+            </view>
+
+            <!-- 取车截止时间 -->
+            <view v-if="orderDetail.pickupDeadline" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                取车截止时间
+              </text>
+              <view class="text-right">
+                <text class="text-[24rpx] text-orange-600">
+                  {{ formatTime(orderDetail.pickupDeadline) }}
+                </text>
+                <text v-if="['paid', 'picked'].includes(orderDetail.status)" class="block text-[20rpx] font-mono" :class="getCountdownColor()">
+                  {{ formatCountdown() }}
+                </text>
+              </view>
+            </view>
+
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 租赁天数
@@ -438,6 +612,8 @@ function getStatusColor(status: string) {
                 {{ orderDetail.rentPeriod.days }}天
               </text>
             </view>
+
+            <!-- 取车方式 -->
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 取车方式
@@ -446,12 +622,54 @@ function getStatusColor(status: string) {
                 {{ orderDetail.pickupMethod === 'self' ? '用户自取' : '平台送车' }}
               </text>
             </view>
+
+            <!-- 取车地点 -->
             <view class="flex items-start justify-between">
               <text class="text-[24rpx] text-gray-600">
                 取车地点
               </text>
               <text class="max-w-[400rpx] text-right text-[24rpx] text-black">
-                {{ orderDetail.deliveryAddress || orderDetail.location }}
+                {{ orderDetail.pickupLocation || orderDetail.deliveryAddress || orderDetail.location }}
+              </text>
+            </view>
+
+            <!-- 还车地点 -->
+            <view v-if="orderDetail.returnLocation" class="flex items-start justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                还车地点
+              </text>
+              <text class="max-w-[400rpx] text-right text-[24rpx] text-black">
+                {{ orderDetail.returnLocation }}
+              </text>
+            </view>
+
+            <!-- 送车距离 -->
+            <view v-if="orderDetail.deliveryDistance" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                送车距离
+              </text>
+              <text class="text-[24rpx] text-black">
+                {{ orderDetail.deliveryDistance }}公里
+              </text>
+            </view>
+
+            <!-- 还车码 -->
+            <view v-if="orderDetail.returnCode" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                还车码
+              </text>
+              <text class="text-[24rpx] text-purple-600 font-mono">
+                {{ orderDetail.returnCode }}
+              </text>
+            </view>
+
+            <!-- 是否可续租 -->
+            <view v-if="orderDetail.orderType === 'monthly' && orderDetail.isRenewable !== undefined" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                是否可续租
+              </text>
+              <text class="text-[24rpx]" :class="orderDetail.isRenewable ? 'text-green-600' : 'text-red-600'">
+                {{ orderDetail.isRenewable ? '是' : '否' }}
               </text>
             </view>
           </view>
@@ -467,14 +685,33 @@ function getStatusColor(status: string) {
           </view>
 
           <view class="space-y-[16rpx]">
+            <!-- 基础费用 -->
+            <view v-if="orderDetail.dailyPrice" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                日租价格
+              </text>
+              <text class="text-[24rpx] text-black">
+                ¥{{ orderDetail.dailyPrice }}
+              </text>
+            </view>
+            <view v-if="orderDetail.monthlyPrice" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                月租价格
+              </text>
+              <text class="text-[24rpx] text-black">
+                ¥{{ orderDetail.monthlyPrice }}
+              </text>
+            </view>
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 租金费用
               </text>
               <text class="text-[24rpx] text-black">
-                ¥{{ orderDetail.amount }}
+                ¥{{ orderDetail.totalAmount || orderDetail.amount }}
               </text>
             </view>
+
+            <!-- 额外费用 -->
             <view v-if="orderDetail.deliveryFee > 0" class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 送车服务费
@@ -483,6 +720,40 @@ function getStatusColor(status: string) {
                 ¥{{ orderDetail.deliveryFee }}
               </text>
             </view>
+            <view v-if="orderDetail.deliveryServicesFee && orderDetail.deliveryServicesFee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                交付服务费
+              </text>
+              <text class="text-[24rpx] text-black">
+                ¥{{ orderDetail.deliveryServicesFee }}
+              </text>
+            </view>
+            <view v-if="orderDetail.latePickupFee && orderDetail.latePickupFee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                延迟取车费
+              </text>
+              <text class="text-[24rpx] text-red-600">
+                ¥{{ orderDetail.latePickupFee }}
+              </text>
+            </view>
+            <view v-if="orderDetail.overtimeFee && orderDetail.overtimeFee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                超时费用 ({{ orderDetail.overtimeHours }}小时)
+              </text>
+              <text class="text-[24rpx] text-red-600">
+                ¥{{ orderDetail.overtimeFee }}
+              </text>
+            </view>
+            <view v-if="orderDetail.cancelFee && orderDetail.cancelFee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                取消手续费
+              </text>
+              <text class="text-[24rpx] text-red-600">
+                ¥{{ orderDetail.cancelFee }}
+              </text>
+            </view>
+
+            <!-- 优惠 -->
             <view v-if="orderDetail.discountAmount > 0" class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 优惠折扣
@@ -491,6 +762,8 @@ function getStatusColor(status: string) {
                 -¥{{ orderDetail.discountAmount }}
               </text>
             </view>
+
+            <!-- 实付金额 -->
             <view class="border-t border-gray-100 pt-[16rpx]">
               <view class="flex items-center justify-between">
                 <text class="text-[26rpx] text-black font-semibold">
@@ -541,6 +814,135 @@ function getStatusColor(status: string) {
           </view>
         </view>
 
+        <!-- 取消信息 -->
+        <view v-if="orderDetail.status === 'cancelled' && (orderDetail.cancelReason || orderDetail.cancelTime)" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text class="i-material-symbols-cancel mr-[12rpx] text-[24rpx] text-red-600" />
+            <text class="text-[28rpx] text-black font-semibold">
+              取消信息
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view v-if="orderDetail.cancelReason" class="flex items-start justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                取消原因
+              </text>
+              <text class="max-w-[400rpx] text-right text-[24rpx] text-black">
+                {{ orderDetail.cancelReason }}
+              </text>
+            </view>
+            <view v-if="orderDetail.cancelTime" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                取消时间
+              </text>
+              <text class="text-[24rpx] text-red-600">
+                {{ orderDetail.cancelTime }}
+              </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 退款信息 -->
+        <view v-if="orderDetail.refundAmount && orderDetail.refundAmount > 0" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text class="i-material-symbols-payments mr-[12rpx] text-[24rpx] text-green-600" />
+            <text class="text-[28rpx] text-black font-semibold">
+              退款信息
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                退款金额
+              </text>
+              <text class="text-[24rpx] text-green-600 font-semibold">
+                ¥{{ orderDetail.refundAmount }}
+              </text>
+            </view>
+            <view v-if="orderDetail.refundStatus" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                退款状态
+              </text>
+              <text
+                class="text-[24rpx]" :class="{
+                  'text-orange-600': orderDetail.refundStatus === 'processing',
+                  'text-green-600': orderDetail.refundStatus === 'success',
+                  'text-red-600': orderDetail.refundStatus === 'failed',
+                }"
+              >
+                {{
+                  orderDetail.refundStatus === 'processing' ? '处理中'
+                  : orderDetail.refundStatus === 'success' ? '退款成功'
+                    : orderDetail.refundStatus === 'failed' ? '退款失败' : orderDetail.refundStatus
+                }}
+              </text>
+            </view>
+            <view v-if="orderDetail.refundTime" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                退款时间
+              </text>
+              <text class="text-[24rpx] text-green-600">
+                {{ orderDetail.refundTime }}
+              </text>
+            </view>
+            <view v-if="orderDetail.refundReason" class="flex items-start justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                退款原因
+              </text>
+              <text class="max-w-[400rpx] text-right text-[24rpx] text-black">
+                {{ orderDetail.refundReason }}
+              </text>
+            </view>
+            <view v-if="orderDetail.refundNo" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                退款单号
+              </text>
+              <text class="text-[20rpx] text-gray-500">
+                {{ orderDetail.refundNo }}
+              </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 争议信息 -->
+        <view v-if="orderDetail.disputeStatus && orderDetail.disputeStatus !== 'none'" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text class="i-material-symbols-report mr-[12rpx] text-[24rpx] text-orange-600" />
+            <text class="text-[28rpx] text-black font-semibold">
+              争议信息
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                争议状态
+              </text>
+              <text
+                class="text-[24rpx]" :class="{
+                  'text-orange-600': orderDetail.disputeStatus === 'pending',
+                  'text-green-600': orderDetail.disputeStatus === 'resolved',
+                }"
+              >
+                {{
+                  orderDetail.disputeStatus === 'pending' ? '处理中'
+                  : orderDetail.disputeStatus === 'resolved' ? '已解决' : orderDetail.disputeStatus
+                }}
+              </text>
+            </view>
+            <view v-if="orderDetail.disputeReason" class="flex items-start justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                争议原因
+              </text>
+              <text class="max-w-[400rpx] text-right text-[24rpx] text-black">
+                {{ orderDetail.disputeReason }}
+              </text>
+            </view>
+          </view>
+        </view>
+
         <!-- 订单信息 -->
         <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
           <view class="mb-[24rpx] flex items-center">
@@ -551,6 +953,34 @@ function getStatusColor(status: string) {
           </view>
 
           <view class="space-y-[16rpx]">
+            <view class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                订单编号
+              </text>
+              <text class="text-[22rpx] text-black font-mono">
+                {{ orderDetail.orderNumber }}
+              </text>
+            </view>
+            <view class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                订单类型
+              </text>
+              <text class="text-[24rpx] text-black">
+                {{
+                  orderDetail.orderType === 'daily' ? '日租订单'
+                  : orderDetail.orderType === 'monthly' ? '月租订单'
+                    : orderDetail.orderType === 'mystery_box' ? '盲盒订单' : '普通订单'
+                }}
+              </text>
+            </view>
+            <view v-if="orderDetail.couponId" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                使用优惠券
+              </text>
+              <text class="text-[24rpx] text-green-600">
+                ID: {{ orderDetail.couponId }}
+              </text>
+            </view>
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 创建时间

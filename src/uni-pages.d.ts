@@ -28,6 +28,7 @@ interface NavigateToOptions {
        "/pages/shop/home" |
        "/pages/shop/order" |
        "/pages/vehicle/detail" |
+       "/pages/vehicle/reviews" |
        "/pages/vehicle-affiliation-records/index" |
        "/pages/vehicle-rental-request/index";
 }
