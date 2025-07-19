@@ -239,7 +239,7 @@ function handleConfirm() {
 
         <!-- 确认按钮 -->
         <view
-          class="w-full rounded-[16rpx] bg-purple-600 py-[20rpx] text-[32rpx] text-white font-medium shadow-sm text-center active:scale-[0.98] transition-transform"
+          class="w-full rounded-[16rpx] bg-purple-600 py-[20rpx] text-center text-[32rpx] text-white font-medium shadow-sm transition-transform active:scale-[0.98]"
           @tap="handleConfirm"
         >
           确认选择

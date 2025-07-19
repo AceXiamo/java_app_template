@@ -306,14 +306,16 @@ onMounted(() => {
         >
           <!-- 地点选择 -->
           <view class="mb-[48rpx] flex items-center justify-between" @tap="showAddressPicker">
-            <view class="flex items-center flex-1 min-w-0">
+            <view class="min-w-0 flex flex-1 items-center">
               <view i-material-symbols:location-on class="text-[36rpx] text-purple-600" />
-              <text class="ml-[16rpx] text-[36rpx] text-black font-medium truncate">
+              <text class="ml-[16rpx] truncate text-[36rpx] text-black font-medium">
                 {{ searchForm.address }}
               </text>
             </view>
             <view class="flex items-center text-[24rpx] text-gray-500">
-              <text class="mr-[8rpx]">选择地址</text>
+              <text class="mr-[8rpx]">
+                选择地址
+              </text>
               <view i-material-symbols:chevron-right class="text-[20rpx]" />
             </view>
           </view>

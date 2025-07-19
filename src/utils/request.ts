@@ -108,7 +108,7 @@ function callbackHandle({
 function handleUnauthorized(_obj: RequestOptions, method: string, resolve: (value: any) => void, reject: (reason: any) => void) {
   const userStore = useUserStore()
   logger.info('Token expired, attempting to re-login...')
-  
+
   // 尝试重新登录
   userStore.wxLogin()
     .then(() => {

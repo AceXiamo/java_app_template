@@ -50,21 +50,23 @@ function shareRanking() {
     <view class="flex items-center justify-between px-[40rpx] py-[16rpx]">
       <view class="flex items-center space-x-[24rpx]">
         <text
-          class="i-material-symbols-arrow-back-ios text-[24rpx] text-gray-700 cursor-pointer"
+          class="i-material-symbols-arrow-back-ios cursor-pointer text-[24rpx] text-gray-700"
           @tap="goBack"
         />
-        <text class="text-[28rpx] text-black font-semibold">用车榜单</text>
+        <text class="text-[28rpx] text-black font-semibold">
+          用车榜单
+        </text>
       </view>
       <view class="flex items-center space-x-[32rpx]">
         <text
-          class="i-material-symbols-refresh text-[24rpx] text-gray-700 cursor-pointer"
+          class="i-material-symbols-refresh cursor-pointer text-[24rpx] text-gray-700"
           @tap="refreshData"
         />
         <text
-          class="i-material-symbols-share text-[24rpx] text-gray-700 cursor-pointer"
+          class="i-material-symbols-share cursor-pointer text-[24rpx] text-gray-700"
           @tap="shareRanking"
         />
       </view>
     </view>
   </HeadBar>
-</template> 
+</template>

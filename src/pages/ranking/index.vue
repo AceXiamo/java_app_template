@@ -176,21 +176,25 @@ onUnmounted(() => {
           <view
             v-for="vehicle in dailyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="bg-white rounded-[16rpx] p-[20rpx] transition-all duration-150 active:scale-[0.98]"
+            class="rounded-[16rpx] bg-white p-[20rpx] transition-all duration-150 active:scale-[0.98]"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
             <view class="flex items-center space-x-[16rpx]">
               <!-- 排名 -->
-              <view class="w-[44rpx] h-[44rpx] rounded-full flex items-center justify-center flex-shrink-0"
-                    :class="getRankStyle(vehicle.rank)">
-                <text class="text-[20rpx] font-bold">{{ vehicle.rank }}</text>
+              <view
+                class="h-[44rpx] w-[44rpx] flex flex-shrink-0 items-center justify-center rounded-full"
+                :class="getRankStyle(vehicle.rank)"
+              >
+                <text class="text-[20rpx] font-bold">
+                  {{ vehicle.rank }}
+                </text>
               </view>
 
               <!-- 车辆图片 -->
-              <view class="w-[80rpx] h-[60rpx] rounded-[8rpx] overflow-hidden bg-gray-100 flex-shrink-0">
+              <view class="h-[60rpx] w-[80rpx] flex-shrink-0 overflow-hidden rounded-[8rpx] bg-gray-100">
                 <image
                   :src="vehicle.imageUrl"
-                  class="w-full h-full object-cover"
+                  class="h-full w-full object-cover"
                   mode="aspectFill"
                   lazy-load
                   :alt="vehicle.name"
@@ -198,20 +202,22 @@ onUnmounted(() => {
               </view>
 
               <!-- 车辆信息 -->
-              <view class="flex-1 min-w-0">
+              <view class="min-w-0 flex-1">
                 <view class="mb-[8rpx]">
-                  <text class="text-[28rpx] font-semibold text-gray-900">
+                  <text class="text-[28rpx] text-gray-900 font-semibold">
                     {{ vehicle.name }}
                   </text>
                 </view>
 
                 <view class="flex items-center justify-between text-[22rpx]">
-                  <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
+                  <text class="mr-[12rpx] flex-1 truncate text-gray-600">
                     {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
                   </text>
-                  <view class="flex items-center space-x-[4rpx] flex-shrink-0">
+                  <view class="flex flex-shrink-0 items-center space-x-[4rpx]">
                     <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
-                    <text class="text-gray-600">{{ vehicle.rating }}</text>
+                    <text class="text-gray-600">
+                      {{ vehicle.rating }}
+                    </text>
                   </view>
                 </view>
               </view>
@@ -227,21 +233,25 @@ onUnmounted(() => {
           <view
             v-for="vehicle in monthlyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="bg-white rounded-[16rpx] p-[20rpx] transition-all duration-150 active:scale-[0.98]"
+            class="rounded-[16rpx] bg-white p-[20rpx] transition-all duration-150 active:scale-[0.98]"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
             <view class="flex items-center space-x-[16rpx]">
               <!-- 排名 -->
-              <view class="w-[44rpx] h-[44rpx] rounded-full flex items-center justify-center flex-shrink-0"
-                    :class="getRankStyle(vehicle.rank)">
-                <text class="text-[20rpx] font-bold">{{ vehicle.rank }}</text>
+              <view
+                class="h-[44rpx] w-[44rpx] flex flex-shrink-0 items-center justify-center rounded-full"
+                :class="getRankStyle(vehicle.rank)"
+              >
+                <text class="text-[20rpx] font-bold">
+                  {{ vehicle.rank }}
+                </text>
               </view>
 
               <!-- 车辆图片 -->
-              <view class="w-[80rpx] h-[60rpx] rounded-[8rpx] overflow-hidden bg-gray-100 flex-shrink-0">
+              <view class="h-[60rpx] w-[80rpx] flex-shrink-0 overflow-hidden rounded-[8rpx] bg-gray-100">
                 <image
                   :src="vehicle.imageUrl"
-                  class="w-full h-full object-cover"
+                  class="h-full w-full object-cover"
                   mode="aspectFill"
                   lazy-load
                   :alt="vehicle.name"
@@ -249,20 +259,22 @@ onUnmounted(() => {
               </view>
 
               <!-- 车辆信息 -->
-              <view class="flex-1 min-w-0">
+              <view class="min-w-0 flex-1">
                 <view class="mb-[8rpx]">
-                  <text class="text-[28rpx] font-semibold text-gray-900">
+                  <text class="text-[28rpx] text-gray-900 font-semibold">
                     {{ vehicle.name }}
                   </text>
                 </view>
 
                 <view class="flex items-center justify-between text-[22rpx]">
-                  <text class="text-gray-600 truncate flex-1 mr-[12rpx]">
+                  <text class="mr-[12rpx] flex-1 truncate text-gray-600">
                     {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
                   </text>
-                  <view class="flex items-center space-x-[4rpx] flex-shrink-0">
+                  <view class="flex flex-shrink-0 items-center space-x-[4rpx]">
                     <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
-                    <text class="text-gray-600">{{ vehicle.rating }}</text>
+                    <text class="text-gray-600">
+                      {{ vehicle.rating }}
+                    </text>
                   </view>
                 </view>
               </view>
@@ -275,21 +287,31 @@ onUnmounted(() => {
       <view v-if="loading" class="flex items-center justify-center py-[100rpx]">
         <view class="flex flex-col items-center space-y-[16rpx]">
           <text class="i-material-symbols-sync animate-spin text-[48rpx] text-purple-600" />
-          <text class="text-[24rpx] text-gray-500">加载中...</text>
+          <text class="text-[24rpx] text-gray-500">
+            加载中...
+          </text>
         </view>
       </view>
 
       <!-- 空状态 -->
-      <view v-if="!loading && activeTab === 'daily' && !dailyRanking?.rankings?.length" class="flex flex-col items-center justify-center py-[120rpx] px-[40rpx]">
-        <text class="i-material-symbols-trending-up text-[80rpx] text-gray-300 mb-[20rpx]" />
-        <text class="text-[26rpx] text-gray-500 font-medium mb-[8rpx]">暂无排行数据</text>
-        <text class="text-[22rpx] text-gray-400 text-center">当前暂无日租车辆排行信息</text>
+      <view v-if="!loading && activeTab === 'daily' && !dailyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[120rpx]">
+        <text class="i-material-symbols-trending-up mb-[20rpx] text-[80rpx] text-gray-300" />
+        <text class="mb-[8rpx] text-[26rpx] text-gray-500 font-medium">
+          暂无排行数据
+        </text>
+        <text class="text-center text-[22rpx] text-gray-400">
+          当前暂无日租车辆排行信息
+        </text>
       </view>
 
-      <view v-if="!loading && activeTab === 'monthly' && !monthlyRanking?.rankings?.length" class="flex flex-col items-center justify-center py-[120rpx] px-[40rpx]">
-        <text class="i-material-symbols-calendar-month text-[80rpx] text-gray-300 mb-[20rpx]" />
-        <text class="text-[26rpx] text-gray-500 font-medium mb-[8rpx]">暂无排行数据</text>
-        <text class="text-[22rpx] text-gray-400 text-center">当前暂无月租车辆排行信息</text>
+      <view v-if="!loading && activeTab === 'monthly' && !monthlyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[120rpx]">
+        <text class="i-material-symbols-calendar-month mb-[20rpx] text-[80rpx] text-gray-300" />
+        <text class="mb-[8rpx] text-[26rpx] text-gray-500 font-medium">
+          暂无排行数据
+        </text>
+        <text class="text-center text-[22rpx] text-gray-400">
+          当前暂无月租车辆排行信息
+        </text>
       </view>
     </scroll-view>
   </view>

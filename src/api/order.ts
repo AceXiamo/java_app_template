@@ -23,6 +23,8 @@ export interface VehicleInfo {
   seats?: number
   rating?: number
   ratingCount?: number
+  operationType?: string // 运营类型：platform平台自营、owner车主自运营
+  isOwnerOperation?: boolean // 是否车主自运营
 }
 
 // 租期信息
@@ -60,7 +62,7 @@ export interface OrderData {
   id: string
   orderNumber: string
   status: string
-  originalStatus?: string  // 原始数据库状态，用于取车码展示等逻辑
+  originalStatus?: string // 原始数据库状态，用于取车码展示等逻辑
   statusText: string
   statusColor: string
   orderType?: string
@@ -406,6 +408,16 @@ export function cancelOrder(orderId: string | number, reason: string, descriptio
       reason,
       description,
     },
+  })
+}
+
+/**
+ * 获取续租定价信息
+ */
+export function getRenewalPricing(orderId: number, days: number): Promise<BaseRes<any>> {
+  return request.get({
+    url: `${host}/api/orders/${orderId}/renew/pricing`,
+    params: { days },
   })
 }
 

@@ -5,8 +5,8 @@ import PageSearchHead from '@/components/page/search/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
-import { getVehicleCategories, getVehicleFilters, getVehicleTagTypes, searchVehicles } from '@/api/vehicle'
-import type { Vehicle, VehicleCategory, VehicleFilterOptions, VehicleSearchParams, VehicleSearchResult, VehicleTagType } from '@/api/vehicle'
+import { getVehicleFilters, getVehicleTagTypes, searchVehicles } from '@/api/vehicle'
+import type { Vehicle, VehicleFilterOptions, VehicleSearchParams, VehicleTagType } from '@/api/vehicle'
 
 // 搜索参数
 const searchParams = ref<VehicleSearchParams>({
@@ -63,7 +63,6 @@ const priceRanges = ref([
   { label: '500以上', value: [500, 9999] },
 ])
 
-
 // 排序选项
 const sortOptions = [
   { label: '综合排序', value: 'hot' },
@@ -88,28 +87,30 @@ const displayTimeRange = computed(() => {
   if (!searchParams.value.startTime || !searchParams.value.endTime) {
     return '请选择时间'
   }
-  
+
   const start = new Date(searchParams.value.startTime)
   const end = new Date(searchParams.value.endTime)
-  
+
   const formatDate = (date: Date) => {
     const today = new Date()
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-    
+
     if (date.toDateString() === today.toDateString()) {
       return '今天'
-    } else if (date.toDateString() === tomorrow.toDateString()) {
+    }
+    else if (date.toDateString() === tomorrow.toDateString()) {
       return '明天'
-    } else {
+    }
+    else {
       return `${date.getMonth() + 1}月${date.getDate()}日`
     }
   }
-  
+
   const startDateText = formatDate(start)
   const endDateText = formatDate(end)
   const startTimeText = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`
   const endTimeText = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`
-  
+
   return `${startDateText} ${startTimeText} - ${endDateText} ${endTimeText}`
 })
 
@@ -125,17 +126,17 @@ onLoad(() => {
     searchParams.value.endTime = jumpData.endTime
     searchParams.value.latitude = jumpData.latitude
     searchParams.value.longitude = jumpData.longitude
-    
+
     // 更新地址显示
     if (jumpData.address) {
       currentAddress.value = jumpData.address
     }
-    
+
     // 解析时间参数到timeForm
     if (jumpData.startTime && jumpData.endTime) {
       const startDateTime = new Date(jumpData.startTime)
       const endDateTime = new Date(jumpData.endTime)
-      
+
       timeForm.value.startDate = startDateTime.toISOString().split('T')[0]
       timeForm.value.endDate = endDateTime.toISOString().split('T')[0]
       timeForm.value.startTime = `${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`
@@ -411,9 +412,9 @@ function quickBook(vehicleId: number) {
     ...(searchParams.value.startTime && { startTime: searchParams.value.startTime }),
     ...(searchParams.value.endTime && { endTime: searchParams.value.endTime }),
   }
-  
+
   setJumpData('bookingParams', bookingData)
-  
+
   uni.navigateTo({
     url: '/pages/booking/index',
   })
@@ -437,11 +438,11 @@ function handleDateRangeConfirm(data: {
   timeForm.value.endDate = data.endDate
   timeForm.value.startTime = data.startTime
   timeForm.value.endTime = data.endTime
-  
+
   // 更新搜索参数
   searchParams.value.startTime = data.startDateTime
   searchParams.value.endTime = data.endDateTime
-  
+
   // 重新搜索
   searchVehicleList()
 }
@@ -453,7 +454,7 @@ function getCurrentLocation() {
     success: (res) => {
       searchParams.value.latitude = res.latitude
       searchParams.value.longitude = res.longitude
-      
+
       // 获取位置成功后重新搜索
       searchVehicleList()
     },
@@ -462,7 +463,7 @@ function getCurrentLocation() {
       // 使用默认位置（上海市中心）
       searchParams.value.latitude = 31.2304
       searchParams.value.longitude = 121.4737
-    }
+    },
   })
 }
 
@@ -481,10 +482,10 @@ function handleAddressConfirm(data: {
 }) {
   searchParams.value.latitude = data.latitude
   searchParams.value.longitude = data.longitude
-  
+
   // 更新地址显示
   currentAddress.value = data.formattedAddress || data.address
-  
+
   // 重新搜索
   searchVehicleList()
 }
@@ -497,211 +498,211 @@ function handleAddressConfirm(data: {
 
     <!-- 主要内容区域 -->
     <view class="flex flex-1 flex-col overflow-hidden">
-        <!-- 搜索条件栏 -->
-        <view class="border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
-          <!-- 地址和时间信息 -->
-          <view class="mb-[24rpx] flex items-center justify-between">
-            <view class="flex items-center cursor-pointer min-w-0 flex-1" @tap="showMapSelector">
-              <text class="i-material-symbols-location-on mr-[8rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-medium truncate">
-                {{ currentAddress }}
-              </text>
-              <text class="i-material-symbols-keyboard-arrow-down ml-[4rpx] text-[24rpx] text-gray-400" />
-            </view>
-            <view class="flex items-center" @tap="showTimePicker">
-              <text class="i-material-symbols-schedule mr-[8rpx] text-[24rpx] text-gray-500" />
-              <text class="text-[24rpx] text-gray-600">
-                {{ displayTimeRange }}
-              </text>
-            </view>
+      <!-- 搜索条件栏 -->
+      <view class="border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
+        <!-- 地址和时间信息 -->
+        <view class="mb-[24rpx] flex items-center justify-between">
+          <view class="min-w-0 flex flex-1 cursor-pointer items-center" @tap="showMapSelector">
+            <text class="i-material-symbols-location-on mr-[8rpx] text-[28rpx] text-purple-600" />
+            <text class="truncate text-[28rpx] text-black font-medium">
+              {{ currentAddress }}
+            </text>
+            <text class="i-material-symbols-keyboard-arrow-down ml-[4rpx] text-[24rpx] text-gray-400" />
           </view>
-
-          <!-- 排序和筛选控制 -->
-          <view class="flex items-center justify-between">
-            <view class="flex items-center space-x-[16rpx]">
-              <!-- 排序选择 -->
-              <picker
-                mode="selector"
-                :range="sortOptions"
-                range-key="label"
-                :value="sortOptions.findIndex(item => item.value === searchParams.sortBy)"
-                @change="(e: any) => handleSortChange(sortOptions[e.detail.value].value)"
-              >
-                <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]">
-                  <text class="mr-[8rpx] text-[26rpx] text-gray-700">
-                    {{ sortOptions.find(item => item.value === searchParams.sortBy)?.label }}
-                  </text>
-                  <text class="i-material-symbols-keyboard-arrow-down text-[28rpx] text-gray-400" />
-                </view>
-              </picker>
-
-              <!-- 筛选按钮 -->
-              <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]" @tap="showFilters = true">
-                <text class="i-material-symbols-tune text-[26rpx] text-gray-700" />
-                <text class="ml-[8rpx] text-[26rpx] text-gray-700">
-                  筛选
-                </text>
-              </view>
-            </view>
-
-            <!-- 搜索结果数量 -->
-            <text class="text-[24rpx] text-gray-500">
-              共{{ total }}辆车
+          <view class="flex items-center" @tap="showTimePicker">
+            <text class="i-material-symbols-schedule mr-[8rpx] text-[24rpx] text-gray-500" />
+            <text class="text-[24rpx] text-gray-600">
+              {{ displayTimeRange }}
             </text>
           </view>
-
-          <!-- 标签栏（支持横向滚动） -->
-          <scroll-view
-            v-if="quickTags.length > 0"
-            scroll-x
-            class="mt-[24rpx]"
-            show-scrollbar="false"
-          >
-            <view class="flex px-[2rpx] space-x-[16rpx]">
-              <view
-                v-for="tag in quickTags"
-                :key="tag.value"
-                class="flex-shrink-0 whitespace-nowrap rounded-full px-[24rpx] py-[8rpx] text-[24rpx] transition-all"
-                :class="selectedTags.includes(tag.value)
-                  ? 'text-white'
-                  : 'bg-gray-100 text-gray-600'"
-                :style="selectedTags.includes(tag.value) ? { backgroundColor: tag.color } : {}"
-                @tap="toggleTag(tag.value)"
-              >
-                {{ tag.label }}
-              </view>
-            </view>
-          </scroll-view>
         </view>
 
-        <!-- 车辆列表 -->
-        <scroll-view
-          scroll-y
-          class="flex-1 overflow-y-auto"
-          @scrolltolower="onReachBottom"
-        >
-          <view class="p-[24rpx] space-y-[16rpx]">
-            <view
-              v-for="vehicle in vehicles"
-              :key="vehicle.vehicleId"
-              class="flex flex-col overflow-hidden rounded-[24rpx] bg-white shadow-sm"
-              @tap="goToVehicleDetail(vehicle.vehicleId)"
+        <!-- 排序和筛选控制 -->
+        <view class="flex items-center justify-between">
+          <view class="flex items-center space-x-[16rpx]">
+            <!-- 排序选择 -->
+            <picker
+              mode="selector"
+              :range="sortOptions"
+              range-key="label"
+              :value="sortOptions.findIndex(item => item.value === searchParams.sortBy)"
+              @change="(e: any) => handleSortChange(sortOptions[e.detail.value].value)"
             >
-              <!-- 上半部分：图片和车辆信息 -->
-              <view class="flex">
-                <!-- 车辆图片 -->
-                <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
-                  <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[24rpx]" />
-                  <!-- 促销标签 -->
-                  <view class="absolute left-[12rpx] top-[12rpx] flex flex-col space-y-[6rpx]">
-                    <view
-                      v-for="tag in vehicle.tags.slice(0, 2)"
-                      :key="tag.tagName"
-                      class="w-max rounded-[12rpx] px-[12rpx] py-[4rpx] text-[18rpx] text-white font-medium"
-                      :class="getTagStyle(tag.tagType)"
-                    >
-                      {{ tag.tagName }}
-                    </view>
-                  </view>
-                </view>
-
-                <!-- 车辆基本信息 -->
-                <view class="flex flex-1 flex-col justify-center p-[20rpx]">
-                  <text class="block text-[28rpx] text-black font-semibold leading-[40rpx]">
-                    {{ getVehicleDisplayName(vehicle) }}
-                  </text>
-
-                  <!-- 车牌和基本信息分两行显示 -->
-                  <view class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600">
-                    <text class="flex-shrink-0">
-                      {{ formatLicensePlate(vehicle.licensePlate) }}
-                    </text>
-                    <view class="flex items-center space-x-[12rpx]">
-                      <text class="flex-shrink-0">
-                        {{ vehicle.seats }}座
-                      </text>
-                      <text class="flex-shrink-0">
-                        {{ getEnergyTypeText(vehicle.energyType) }}
-                      </text>
-                    </view>
-                  </view>
-
-                  <!-- 车辆特性 -->
-                  <view class="mt-[12rpx] flex flex-wrap items-center gap-[16rpx]">
-                    <view v-if="vehicle.rangeKm" class="flex items-center">
-                      <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
-                      <text class="text-[20rpx] text-gray-600">
-                        {{ vehicle.rangeKm }}km
-                      </text>
-                    </view>
-                    <view v-if="vehicle.distance" class="flex items-center">
-                      <text class="i-material-symbols-location-on mr-[6rpx] text-[20rpx] text-purple-500" />
-                      <text class="text-[20rpx] text-gray-600">
-                        {{ formatDistance(vehicle.distance) }}
-                      </text>
-                    </view>
-                    <view class="flex items-center">
-                      <text class="i-material-symbols-star mr-[6rpx] text-[20rpx] text-yellow-500" />
-                      <text class="text-[20rpx] text-gray-600">
-                        {{ vehicle.rating }}({{ vehicle.ratingCount }})
-                      </text>
-                    </view>
-                  </view>
-                </view>
+              <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]">
+                <text class="mr-[8rpx] text-[26rpx] text-gray-700">
+                  {{ sortOptions.find(item => item.value === searchParams.sortBy)?.label }}
+                </text>
+                <text class="i-material-symbols-keyboard-arrow-down text-[28rpx] text-gray-400" />
               </view>
+            </picker>
 
-              <!-- 下半部分：价格信息和预订按钮 -->
-              <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
-                <view>
-                  <view class="flex items-baseline">
-                    <text class="text-[32rpx] text-purple-600 font-bold">
-                      ¥{{ vehicle.dailyPrice }}
-                    </text>
-                    <text class="ml-[4rpx] text-[20rpx] text-gray-500">
-                      /天
-                    </text>
-                  </view>
-                  <template v-if="vehicle.monthlyPrice">
-                    <view
-                      v-if="getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)"
-                      class="mt-[4rpx] flex items-center"
-                    >
-                      <text class="mr-[8rpx] text-[20rpx] text-gray-400 line-through">
-                        ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
-                      </text>
-                      <text class="rounded-full bg-red-50 px-[8rpx] py-[2rpx] text-[20rpx] text-red-500 font-medium">
-                        月租{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.discountPercent }}折
-                      </text>
-                      <text class="ml-[8rpx] text-[18rpx] text-green-600">
-                        省{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.savings.toFixed(0) }}元
-                      </text>
-                    </view>
-                  </template>
-                </view>
-
-                <!-- 快速预订按钮 -->
-                <view class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
-                  <text class="text-[24rpx] text-white font-medium">
-                    立即预订
-                  </text>
-                </view>
-              </view>
+            <!-- 筛选按钮 -->
+            <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]" @tap="showFilters = true">
+              <text class="i-material-symbols-tune text-[26rpx] text-gray-700" />
+              <text class="ml-[8rpx] text-[26rpx] text-gray-700">
+                筛选
+              </text>
             </view>
+          </view>
 
-            <!-- 加载状态 -->
-            <view class="py-[48rpx] text-center text-[28rpx] text-gray-500">
-              <text v-if="loading">
-                加载中...
-              </text>
-              <text v-else-if="noMore && vehicles.length > 0">
-                没有更多了
-              </text>
-              <text v-else-if="vehicles.length === 0 && !loading">
-                暂无搜索结果
-              </text>
+          <!-- 搜索结果数量 -->
+          <text class="text-[24rpx] text-gray-500">
+            共{{ total }}辆车
+          </text>
+        </view>
+
+        <!-- 标签栏（支持横向滚动） -->
+        <scroll-view
+          v-if="quickTags.length > 0"
+          scroll-x
+          class="mt-[24rpx]"
+          show-scrollbar="false"
+        >
+          <view class="flex px-[2rpx] space-x-[16rpx]">
+            <view
+              v-for="tag in quickTags"
+              :key="tag.value"
+              class="flex-shrink-0 whitespace-nowrap rounded-full px-[24rpx] py-[8rpx] text-[24rpx] transition-all"
+              :class="selectedTags.includes(tag.value)
+                ? 'text-white'
+                : 'bg-gray-100 text-gray-600'"
+              :style="selectedTags.includes(tag.value) ? { backgroundColor: tag.color } : {}"
+              @tap="toggleTag(tag.value)"
+            >
+              {{ tag.label }}
             </view>
           </view>
         </scroll-view>
+      </view>
+
+      <!-- 车辆列表 -->
+      <scroll-view
+        scroll-y
+        class="flex-1 overflow-y-auto"
+        @scrolltolower="onReachBottom"
+      >
+        <view class="p-[24rpx] space-y-[16rpx]">
+          <view
+            v-for="vehicle in vehicles"
+            :key="vehicle.vehicleId"
+            class="flex flex-col overflow-hidden rounded-[24rpx] bg-white shadow-sm"
+            @tap="goToVehicleDetail(vehicle.vehicleId)"
+          >
+            <!-- 上半部分：图片和车辆信息 -->
+            <view class="flex">
+              <!-- 车辆图片 -->
+              <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
+                <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[24rpx]" />
+                <!-- 促销标签 -->
+                <view class="absolute left-[12rpx] top-[12rpx] flex flex-col space-y-[6rpx]">
+                  <view
+                    v-for="tag in vehicle.tags.slice(0, 2)"
+                    :key="tag.tagName"
+                    class="w-max rounded-[12rpx] px-[12rpx] py-[4rpx] text-[18rpx] text-white font-medium"
+                    :class="getTagStyle(tag.tagType)"
+                  >
+                    {{ tag.tagName }}
+                  </view>
+                </view>
+              </view>
+
+              <!-- 车辆基本信息 -->
+              <view class="flex flex-1 flex-col justify-center p-[20rpx]">
+                <text class="block text-[28rpx] text-black font-semibold leading-[40rpx]">
+                  {{ getVehicleDisplayName(vehicle) }}
+                </text>
+
+                <!-- 车牌和基本信息分两行显示 -->
+                <view class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600">
+                  <text class="flex-shrink-0">
+                    {{ formatLicensePlate(vehicle.licensePlate) }}
+                  </text>
+                  <view class="flex items-center space-x-[12rpx]">
+                    <text class="flex-shrink-0">
+                      {{ vehicle.seats }}座
+                    </text>
+                    <text class="flex-shrink-0">
+                      {{ getEnergyTypeText(vehicle.energyType) }}
+                    </text>
+                  </view>
+                </view>
+
+                <!-- 车辆特性 -->
+                <view class="mt-[12rpx] flex flex-wrap items-center gap-[16rpx]">
+                  <view v-if="vehicle.rangeKm" class="flex items-center">
+                    <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
+                    <text class="text-[20rpx] text-gray-600">
+                      {{ vehicle.rangeKm }}km
+                    </text>
+                  </view>
+                  <view v-if="vehicle.distance" class="flex items-center">
+                    <text class="i-material-symbols-location-on mr-[6rpx] text-[20rpx] text-purple-500" />
+                    <text class="text-[20rpx] text-gray-600">
+                      {{ formatDistance(vehicle.distance) }}
+                    </text>
+                  </view>
+                  <view class="flex items-center">
+                    <text class="i-material-symbols-star mr-[6rpx] text-[20rpx] text-yellow-500" />
+                    <text class="text-[20rpx] text-gray-600">
+                      {{ vehicle.rating }}({{ vehicle.ratingCount }})
+                    </text>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <!-- 下半部分：价格信息和预订按钮 -->
+            <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
+              <view>
+                <view class="flex items-baseline">
+                  <text class="text-[32rpx] text-purple-600 font-bold">
+                    ¥{{ vehicle.dailyPrice }}
+                  </text>
+                  <text class="ml-[4rpx] text-[20rpx] text-gray-500">
+                    /天
+                  </text>
+                </view>
+                <template v-if="vehicle.monthlyPrice">
+                  <view
+                    v-if="getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)"
+                    class="mt-[4rpx] flex items-center"
+                  >
+                    <text class="mr-[8rpx] text-[20rpx] text-gray-400 line-through">
+                      ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
+                    </text>
+                    <text class="rounded-full bg-red-50 px-[8rpx] py-[2rpx] text-[20rpx] text-red-500 font-medium">
+                      月租{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.discountPercent }}折
+                    </text>
+                    <text class="ml-[8rpx] text-[18rpx] text-green-600">
+                      省{{ getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)?.savings.toFixed(0) }}元
+                    </text>
+                  </view>
+                </template>
+              </view>
+
+              <!-- 快速预订按钮 -->
+              <view class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+                <text class="text-[24rpx] text-white font-medium">
+                  立即预订
+                </text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 加载状态 -->
+          <view class="py-[48rpx] text-center text-[28rpx] text-gray-500">
+            <text v-if="loading">
+              加载中...
+            </text>
+            <text v-else-if="noMore && vehicles.length > 0">
+              没有更多了
+            </text>
+            <text v-else-if="vehicles.length === 0 && !loading">
+              暂无搜索结果
+            </text>
+          </view>
+        </view>
+      </scroll-view>
     </view>
 
     <!-- 筛选弹窗 -->

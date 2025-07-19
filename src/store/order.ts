@@ -43,19 +43,19 @@ export const useOrderStore = defineStore('order', () => {
       orderListTotal.value = response.data.total
       statusCounts.value = response.data.statusCounts
 
-      // 判断是否还有更多数据
-      if (orderList.value.length + response.data.orders.length < orderListTotal.value) {
-        orderListStatus.value = 'hide'
-      }
-      else {
-        orderListStatus.value = 'nomore'
-      }
-
       if (reload) {
         orderList.value = response.data.orders
       }
       else {
         orderList.value = [...orderList.value, ...response.data.orders]
+      }
+
+      // 判断是否还有更多数据（在更新数据后判断）
+      if (orderList.value.length < orderListTotal.value) {
+        orderListStatus.value = 'hide'
+      }
+      else {
+        orderListStatus.value = 'nomore'
       }
     }
     catch (error) {

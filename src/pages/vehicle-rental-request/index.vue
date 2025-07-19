@@ -3,14 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import type {
   AgreementInfo,
   OperationPackageConfig,
-  VehicleRentalRequestSubmitData,
   VehicleRentalRequest,
+  VehicleRentalRequestSubmitData,
 } from '@/api/vehicle-rental-request'
 import {
+  getAgreement,
+  getCurrentStatus,
   getOperationPackages,
   submitRentalRequest,
-  getCurrentStatus,
-  getAgreement,
 } from '@/api/vehicle-rental-request'
 import { uploadFileToOss } from '@/utils/alioss'
 
@@ -236,7 +236,7 @@ async function loadPackageConfigs() {
     const response = await getOperationPackages()
     if (response.code === 200) {
       packageConfigs.value = response.data
-      
+
       // 默认选中套餐A
       if (packageConfigs.value.length > 0) {
         formData.value.operationMode = packageConfigs.value[0].packageCode
@@ -288,7 +288,7 @@ onMounted(async () => {
 <template>
   <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
     <!-- 头部导航 -->
-    <view class="flex-shrink-0 bg-white border-b border-gray-100 px-[32rpx] py-[24rpx]">
+    <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
       <view class="flex items-center space-x-[24rpx]">
         <text class="i-material-symbols-arrow-back text-[48rpx] text-gray-600" @tap="uni.navigateBack()" />
         <text class="text-[36rpx] text-black font-semibold">
@@ -349,7 +349,7 @@ onMounted(async () => {
                 <text
                   v-for="service in config.includedServices"
                   :key="service"
-                  class="px-[12rpx] py-[4rpx] bg-purple-100 text-purple-700 text-[20rpx] rounded-[8rpx]"
+                  class="rounded-[8rpx] bg-purple-100 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-700"
                 >
                   {{ service }}
                 </text>
@@ -374,7 +374,9 @@ onMounted(async () => {
             <view class="flex items-center justify-between">
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  联系电话 <text class="text-red-500">*</text>
+                  联系电话 <text class="text-red-500">
+                    *
+                  </text>
                 </text>
                 <text class="text-[24rpx] text-gray-500">
                   方便我们联系您
@@ -428,12 +430,12 @@ onMounted(async () => {
           <view class="p-[32rpx] space-y-[32rpx]">
             <!-- 车辆描述 -->
             <view>
-              <text class="block text-[28rpx] text-black font-medium mb-[16rpx]">
+              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
                 车辆描述
               </text>
               <textarea
                 v-model="formData.vehicleDescription"
-                class="w-full h-[200rpx] border border-gray-300 rounded p-[16rpx] text-[26rpx]"
+                class="h-[200rpx] w-full border border-gray-300 rounded p-[16rpx] text-[26rpx]"
                 placeholder="请简单描述您的车辆，如：品牌型号、年份、颜色、里程等"
                 maxlength="200"
               />
@@ -441,12 +443,12 @@ onMounted(async () => {
 
             <!-- 出租意向 -->
             <view>
-              <text class="block text-[28rpx] text-black font-medium mb-[16rpx]">
+              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
                 出租意向
               </text>
               <textarea
                 v-model="formData.rentalIntention"
-                class="w-full h-[200rpx] border border-gray-300 rounded p-[16rpx] text-[26rpx]"
+                class="h-[200rpx] w-full border border-gray-300 rounded p-[16rpx] text-[26rpx]"
                 placeholder="请描述您的出租意向，如：期望价格、可出租时间等"
                 maxlength="200"
               />
@@ -470,7 +472,9 @@ onMounted(async () => {
             <view class="flex items-center justify-between">
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  行驶证正本 <text class="text-red-500">*</text>
+                  行驶证正本 <text class="text-red-500">
+                    *
+                  </text>
                 </text>
                 <text class="text-[24rpx] text-gray-500">
                   上传行驶证正本照片
@@ -503,7 +507,9 @@ onMounted(async () => {
             <view class="flex items-center justify-between">
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  行驶证副本 <text class="text-red-500">*</text>
+                  行驶证副本 <text class="text-red-500">
+                    *
+                  </text>
                 </text>
                 <text class="text-[24rpx] text-gray-500">
                   上传行驶证副本照片
@@ -534,23 +540,25 @@ onMounted(async () => {
 
             <!-- 保险单 -->
             <view>
-              <view class="flex items-center justify-between mb-[16rpx]">
+              <view class="mb-[16rpx] flex items-center justify-between">
                 <view>
                   <text class="block text-[28rpx] text-black font-medium">
-                    保险单 <text class="text-red-500">*</text>
+                    保险单 <text class="text-red-500">
+                      *
+                    </text>
                   </text>
                   <text class="text-[24rpx] text-gray-500">
                     交强险、商业保险等
                   </text>
                 </view>
                 <view
-                  class="px-[16rpx] py-[8rpx] bg-purple-600 text-white text-[24rpx] rounded-[8rpx] active:bg-purple-700"
+                  class="rounded-[8rpx] bg-purple-600 px-[16rpx] py-[8rpx] text-[24rpx] text-white active:bg-purple-700"
                   @tap="uploadDocument('insurancePolicy')"
                 >
                   添加保险单
                 </view>
               </view>
-              
+
               <view v-if="formData.insurancePolicyUrls.length > 0" class="grid grid-cols-3 gap-[16rpx]">
                 <view
                   v-for="(url, index) in formData.insurancePolicyUrls"
@@ -563,7 +571,7 @@ onMounted(async () => {
                     mode="aspectFill"
                   />
                   <view
-                    class="absolute -top-[8rpx] -right-[8rpx] h-[24rpx] w-[24rpx] bg-red-500 rounded-full flex items-center justify-center"
+                    class="absolute h-[24rpx] w-[24rpx] flex items-center justify-center rounded-full bg-red-500 -right-[8rpx] -top-[8rpx]"
                     @tap="removeInsuranceFile(index)"
                   >
                     <text class="i-material-symbols-close text-[16rpx] text-white" />
@@ -576,7 +584,9 @@ onMounted(async () => {
             <view class="flex items-center justify-between">
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  电子年检标 <text class="text-red-500">*</text>
+                  电子年检标 <text class="text-red-500">
+                    *
+                  </text>
                 </text>
                 <text class="text-[24rpx] text-gray-500">
                   上传年检标照片
@@ -623,7 +633,9 @@ onMounted(async () => {
             <view class="flex items-center justify-between">
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  协议同意 <text class="text-red-500">*</text>
+                  协议同意 <text class="text-red-500">
+                    *
+                  </text>
                 </text>
                 <text class="text-[24rpx] text-gray-500">
                   同意车辆出租服务协议

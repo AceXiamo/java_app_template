@@ -9,7 +9,7 @@ export enum UploadType {
   ID_CARD = 'documents/id-cards',
   DRIVING_LICENSE = 'documents/driving-licenses',
   VEHICLE_IMAGE = 'vehicles/images',
-  OTHER = 'others'
+  OTHER = 'others',
 }
 
 /**
@@ -24,7 +24,7 @@ export async function uploadFile(
   filePath: string,
   type: UploadType,
   customFileName?: string,
-  onProgress?: ({ progress }: { progress: number }) => void
+  onProgress?: ({ progress }: { progress: number }) => void,
 ): Promise<string> {
   try {
     // 生成文件名
@@ -37,10 +37,11 @@ export async function uploadFile(
 
     // 上传到阿里云 OSS
     const fileUrl = await uploadFileToOss(filePath, fullPath, onProgress)
-    
+
     logger.info(`File uploaded successfully: ${fileUrl}`)
     return fileUrl
-  } catch (error) {
+  }
+  catch (error) {
     logger.error('File upload failed:', error)
     throw new Error(`文件上传失败: ${error}`)
   }
@@ -54,7 +55,7 @@ export async function uploadFile(
  */
 export function uploadAvatar(
   filePath: string,
-  onProgress?: ({ progress }: { progress: number }) => void
+  onProgress?: ({ progress }: { progress: number }) => void,
 ): Promise<string> {
   return uploadFile(filePath, UploadType.AVATAR, undefined, onProgress)
 }
@@ -69,7 +70,7 @@ export function uploadAvatar(
 export function uploadIdCard(
   filePath: string,
   side: 'front' | 'back',
-  onProgress?: ({ progress }: { progress: number }) => void
+  onProgress?: ({ progress }: { progress: number }) => void,
 ): Promise<string> {
   const timestamp = Date.now()
   const ext = filePath.split('.').pop() || 'jpg'
@@ -87,7 +88,7 @@ export function uploadIdCard(
 export function uploadDrivingLicense(
   filePath: string,
   side: 'front' | 'back',
-  onProgress?: ({ progress }: { progress: number }) => void
+  onProgress?: ({ progress }: { progress: number }) => void,
 ): Promise<string> {
   const timestamp = Date.now()
   const ext = filePath.split('.').pop() || 'jpg'
@@ -105,11 +106,11 @@ export function uploadDrivingLicense(
 export function uploadVehicleImage(
   filePath: string,
   vehicleId?: string | number,
-  onProgress?: ({ progress }: { progress: number }) => void
+  onProgress?: ({ progress }: { progress: number }) => void,
 ): Promise<string> {
   const timestamp = Date.now()
   const ext = filePath.split('.').pop() || 'jpg'
-  const fileName = vehicleId 
+  const fileName = vehicleId
     ? `vehicle_${vehicleId}_${timestamp}.${ext}`
     : `vehicle_${timestamp}.${ext}`
   return uploadFile(filePath, UploadType.VEHICLE_IMAGE, fileName, onProgress)
@@ -122,8 +123,8 @@ export function uploadVehicleImage(
  * @returns Promise<string[]> 返回文件URL列表
  */
 export async function uploadMultipleFiles(
-  files: Array<{ filePath: string; type: UploadType; customFileName?: string }>,
-  onProgress?: ({ progress, current, total }: { progress: number; current: number; total: number }) => void
+  files: Array<{ filePath: string, type: UploadType, customFileName?: string }>,
+  onProgress?: ({ progress, current, total }: { progress: number, current: number, total: number }) => void,
 ): Promise<string[]> {
   const results: string[] = []
   const total = files.length
@@ -133,10 +134,11 @@ export async function uploadMultipleFiles(
     try {
       const url = await uploadFile(file.filePath, file.type, file.customFileName)
       results.push(url)
-      
+
       const progress = Math.round(((i + 1) / total) * 100)
       onProgress?.({ progress, current: i + 1, total })
-    } catch (error) {
+    }
+    catch (error) {
       logger.error(`Failed to upload file ${file.filePath}:`, error)
       throw error
     }

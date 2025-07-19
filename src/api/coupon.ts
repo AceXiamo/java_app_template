@@ -38,9 +38,9 @@ export function applyCoupon(params: {
   endTime: string
   totalAmount: number
 }): Promise<BaseRes<{
-  discountAmount: number
-  finalAmount: number
-}>> {
+    discountAmount: number
+    finalAmount: number
+  }>> {
   return request.post({
     url: `${host}/api/coupons/apply`,
     data: params,

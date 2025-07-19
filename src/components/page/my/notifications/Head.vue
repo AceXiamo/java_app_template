@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // 返回上一页
 function goBack() {
-  uni.navigateBack();
+  uni.navigateBack()
 }
 </script>
 

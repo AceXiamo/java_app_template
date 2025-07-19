@@ -61,6 +61,7 @@ declare module '@vue/runtime-core' {
     PageShopOrderHead: typeof import('./components/page/shop/order/Head.vue')['default']
     PageVehicleHead: typeof import('./components/page/vehicle/Head.vue')['default']
     QrCode: typeof import('./components/QrCode.vue')['default']
+    RenewOrderDrawer: typeof import('./components/RenewOrderDrawer.vue')['default']
     SelectBar: typeof import('./components/SelectBar.vue')['default']
     TabBarMain: typeof import('./components/tabBar/main.vue')['default']
     TabBarMy: typeof import('./components/tabBar/my.vue')['default']

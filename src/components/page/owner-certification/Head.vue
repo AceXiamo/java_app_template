@@ -7,7 +7,7 @@ function goBack() {
 
 function goToRecords() {
   uni.navigateTo({
-    url: '/pages/vehicle-affiliation-records/index'
+    url: '/pages/vehicle-affiliation-records/index',
   })
 }
 </script>
@@ -19,7 +19,7 @@ function goToRecords() {
       <view class="absolute left-0 z-10 h-full w-[80rpx] flex items-center justify-center" @tap="goBack">
         <text class="i-material-symbols-arrow-back text-[36rpx] text-black" />
       </view>
-      
+
       <!-- 页面标题 -->
       <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
         车辆挂靠申请
@@ -27,12 +27,14 @@ function goToRecords() {
 
       <!-- 填写记录按钮 -->
       <view class="absolute right-0 z-10 h-full flex items-center pr-[24rpx]">
-        <view 
-          class="flex items-center space-x-[8rpx] bg-purple-50 rounded-full px-[20rpx] py-[12rpx] active:scale-95 transition-transform"
+        <view
+          class="flex items-center rounded-full bg-purple-50 px-[20rpx] py-[12rpx] transition-transform active:scale-95 space-x-[8rpx]"
           @tap="goToRecords"
         >
           <text class="i-material-symbols-history text-[24rpx] text-purple-600" />
-          <text class="text-[24rpx] text-purple-600 font-medium">记录</text>
+          <text class="text-[24rpx] text-purple-600 font-medium">
+            记录
+          </text>
         </view>
       </view>
     </view>

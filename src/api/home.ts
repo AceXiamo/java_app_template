@@ -13,7 +13,6 @@ export interface Banner {
   isActive: boolean
 }
 
-
 export interface HomeData {
   banners: Banner[]
 }
@@ -33,4 +32,3 @@ export function getCurrentLocation(params: {
 }): Promise<BaseRes<AddressInfo>> {
   return reverseGeocode(params)
 }
-

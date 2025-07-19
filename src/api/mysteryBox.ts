@@ -193,4 +193,3 @@ export function purchaseMysteryBox(params: {
     data: params,
   })
 }
- 

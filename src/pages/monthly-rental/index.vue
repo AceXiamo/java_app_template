@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import {
   type LocationInfo,
   type MonthlyRentalActivity,
-  type MonthlyVehicle,
   getActivityInfo,
   getMonthlyVehicles,
 } from '@/api/monthly-rental'
@@ -301,19 +300,19 @@ function selectVehicle(vehicle: any) {
   const today = new Date()
   const startTime = new Date(today)
   startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
-  
+
   const endTime = new Date(today)
   endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
   endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
-  
+
   // 传递时间参数到车辆详情页
   const vehicleDetailParams = {
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
   }
-  
+
   setJumpData('vehicleDetailParams', vehicleDetailParams)
-  
+
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicle.vehicleId}`,
   })
@@ -325,19 +324,19 @@ function quickBook(vehicleId: number) {
   const today = new Date()
   const startTime = new Date(today)
   startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
-  
+
   const endTime = new Date(today)
   endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
   endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
-  
+
   // 传递时间参数到车辆详情页
   const vehicleDetailParams = {
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
   }
-  
+
   setJumpData('vehicleDetailParams', vehicleDetailParams)
-  
+
   uni.navigateTo({
     url: `/pages/vehicle/detail?id=${vehicleId}`,
   })
@@ -487,7 +486,7 @@ onMounted(async () => {
     <view class="flex-1 overflow-y-auto">
       <!-- 活动说明区域 - 按设计规范优化 -->
       <view class="flex-shrink-0 bg-gray-50 px-[24rpx] py-[24rpx]">
-        <view class="bg-white rounded-[24rpx] p-[32rpx] shadow-sm">
+        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
           <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
             <view
               i-material-symbols:calendar-month
@@ -523,11 +522,11 @@ onMounted(async () => {
       </view>
 
       <!-- 租期选择栏 - 按设计规范优化 -->
-      <view class="flex-shrink-0 bg-white border-b border-gray-100 px-[24rpx] py-[24rpx]">
+      <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[24rpx] py-[24rpx]">
         <view class="space-y-[24rpx]">
           <!-- 地址信息 -->
           <view
-            class="flex items-center space-x-[12rpx] p-[16rpx] rounded-[12rpx] bg-gray-50 active:bg-gray-100 transition-colors"
+            class="flex items-center rounded-[12rpx] bg-gray-50 p-[16rpx] transition-colors space-x-[12rpx] active:bg-gray-100"
             @tap="showLocationSelector"
           >
             <view i-material-symbols:location-on class="text-[24rpx] text-purple-600" />
@@ -562,9 +561,9 @@ onMounted(async () => {
                 <text class="block text-[24rpx] font-medium">
                   {{ option.label }}
                 </text>
-                <text 
+                <text
                   v-if="option.discountText"
-                  class="block text-[20rpx] mt-[4rpx]"
+                  class="mt-[4rpx] block text-[20rpx]"
                   :class="selectedPeriod === option.period ? 'text-purple-100' : 'text-gray-500'"
                 >
                   {{ option.discountText }}
@@ -576,7 +575,7 @@ onMounted(async () => {
       </view>
 
       <!-- 排序和筛选控制栏 - 按设计规范优化 -->
-      <view class="flex-shrink-0 bg-white border-b border-gray-100 px-[24rpx] py-[16rpx]">
+      <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[24rpx] py-[16rpx]">
         <view class="flex items-center justify-between">
           <view class="flex items-center space-x-[16rpx]">
             <!-- 排序选择 -->
@@ -587,7 +586,7 @@ onMounted(async () => {
               :value="sortOptions.findIndex((item) => item.value === sortBy)"
               @change="(e: any) => handleSortChange(sortOptions[e.detail.value].value)"
             >
-              <view class="flex items-center rounded-[20rpx] bg-purple-50 px-[16rpx] py-[12rpx] active:bg-purple-100 transition-colors">
+              <view class="flex items-center rounded-[20rpx] bg-purple-50 px-[16rpx] py-[12rpx] transition-colors active:bg-purple-100">
                 <text class="mr-[8rpx] text-[24rpx] text-purple-600 font-medium">
                   {{ sortOptions.find((item) => item.value === sortBy)?.label }}
                 </text>
@@ -597,7 +596,7 @@ onMounted(async () => {
 
             <!-- 筛选按钮 -->
             <view
-              class="flex items-center rounded-[20rpx] bg-gray-50 px-[16rpx] py-[12rpx] active:bg-gray-100 transition-colors"
+              class="flex items-center rounded-[20rpx] bg-gray-50 px-[16rpx] py-[12rpx] transition-colors active:bg-gray-100"
               @tap="showFilters = true"
             >
               <text class="i-material-symbols-tune text-[20rpx] text-gray-600" />
@@ -624,7 +623,7 @@ onMounted(async () => {
           <view
             v-for="vehicle in vehicles"
             :key="vehicle.vehicleId"
-            class="bg-white rounded-[24rpx] shadow-sm overflow-hidden active:scale-99 transition-all duration-150"
+            class="overflow-hidden rounded-[24rpx] bg-white shadow-sm transition-all duration-150 active:scale-99"
             @tap="selectVehicle(vehicle)"
           >
             <!-- 车辆信息卡片 -->
@@ -651,18 +650,18 @@ onMounted(async () => {
                 </view>
 
                 <!-- 车辆基本信息 -->
-                <view class="flex-1 flex flex-col justify-between">
+                <view class="flex flex-1 flex-col justify-between">
                   <view>
-                    <text class="block text-[28rpx] text-gray-900 font-semibold leading-tight mb-[8rpx]">
+                    <text class="mb-[8rpx] block text-[28rpx] text-gray-900 font-semibold leading-tight">
                       {{ vehicle.name }}
                     </text>
 
                     <!-- 车牌和基本信息 -->
-                    <view class="space-y-[4rpx] mb-[12rpx]">
+                    <view class="mb-[12rpx] space-y-[4rpx]">
                       <text class="block text-[22rpx] text-gray-600">
                         {{ formatLicensePlate(vehicle.licensePlate) }}
                       </text>
-                      <view class="flex items-center space-x-[16rpx] text-[20rpx] text-gray-500">
+                      <view class="flex items-center text-[20rpx] text-gray-500 space-x-[16rpx]">
                         <text>{{ vehicle.seats }}座</text>
                         <text>{{ getEnergyTypeText(vehicle.energyType) }}</text>
                       </view>
@@ -671,19 +670,19 @@ onMounted(async () => {
 
                   <!-- 车辆特性 -->
                   <view class="flex flex-wrap items-center gap-[12rpx]">
-                    <view v-if="vehicle.rangeKm" class="flex items-center bg-green-50 rounded-[8rpx] px-[8rpx] py-[4rpx]">
+                    <view v-if="vehicle.rangeKm" class="flex items-center rounded-[8rpx] bg-green-50 px-[8rpx] py-[4rpx]">
                       <text class="i-material-symbols-battery-charging-full mr-[4rpx] text-[16rpx] text-green-600" />
                       <text class="text-[18rpx] text-green-600 font-medium">
                         {{ vehicle.rangeKm }}km
                       </text>
                     </view>
-                    <view v-if="vehicle.distance" class="flex items-center bg-purple-50 rounded-[8rpx] px-[8rpx] py-[4rpx]">
+                    <view v-if="vehicle.distance" class="flex items-center rounded-[8rpx] bg-purple-50 px-[8rpx] py-[4rpx]">
                       <text class="i-material-symbols-location-on mr-[4rpx] text-[16rpx] text-purple-600" />
                       <text class="text-[18rpx] text-purple-600 font-medium">
                         {{ formatDistance(vehicle.distance) }}
                       </text>
                     </view>
-                    <view class="flex items-center bg-yellow-50 rounded-[8rpx] px-[8rpx] py-[4rpx]">
+                    <view class="flex items-center rounded-[8rpx] bg-yellow-50 px-[8rpx] py-[4rpx]">
                       <text class="i-material-symbols-star mr-[4rpx] text-[16rpx] text-yellow-600" />
                       <text class="text-[18rpx] text-yellow-600 font-medium">
                         {{ vehicle.rating }}({{ vehicle.ratingCount }})
@@ -698,7 +697,7 @@ onMounted(async () => {
             <view class="border-t border-gray-100 px-[24rpx] py-[20rpx]">
               <view class="flex items-center justify-between">
                 <view class="flex-1">
-                  <view class="flex items-baseline mb-[4rpx]">
+                  <view class="mb-[4rpx] flex items-baseline">
                     <text class="text-[36rpx] text-purple-600 font-bold">
                       ¥{{ vehicle.monthlyPrice || (vehicle.dailyPrice * 30).toFixed(0) }}
                     </text>
@@ -714,7 +713,7 @@ onMounted(async () => {
                       <text class="text-[20rpx] text-gray-400 line-through">
                         ¥{{ (vehicle.dailyPrice * 30).toFixed(0) }}
                       </text>
-                      <view class="bg-red-50 rounded-[8rpx] px-[8rpx] py-[2rpx]">
+                      <view class="rounded-[8rpx] bg-red-50 px-[8rpx] py-[2rpx]">
                         <text class="text-[18rpx] text-red-600 font-medium">
                           {{
                             getMonthlyDiscount(vehicle.dailyPrice, vehicle.monthlyPrice)
@@ -736,7 +735,7 @@ onMounted(async () => {
 
                 <!-- 快速预订按钮 -->
                 <view
-                  class="bg-purple-600 rounded-[20rpx] px-[32rpx] py-[16rpx] active:bg-purple-700 transition-colors"
+                  class="rounded-[20rpx] bg-purple-600 px-[32rpx] py-[16rpx] transition-colors active:bg-purple-700"
                   @tap.stop="quickBook(vehicle.vehicleId)"
                 >
                   <text class="text-[24rpx] text-white font-semibold">
@@ -748,7 +747,7 @@ onMounted(async () => {
           </view>
 
           <!-- 月租须知 - 按设计规范优化 -->
-          <view class="bg-white rounded-[24rpx] p-[32rpx] shadow-sm">
+          <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
             <view class="mb-[24rpx] flex items-center">
               <view i-material-symbols:info class="mr-[12rpx] text-[32rpx] text-orange-600" />
               <text class="text-[28rpx] text-gray-900 font-semibold">
@@ -761,8 +760,10 @@ onMounted(async () => {
                 :key="rule"
                 class="flex items-start space-x-[12rpx]"
               >
-                <view class="mt-[8rpx] h-[8rpx] w-[8rpx] rounded-full bg-orange-600 flex-shrink-0" />
-                <text class="text-[24rpx] text-gray-700 leading-normal">{{ rule }}</text>
+                <view class="mt-[8rpx] h-[8rpx] w-[8rpx] flex-shrink-0 rounded-full bg-orange-600" />
+                <text class="text-[24rpx] text-gray-700 leading-normal">
+                  {{ rule }}
+                </text>
               </view>
             </view>
           </view>

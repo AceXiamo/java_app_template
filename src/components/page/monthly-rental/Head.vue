@@ -21,5 +21,4 @@ function goBack() {
       </view>
     </view>
   </HeadBar>
-</template> 
- 
+</template>

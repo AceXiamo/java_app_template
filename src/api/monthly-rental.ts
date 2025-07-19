@@ -147,25 +147,27 @@ export function getMonthlyVehicleList(
   location?: string,
   days?: number,
   page: number = 1,
-  size: number = 10
+  size: number = 10,
 ): Promise<ApiResponse<{
-  vehicles: Array<{
-    id: number
-    name: string
-    dailyPrice: number
-    monthlyPrice: number
-    originalPrice: number
-    discount: number
-    savings: number
-    imageUrl: string
-    tags: string[]
-    distance: number
-    rating: number
-  }>
-}>> {
+    vehicles: Array<{
+      id: number
+      name: string
+      dailyPrice: number
+      monthlyPrice: number
+      originalPrice: number
+      discount: number
+      savings: number
+      imageUrl: string
+      tags: string[]
+      distance: number
+      rating: number
+    }>
+  }>> {
   const params: any = { page, size }
-  if (location) params.location = location
-  if (days) params.days = days
+  if (location)
+    params.location = location
+  if (days)
+    params.days = days
 
   return request.get({
     url: `${host}/api/monthly-rental/vehicle-list`,

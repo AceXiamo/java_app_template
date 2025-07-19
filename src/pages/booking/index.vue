@@ -6,7 +6,7 @@ import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
-import { type Coupon, applyCoupon, getAvailableCoupons } from '@/api/coupon'
+import { type Coupon, getAvailableCoupons } from '@/api/coupon'
 import { calculateBookingPrice, createBooking, requestWxPayment } from '@/api/booking'
 import { useUserStore } from '@/store/user'
 
@@ -755,15 +755,14 @@ function selectAddress(address: any) {
 
 // 计算送车距离
 async function calculateDeliveryDistance() {
-  if (bookingInfo.value.userLocation.latitude && bookingInfo.value.userLocation.longitude &&
-      vehicleInfo.value.location.latitude && vehicleInfo.value.location.longitude) {
-
+  if (bookingInfo.value.userLocation.latitude && bookingInfo.value.userLocation.longitude
+    && vehicleInfo.value.location.latitude && vehicleInfo.value.location.longitude) {
     // 使用更精确的距离计算公式（球面距离）
     const distance = calculateDistance(
       vehicleInfo.value.location.latitude,
       vehicleInfo.value.location.longitude,
       bookingInfo.value.userLocation.latitude,
-      bookingInfo.value.userLocation.longitude
+      bookingInfo.value.userLocation.longitude,
     )
 
     // 限制距离在合理范围内
@@ -856,19 +855,23 @@ function showBookingTerms() {
             <text
               class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-purple-600"
             />
-            <text class="text-[28rpx] text-black font-semibold"> 租赁时间 </text>
+            <text class="text-[28rpx] text-black font-semibold">
+              租赁时间
+            </text>
           </view>
 
           <view class="space-y-[16rpx]">
             <view class="flex items-center justify-between" @tap="showTimePicker">
-              <text class="text-[24rpx] text-gray-600"> 租赁时间 </text>
+              <text class="text-[24rpx] text-gray-600">
+                租赁时间
+              </text>
               <view class="flex items-center">
                 <text class="text-[26rpx] text-black">
                   {{
                     bookingInfo.startTime && bookingInfo.endTime
                       ? `${formatTime(bookingInfo.startTime)} - ${formatTime(
-                          bookingInfo.endTime
-                        )}`
+                        bookingInfo.endTime,
+                      )}`
                       : "请选择时间"
                   }}
                 </text>
@@ -881,7 +884,9 @@ function showBookingTerms() {
               v-if="bookingInfo.startTime && bookingInfo.endTime"
               class="flex items-center justify-between"
             >
-              <text class="text-[24rpx] text-gray-600"> 租赁天数 </text>
+              <text class="text-[24rpx] text-gray-600">
+                租赁天数
+              </text>
               <text class="text-[26rpx] text-purple-600 font-medium">
                 {{ bookingInfo.rentalDays }}天
                 <text
@@ -901,7 +906,9 @@ function showBookingTerms() {
             <text
               class="i-material-symbols-local-shipping mr-[12rpx] text-[24rpx] text-purple-600"
             />
-            <text class="text-[28rpx] text-black font-semibold"> 取车方式 </text>
+            <text class="text-[28rpx] text-black font-semibold">
+              取车方式
+            </text>
           </view>
 
           <view class="space-y-[16rpx]">
@@ -917,12 +924,16 @@ function showBookingTerms() {
             >
               <view class="flex items-center justify-between">
                 <view>
-                  <text class="text-[26rpx] text-black font-medium"> 用户自取 </text>
+                  <text class="text-[26rpx] text-black font-medium">
+                    用户自取
+                  </text>
                   <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
                     到指定地点取车
                   </text>
                 </view>
-                <text class="text-[24rpx] text-green-600 font-medium"> 免费 </text>
+                <text class="text-[24rpx] text-green-600 font-medium">
+                  免费
+                </text>
               </view>
               <view class="mt-[12rpx] flex items-center text-[22rpx] text-gray-600">
                 <text class="i-material-symbols-location-on mr-[8rpx] text-[20rpx]" />
@@ -943,7 +954,9 @@ function showBookingTerms() {
             >
               <view class="flex items-center justify-between">
                 <view>
-                  <text class="text-[26rpx] text-black font-medium"> 平台送车 </text>
+                  <text class="text-[26rpx] text-black font-medium">
+                    平台送车
+                  </text>
                   <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
                     送车上门，更便捷
                   </text>
@@ -973,9 +986,9 @@ function showBookingTerms() {
                   class="mt-[8rpx] flex items-center text-[20rpx] text-green-600"
                 >
                   <text class="i-material-symbols-info mr-[4rpx]" />
-                  <text
-                    >预计送车距离：{{ bookingInfo.deliveryDistance.toFixed(1) }}公里</text
-                  >
+                  <text>
+                    预计送车距离：{{ bookingInfo.deliveryDistance.toFixed(1) }}公里
+                  </text>
                 </view>
               </view>
             </view>
@@ -989,14 +1002,18 @@ function showBookingTerms() {
               <text
                 class="i-material-symbols-car-wash mr-[12rpx] text-[24rpx] text-purple-600"
               />
-              <text class="text-[28rpx] text-black font-semibold"> 交付标准 </text>
+              <text class="text-[28rpx] text-black font-semibold">
+                交付标准
+              </text>
             </view>
             <!-- 车辆类型标识 -->
             <view v-if="vehicleOperationType === 'owner'" class="flex items-center">
               <text
                 class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-orange-500"
               />
-              <text class="text-[22rpx] text-orange-600 font-medium"> 车主优选 </text>
+              <text class="text-[22rpx] text-orange-600 font-medium">
+                车主优选
+              </text>
             </view>
             <text
               v-else-if="getDeliveryServiceFee() > 0"
@@ -1012,7 +1029,9 @@ function showBookingTerms() {
               <text
                 class="i-material-symbols-info mr-[8rpx] text-[20rpx] text-blue-600"
               />
-              <text class="text-[24rpx] text-blue-800 font-medium"> 默认交付标准 </text>
+              <text class="text-[24rpx] text-blue-800 font-medium">
+                默认交付标准
+              </text>
             </view>
             <view class="mb-[8rpx]">
               <text class="text-[24rpx] text-blue-700 leading-[36rpx]">
@@ -1030,7 +1049,9 @@ function showBookingTerms() {
           <!-- <view v-if="vehicleOperationType === 'platform'" class="space-y-[24rpx]"> -->
           <view v-if="false" class="space-y-[24rpx]">
             <view class="mb-[16rpx]">
-              <text class="text-[26rpx] text-black font-medium"> 增值服务 </text>
+              <text class="text-[26rpx] text-black font-medium">
+                增值服务
+              </text>
               <text class="ml-[8rpx] text-[22rpx] text-gray-500">
                 （可选，收费项目）
               </text>
@@ -1040,7 +1061,9 @@ function showBookingTerms() {
             <view class="flex items-center justify-between">
               <view class="flex-1">
                 <view class="flex items-center">
-                  <text class="text-[26rpx] text-black font-medium"> 专业洗车 </text>
+                  <text class="text-[26rpx] text-black font-medium">
+                    专业洗车
+                  </text>
                   <text class="ml-[16rpx] text-[22rpx] text-purple-600">
                     +¥{{ deliveryServicePrices.carWash }}
                   </text>
@@ -1071,7 +1094,9 @@ function showBookingTerms() {
             <view class="flex items-center justify-between">
               <view class="flex-1">
                 <view class="flex items-center">
-                  <text class="text-[26rpx] text-black font-medium"> 深度精洗 </text>
+                  <text class="text-[26rpx] text-black font-medium">
+                    深度精洗
+                  </text>
                   <text class="ml-[16rpx] text-[22rpx] text-purple-600">
                     +¥{{ deliveryServicePrices.detailing }}
                   </text>
@@ -1122,7 +1147,9 @@ function showBookingTerms() {
               <text
                 class="i-material-symbols-local-offer mr-[12rpx] text-[24rpx] text-purple-600"
               />
-              <text class="text-[28rpx] text-black font-semibold"> 优惠券 </text>
+              <text class="text-[28rpx] text-black font-semibold">
+                优惠券
+              </text>
             </view>
             <view class="flex items-center">
               <text v-if="selectedCoupon" class="mr-[8rpx] text-[24rpx] text-purple-600">
@@ -1145,7 +1172,9 @@ function showBookingTerms() {
             <text
               class="i-material-symbols-receipt mr-[12rpx] text-[24rpx] text-purple-600"
             />
-            <text class="text-[28rpx] text-black font-semibold"> 费用明细 </text>
+            <text class="text-[28rpx] text-black font-semibold">
+              费用明细
+            </text>
           </view>
 
           <view class="space-y-[16rpx]">
@@ -1162,7 +1191,9 @@ function showBookingTerms() {
               v-if="priceCalculation.deliveryFee > 0"
               class="flex items-center justify-between"
             >
-              <text class="text-[24rpx] text-gray-600"> 送车服务费 </text>
+              <text class="text-[24rpx] text-gray-600">
+                送车服务费
+              </text>
               <text class="text-[26rpx] text-black">
                 ¥{{ priceCalculation.deliveryFee }}
               </text>
@@ -1172,7 +1203,9 @@ function showBookingTerms() {
               v-if="getDeliveryServiceFee() > 0"
               class="flex items-center justify-between"
             >
-              <text class="text-[24rpx] text-gray-600"> 交付标准费 </text>
+              <text class="text-[24rpx] text-gray-600">
+                交付标准费
+              </text>
               <text class="text-[26rpx] text-black">
                 ¥{{ getDeliveryServiceFee() }}
               </text>
@@ -1182,7 +1215,9 @@ function showBookingTerms() {
               v-if="priceCalculation.discountAmount > 0"
               class="flex items-center justify-between"
             >
-              <text class="text-[24rpx] text-gray-600"> 优惠券折扣 </text>
+              <text class="text-[24rpx] text-gray-600">
+                优惠券折扣
+              </text>
               <text class="text-[26rpx] text-green-600">
                 -¥{{ priceCalculation.discountAmount }}
               </text>
@@ -1190,7 +1225,9 @@ function showBookingTerms() {
 
             <view class="border-t border-gray-100 pt-[16rpx]">
               <view class="flex items-center justify-between">
-                <text class="text-[28rpx] text-black font-semibold"> 实付金额 </text>
+                <text class="text-[28rpx] text-black font-semibold">
+                  实付金额
+                </text>
                 <text class="text-[32rpx] text-purple-600 font-bold">
                   ¥{{ priceCalculation.finalAmount }}
                 </text>
@@ -1221,7 +1258,9 @@ function showBookingTerms() {
               《租车服务协议》
             </text>
             <text>和</text>
-            <text class="text-purple-600" @tap="showBookingTerms"> 《预订须知》 </text>
+            <text class="text-purple-600" @tap="showBookingTerms">
+              《预订须知》
+            </text>
           </view>
         </view>
       </view>
@@ -1231,7 +1270,9 @@ function showBookingTerms() {
     <view class="border-t border-gray-100 bg-white p-[24rpx]">
       <view class="flex items-center">
         <view class="flex-1">
-          <text class="text-[24rpx] text-gray-500"> 实付金额 </text>
+          <text class="text-[24rpx] text-gray-500">
+            实付金额
+          </text>
           <text class="ml-[8rpx] text-[32rpx] text-purple-600 font-bold">
             ¥{{ priceCalculation.finalAmount }}
           </text>
@@ -1242,8 +1283,12 @@ function showBookingTerms() {
           :disabled="submitLoading || !agreedToTerms"
           @tap="submitBooking"
         >
-          <text v-if="submitLoading"> 提交中... </text>
-          <text v-else> 立即预订 </text>
+          <text v-if="submitLoading">
+            提交中...
+          </text>
+          <text v-else>
+            立即预订
+          </text>
         </view>
       </view>
     </view>
@@ -1287,7 +1332,9 @@ function showBookingTerms() {
             "
             @tap="removeCoupon"
           >
-            <text class="text-[26rpx] text-black font-medium"> 不使用优惠券 </text>
+            <text class="text-[26rpx] text-black font-medium">
+              不使用优惠券
+            </text>
           </view>
         </view>
       </view>
@@ -1360,7 +1407,7 @@ function showBookingTerms() {
               class="w-full border border-gray-200 rounded-[12rpx] bg-gray-50 py-[16rpx] pl-[48rpx] pr-[24rpx] text-[26rpx]"
               placeholder="搜索地址或地标"
               @input="(e: any) => searchAddress(e.detail.value)"
-            />
+            >
             <text
               class="i-material-symbols-search absolute left-[16rpx] top-[50%] translate-y-[-50%] text-[24rpx] text-gray-400"
             />
@@ -1374,7 +1421,9 @@ function showBookingTerms() {
           "
           class="mb-[24rpx] px-[24rpx]"
         >
-          <text class="mb-[16rpx] block text-[24rpx] text-gray-600"> 最近使用 </text>
+          <text class="mb-[16rpx] block text-[24rpx] text-gray-600">
+            最近使用
+          </text>
           <view class="space-y-[12rpx]">
             <view
               v-for="address in addressSelector.recentAddresses"
@@ -1399,7 +1448,9 @@ function showBookingTerms() {
 
         <!-- 搜索结果 -->
         <view v-if="addressSelector.searchResults.length > 0" class="px-[24rpx]">
-          <text class="mb-[16rpx] block text-[24rpx] text-gray-600"> 搜索结果 </text>
+          <text class="mb-[16rpx] block text-[24rpx] text-gray-600">
+            搜索结果
+          </text>
           <view class="space-y-[12rpx]">
             <view
               v-for="address in addressSelector.searchResults"
@@ -1418,7 +1469,9 @@ function showBookingTerms() {
                   {{ address.detail }}
                 </text>
               </view>
-              <text class="text-[20rpx] text-gray-500"> {{ address.distance }}km </text>
+              <text class="text-[20rpx] text-gray-500">
+                {{ address.distance }}km
+              </text>
             </view>
           </view>
         </view>
@@ -1430,7 +1483,9 @@ function showBookingTerms() {
           "
           class="py-[48rpx] text-center"
         >
-          <text class="text-[24rpx] text-gray-500"> 未找到相关地址 </text>
+          <text class="text-[24rpx] text-gray-500">
+            未找到相关地址
+          </text>
         </view>
       </view>
     </BottomDrawer>
@@ -1444,16 +1499,24 @@ function showBookingTerms() {
               <text class="mb-[12rpx] block text-[26rpx] text-black font-semibold">
                 取消规则
               </text>
-              <text class="block"> • 用车开始前24小时外：免费取消 </text>
-              <text class="block"> • 用车开始前24小时内：扣除40%订单金额作为违约金 </text>
-              <text class="block"> • 用车开始后：不支持取消，不退款 </text>
+              <text class="block">
+                • 用车开始前24小时外：免费取消
+              </text>
+              <text class="block">
+                • 用车开始前24小时内：扣除40%订单金额作为违约金
+              </text>
+              <text class="block">
+                • 用车开始后：不支持取消，不退款
+              </text>
             </view>
 
             <view>
               <text class="mb-[12rpx] block text-[26rpx] text-black font-semibold">
                 押金政策
               </text>
-              <text class="block"> • 免押金服务，无需支付额外押金 </text>
+              <text class="block">
+                • 免押金服务，无需支付额外押金
+              </text>
               <text class="block">
                 • 如发生违章、损坏等情况，将从用户账户扣除相应费用
               </text>
@@ -1463,27 +1526,45 @@ function showBookingTerms() {
               <text class="mb-[12rpx] block text-[26rpx] text-black font-semibold">
                 保险政策
               </text>
-              <text class="block"> • 车辆已投保交强险、商业险 </text>
-              <text class="block"> • 正常使用过程中的保险理赔由平台协助处理 </text>
-              <text class="block"> • 违法违规使用导致的损失由用户承担 </text>
+              <text class="block">
+                • 车辆已投保交强险、商业险
+              </text>
+              <text class="block">
+                • 正常使用过程中的保险理赔由平台协助处理
+              </text>
+              <text class="block">
+                • 违法违规使用导致的损失由用户承担
+              </text>
             </view>
 
             <view>
               <text class="mb-[12rpx] block text-[26rpx] text-black font-semibold">
                 取车要求
               </text>
-              <text class="block"> • 取车时需出示有效驾驶证 </text>
-              <text class="block"> • 驾驶证须在有效期内，准驾车型相符 </text>
-              <text class="block"> • 取车时需验证取车码 </text>
+              <text class="block">
+                • 取车时需出示有效驾驶证
+              </text>
+              <text class="block">
+                • 驾驶证须在有效期内，准驾车型相符
+              </text>
+              <text class="block">
+                • 取车时需验证取车码
+              </text>
             </view>
 
             <view>
               <text class="mb-[12rpx] block text-[26rpx] text-black font-semibold">
                 还车要求
               </text>
-              <text class="block"> • 按时归还车辆到指定地点 </text>
-              <text class="block"> • 车辆外观无明显损坏 </text>
-              <text class="block"> • 车内无遗留物品，保持清洁 </text>
+              <text class="block">
+                • 按时归还车辆到指定地点
+              </text>
+              <text class="block">
+                • 车辆外观无明显损坏
+              </text>
+              <text class="block">
+                • 车内无遗留物品，保持清洁
+              </text>
             </view>
           </view>
         </scroll-view>

@@ -436,6 +436,5 @@ function handleLogout() {
 
       <view class="h-[1rpx]" />
     </view>
-
   </view>
 </template>
