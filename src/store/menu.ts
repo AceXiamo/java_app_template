@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 // 租车应用的主要导航
-export type ActiveMenu = 'home' | 'order' | 'my'
+export type ActiveMenu = 'home' | 'order' | 'discover' | 'my'
 
 export const useMenuStore = defineStore('menu', () => {
   const active = ref<ActiveMenu>('home')

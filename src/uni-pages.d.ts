@@ -6,6 +6,7 @@
 interface NavigateToOptions {
   url: "/pages/main/index" |
        "/pages/booking/index" |
+       "/pages/feedback-form/index" |
        "/pages/group/activity" |
        "/pages/group/home" |
        "/pages/member/home" |
@@ -20,6 +21,7 @@ interface NavigateToOptions {
        "/pages/my/profile" |
        "/pages/my/wallet" |
        "/pages/mystery-box/index" |
+       "/pages/news-detail/index" |
        "/pages/order/detail" |
        "/pages/owner-certification/index" |
        "/pages/ranking/index" |

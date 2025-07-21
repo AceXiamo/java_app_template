@@ -32,6 +32,7 @@ onLoad(async () => {
     <view class="flex-1 overflow-hidden">
       <TabBarMain v-if="menu.active === 'home'" class="h-full" />
       <TabBarOrder v-if="menu.active === 'order'" class="h-full" />
+      <TabBarDiscover v-if="menu.active === 'discover'" class="h-full" />
       <TabBarMy v-if="menu.active === 'my'" class="h-full" />
     </view>
   </view>

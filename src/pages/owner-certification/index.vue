@@ -178,6 +178,13 @@ function toggleAgreement() {
   formData.value.agreementAgreed = !formData.value.agreementAgreed
 }
 
+// 查看申请记录
+function goToRecords() {
+  uni.navigateTo({
+    url: '/pages/vehicle-affiliation-records/index',
+  })
+}
+
 // 提交申请
 async function submitForm() {
   if (!canSubmit.value) {
@@ -195,14 +202,28 @@ async function submitForm() {
 
     if (response.code === 200) {
       uni.hideLoading()
-      toastRef.value?.success('申请提交成功')
 
-      // 延迟跳转到记录页面
-      setTimeout(() => {
-        uni.navigateTo({
-          url: '/pages/vehicle-rental-records/index',
-        })
-      }, 1500)
+      // 显示详细的成功信息
+      const { applicationNo, submitTime, expectedProcessDays, message } = response.data
+
+      uni.showModal({
+        title: '申请提交成功',
+        content: `申请编号：${applicationNo}\n提交时间：${submitTime}\n预计处理：${expectedProcessDays}个工作日\n\n${message}`,
+        confirmText: '查看记录',
+        cancelText: '继续申请',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转到记录页面
+            uni.navigateTo({
+              url: '/pages/vehicle-affiliation-records/index',
+            })
+          }
+          else {
+            // 重置表单继续申请
+            resetForm()
+          }
+        },
+      })
     }
     else {
       throw new Error(response.message || '提交失败')
@@ -215,6 +236,25 @@ async function submitForm() {
   }
   finally {
     submitting.value = false
+  }
+}
+
+// 重置表单
+function resetForm() {
+  formData.value = {
+    operationMode: packageConfigs.value.length > 0 ? packageConfigs.value[0].packageCode : '',
+    contactPhone: userStore.user?.phone || '',
+    contactAddress: '',
+    contactLongitude: undefined,
+    contactLatitude: undefined,
+    vehicleDescription: '',
+    rentalIntention: '',
+    registrationCertFrontUrl: '',
+    registrationCertBackUrl: '',
+    insurancePolicyUrls: [],
+    inspectionCertUrl: '',
+    agreementVersion: agreementInfo.value?.version || 'v1.0',
+    agreementAgreed: false,
   }
 }
 
@@ -295,6 +335,26 @@ onMounted(async () => {
     <!-- 主要内容区域 -->
     <view class="flex-1 overflow-y-auto">
       <view class="p-[32rpx] space-y-[32rpx]">
+        <!-- 申请记录入口 -->
+        <view
+          class="border border-purple-100 rounded-[24rpx] from-purple-50 to-blue-50 bg-gradient-to-r p-[24rpx] transition-transform duration-150 active:scale-98"
+          @tap="goToRecords"
+        >
+          <view class="flex items-center justify-between">
+            <view class="flex items-center space-x-[16rpx]">
+              <text class="i-material-symbols-history text-[32rpx] text-purple-600" />
+              <view>
+                <text class="block text-[28rpx] text-purple-800 font-semibold">
+                  查看申请记录
+                </text>
+                <text class="text-[24rpx] text-purple-600">
+                  查看之前的挂靠申请状态
+                </text>
+              </view>
+            </view>
+            <text class="i-material-symbols-chevron-right text-[32rpx] text-purple-400" />
+          </view>
+        </view>
         <!-- 运营套餐选择 -->
         <view class="rounded-[32rpx] bg-white p-[32rpx] shadow-sm">
           <view class="mb-[32rpx] flex items-center space-x-[16rpx]">

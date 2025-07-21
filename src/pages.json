@@ -10,6 +10,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/feedback-form/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/group/activity",
       "type": "page",
       "layout": "home"
@@ -76,6 +81,11 @@
     },
     {
       "path": "pages/mystery-box/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/news-detail/index",
       "type": "page",
       "layout": "home"
     },

@@ -1,14 +1,6 @@
 <script setup lang="ts">
-import HeadBar from '@/components/HeadBar.vue'
-
 function goBack() {
   uni.navigateBack()
-}
-
-function goToRecords() {
-  uni.navigateTo({
-    url: '/pages/vehicle-affiliation-records/index',
-  })
 }
 </script>
 
@@ -24,19 +16,6 @@ function goToRecords() {
       <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
         车辆挂靠申请
       </text>
-
-      <!-- 填写记录按钮 -->
-      <view class="absolute right-0 z-10 h-full flex items-center pr-[24rpx]">
-        <view
-          class="flex items-center rounded-full bg-purple-50 px-[20rpx] py-[12rpx] transition-transform active:scale-95 space-x-[8rpx]"
-          @tap="goToRecords"
-        >
-          <text class="i-material-symbols-history text-[24rpx] text-purple-600" />
-          <text class="text-[24rpx] text-purple-600 font-medium">
-            记录
-          </text>
-        </view>
-      </view>
     </view>
   </HeadBar>
 </template>

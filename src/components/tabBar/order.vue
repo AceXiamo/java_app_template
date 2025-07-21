@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/store/order'
 import OrderHead from '@/components/page/order/Head.vue'
@@ -9,9 +9,45 @@ import RenewOrderDrawer from '@/components/RenewOrderDrawer.vue'
 const orderStore = useOrderStore()
 const { orderList, orderListStatus, activeTab } = storeToRefs(orderStore)
 
+// 定义 tab 数据
+const tabs = [
+  { key: 'all', label: '全部订单' },
+  { key: 'ongoing', label: '进行中' },
+  { key: 'cancelled', label: '已取消' },
+]
+
+// 计算滑块样式
+const sliderStyle = computed(() => {
+  const activeIndex = tabs.findIndex(tab => tab.key === activeTab.value)
+  if (activeIndex === -1)
+    return {}
+
+  const leftPosition = (100 / tabs.length) * (activeIndex + 0.5)
+  return {
+    left: `${leftPosition}%`,
+    transform: 'translateX(-50%)',
+  }
+})
+
+// 下拉刷新状态
+const refreshing = ref(false)
+
 // 切换订单状态tab
-function switchTab(tab: string) {
+function switchTab(tab: 'all' | 'ongoing' | 'cancelled') {
   orderStore.switchOrderTab(tab)
+}
+
+// 下拉刷新
+async function onRefresh() {
+  refreshing.value = true
+  try {
+    // 静默刷新：直接调用loadOrderList而不设置loading状态
+    orderStore.orderListQuery.page = 1
+    await orderStore.loadOrderList(true)
+  }
+  finally {
+    refreshing.value = false
+  }
 }
 
 // 订单操作
@@ -264,28 +300,23 @@ async function openNavigation(location: string) {
 
     <!-- 订单状态筛选 -->
     <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[40rpx] py-[32rpx]">
-      <view class="flex rounded-[24rpx] bg-gray-100 p-[8rpx] space-x-[8rpx]">
+      <view class="relative flex rounded-[10rpx] bg-gray-50 p-[8rpx]">
+        <!-- Tabs -->
         <view
-          class="flex-1 rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
-          :class="activeTab === 'all' ? 'bg-purple-600 text-white' : 'text-gray-600'"
-          @tap="switchTab('all')"
+          v-for="tab in tabs"
+          :key="tab.key"
+          class="flex-1 cursor-pointer rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-colors duration-300"
+          :class="activeTab === tab.key ? 'text-purple-600' : 'text-gray-400'"
+          @tap="switchTab(tab.key as 'all' | 'ongoing' | 'cancelled')"
         >
-          全部订单
+          {{ tab.label }}
         </view>
+
+        <!-- Moving Slider -->
         <view
-          class="flex-1 rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
-          :class="activeTab === 'ongoing' ? 'bg-purple-600 text-white' : 'text-gray-600'"
-          @tap="switchTab('ongoing')"
-        >
-          进行中
-        </view>
-        <view
-          class="flex-1 rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-all duration-200 active:scale-95"
-          :class="activeTab === 'cancelled' ? 'bg-purple-600 text-white' : 'text-gray-600'"
-          @tap="switchTab('cancelled')"
-        >
-          已取消
-        </view>
+          class="absolute bottom-[8rpx] h-[6rpx] w-[40rpx] rounded-full bg-purple-600 transition-all duration-300 ease-out"
+          :style="sliderStyle"
+        />
       </view>
     </view>
 
@@ -294,12 +325,15 @@ async function openNavigation(location: string) {
       <scroll-view
         scroll-y
         class="h-full"
+        refresher-enabled
+        :refresher-triggered="refreshing"
+        @refresherrefresh="onRefresh"
         @scrolltolower="orderStore.loadMoreOrders"
       >
         <view class="p-[24rpx] space-y-[24rpx]">
           <!-- 初始加载状态 -->
           <view v-if="orderList.length === 0 && orderListStatus === 'loading'" class="flex flex-col items-center justify-center py-[120rpx]">
-            <text class="i-material-symbols-sync mb-[24rpx] animate-spin text-[96rpx] text-purple-400" />
+            <text class="i-material-symbols-sync mb-[24rpx] animate-spin text-[32rpx] text-purple-400" />
             <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
               加载订单中
             </text>
@@ -310,7 +344,12 @@ async function openNavigation(location: string) {
 
           <!-- 空状态 -->
           <view v-if="orderList.length === 0 && orderListStatus !== 'loading'" class="flex flex-col items-center justify-center py-[120rpx]">
-            <text class="i-material-symbols-receipt-long mb-[24rpx] text-[96rpx] text-gray-300" />
+            <image
+              src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/empty_order.png"
+              class="mb-[32rpx] h-[180rpx] w-[180rpx]"
+              mode="aspectFit"
+              alt="暂无订单"
+            />
             <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
               暂无订单
             </text>
@@ -323,56 +362,64 @@ async function openNavigation(location: string) {
           <view
             v-for="order in orderList"
             :key="order.id"
-            class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]"
+            class="mb-[24rpx] overflow-hidden rounded-[20rpx] bg-white p-[32rpx] shadow-sm"
             @tap="viewDetail(order.orderNumber)"
           >
             <!-- 订单状态和订单号 -->
-            <view class="mb-[24rpx] flex items-center justify-between">
+            <view class="mb-[20rpx] flex items-center justify-between">
               <view class="flex items-center">
                 <view
-                  class="mr-[12rpx] rounded-[8rpx] px-[12rpx] py-[4rpx] text-[22rpx] font-medium"
+                  class="mr-[10rpx] flex items-center rounded-full px-[16rpx] py-[4rpx]"
                   :class="{
-                    'bg-green-50 text-green-600': order.status === 'ongoing',
-                    'bg-gray-50 text-gray-600': order.status === 'completed',
-                    'bg-red-50 text-red-600': order.status === 'cancelled',
-                    'bg-orange-50 text-orange-600': order.status === 'pending',
+                    'bg-green-50': order.status === 'ongoing',
+                    'bg-gray-50': order.status === 'completed',
+                    'bg-red-50': order.status === 'cancelled',
+                    'bg-orange-50': order.status === 'pending',
                   }"
                 >
-                  {{ order.statusText }}
+                  <text v-if="order.status === 'ongoing'" class="i-material-symbols-schedule mr-[6rpx] text-[20rpx] text-green-500" />
+                  <text v-if="order.status === 'completed'" class="i-material-symbols-check-circle mr-[6rpx] text-[20rpx] text-gray-400" />
+                  <text v-if="order.status === 'cancelled'" class="i-material-symbols-cancel mr-[6rpx] text-[20rpx] text-red-400" />
+                  <text v-if="order.status === 'pending'" class="i-material-symbols-hourglass-empty mr-[6rpx] text-[20rpx] text-orange-400" />
+                  <text
+                    class="text-[22rpx] font-medium" :class="{
+                      'text-green-600': order.status === 'ongoing',
+                      'text-gray-600': order.status === 'completed',
+                      'text-red-600': order.status === 'cancelled',
+                      'text-orange-600': order.status === 'pending',
+                    }"
+                  >
+                    {{ order.statusText }}
+                  </text>
                 </view>
                 <!-- 盲盒徽章 -->
-                <view v-if="order.orderType === 'mystery_box'" class="rounded-[8rpx] bg-purple-100 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-700 font-medium">
+                <view v-if="order.orderType === 'mystery_box'" class="ml-[8rpx] flex items-center rounded-full bg-purple-100 px-[14rpx] py-[4rpx] text-[20rpx] text-purple-700 font-medium">
                   <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx]" />
                   神秘盲盒
                 </view>
                 <!-- 超时提示 -->
-                <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] rounded-[8rpx] bg-red-100 px-[12rpx] py-[4rpx] text-[20rpx] text-red-700 font-medium">
+                <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] flex items-center rounded-full bg-red-100 px-[14rpx] py-[4rpx] text-[20rpx] text-red-700 font-medium">
                   <text class="i-material-symbols-warning mr-[4rpx] text-[16rpx]" />
                   已超时
                 </view>
               </view>
-              <text class="text-[22rpx] text-gray-500">
+              <text class="text-[22rpx] text-gray-400">
                 {{ order.orderNumber }}
               </text>
             </view>
-
             <!-- 车辆信息 -->
-            <view class="mb-[24rpx] flex">
+            <view class="mb-[20rpx] flex">
               <!-- 盲盒订单特殊显示 -->
               <view v-if="order.orderType === 'mystery_box'" class="h-[120rpx] w-[160rpx] flex-shrink-0">
-                <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-purple-100 via-purple-200 to-pink-100 bg-gradient-to-br">
-                  <!-- 装饰背景 -->
-                  <view class="absolute inset-0">
-                    <view class="absolute left-[8rpx] top-[8rpx] h-[20rpx] w-[20rpx] rounded-full bg-purple-300 opacity-50" />
-                    <view class="absolute right-[12rpx] top-[20rpx] h-[12rpx] w-[12rpx] rounded-full bg-pink-300 opacity-60" />
-                    <view class="absolute bottom-[12rpx] left-[20rpx] h-[16rpx] w-[16rpx] rounded-full bg-blue-300 opacity-50" />
-                    <view class="absolute bottom-[8rpx] right-[8rpx] h-[10rpx] w-[10rpx] rounded-full bg-yellow-300 opacity-60" />
-                  </view>
-                  <!-- 盲盒图标 -->
-                  <text class="i-material-symbols-card-giftcard relative z-10 text-[48rpx] text-purple-600" />
+                <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-purple-50 to-purple-100 bg-gradient-to-br">
+                  <image
+                    src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/mystery-box.png"
+                    class="h-[90rpx] w-[90rpx]"
+                    mode="aspectFit"
+                    alt="神秘盲盒"
+                  />
                 </view>
               </view>
-
               <!-- 普通车辆图片 -->
               <view v-else class="h-[120rpx] w-[160rpx] flex-shrink-0">
                 <image
@@ -385,142 +432,151 @@ async function openNavigation(location: string) {
                   <text class="i-material-symbols-directions-car text-[48rpx] text-gray-400" />
                 </view>
               </view>
-
               <!-- 车辆信息 -->
-              <view class="ml-[24rpx] flex flex-1 flex-col justify-center">
+              <view class="ml-[24rpx] min-w-0 flex flex-1 flex-col justify-center">
                 <!-- 盲盒订单显示 -->
                 <template v-if="order.orderType === 'mystery_box'">
-                  <text class="text-[28rpx] text-black font-semibold">
+                  <text class="truncate text-[28rpx] text-black font-bold">
                     神秘盲盒
                   </text>
-                  <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
-                    <text>{{ order.mysteryBox?.energyTypeName || '纯电动' }}</text>
-                    <text>{{ order.mysteryBox?.carTypeName || 'SUV' }}</text>
-                    <text class="text-purple-600 font-medium">
+                  <view class="mt-[8rpx] flex flex-wrap items-center gap-x-[16rpx] gap-y-[4rpx] text-[22rpx] text-gray-600">
+                    <text class="truncate">
+                      {{ order.mysteryBox?.energyTypeName || '纯电动' }}
+                    </text>
+                    <text class="truncate">
+                      {{ order.mysteryBox?.carTypeName || 'SUV' }}
+                    </text>
+                    <text class="truncate text-purple-600 font-medium">
                       取车揭晓
                     </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
                     <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[20rpx] text-purple-500" />
-                    <text class="text-[20rpx] text-purple-600 font-medium">
+                    <text class="truncate text-[20rpx] text-purple-600 font-medium">
                       惊喜车型等你解锁
                     </text>
                   </view>
                 </template>
-
                 <!-- 普通订单显示 -->
                 <template v-else>
-                  <text class="text-[28rpx] text-black font-semibold">
+                  <text class="truncate text-[28rpx] text-black font-bold">
                     {{ order.vehicle?.name || '暂无车辆信息' }}
                   </text>
-                  <view class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]">
-                    <text>{{ order.vehicle?.licensePlate || '沪A·****' }}</text>
-                    <text>{{ order.vehicle?.seats || 5 }}座</text>
-                    <text>{{ order.vehicle?.type || '轿车' }}</text>
+                  <view class="mt-[8rpx] flex flex-wrap items-center gap-x-[16rpx] gap-y-[4rpx] text-[22rpx] text-gray-600">
+                    <text class="truncate">
+                      {{ order.vehicle?.licensePlate || '沪A·****' }}
+                    </text>
+                    <text class="truncate">
+                      {{ order.vehicle?.seats || 5 }}座
+                    </text>
+                    <text class="truncate">
+                      {{ order.vehicle?.type || '轿车' }}
+                    </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
                     <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
-                    <text class="text-[20rpx] text-gray-600">
+                    <text class="truncate text-[20rpx] text-gray-600">
                       {{ order.vehicle?.rating || 4.8 }}({{ order.vehicle?.ratingCount || 128 }})
                     </text>
                   </view>
                 </template>
               </view>
-
               <!-- 价格信息 -->
-              <view class="ml-[16rpx] text-right">
+              <view class="ml-[16rpx] min-w-[80rpx] flex flex-col items-end justify-between text-right">
                 <text class="text-[32rpx] text-purple-600 font-bold">
                   ¥{{ order.amount }}
                 </text>
-                <text class="mt-[4rpx] block text-[22rpx] text-gray-500">
+                <text class="mt-[4rpx] block text-[22rpx] text-gray-400">
                   {{ order.rentPeriod?.days || 1 }}天
                 </text>
                 <!-- 盲盒标识 -->
                 <view v-if="order.orderType === 'mystery_box'" class="mt-[8rpx]">
-                  <text class="rounded-[8rpx] bg-purple-50 px-[8rpx] py-[4rpx] text-[20rpx] text-purple-500">
+                  <text class="rounded-full bg-purple-50 px-[10rpx] py-[2rpx] text-[18rpx] text-purple-500">
                     盲盒
                   </text>
                 </view>
               </view>
             </view>
-
-            <!-- 订单详情 -->
-            <view class="mb-[24rpx] rounded-[16rpx] bg-gray-50 p-[24rpx]">
-              <view class="mb-[16rpx] flex items-center">
-                <text class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-purple-600" />
-                <text class="text-[26rpx] text-black font-medium">
+            <!-- 用车时间地点区 -->
+            <view class="mb-[20rpx] rounded-[14rpx] bg-gray-50 p-[20rpx]">
+              <view class="mb-[10rpx] flex items-center">
+                <text class="i-material-symbols-schedule mr-[8rpx] text-[22rpx] text-purple-600" />
+                <text class="text-[24rpx] text-black font-medium">
                   用车时间
                 </text>
               </view>
-              <text class="mb-[16rpx] block text-[24rpx] text-gray-700">
+              <text class="mb-[10rpx] block text-[22rpx] text-gray-700">
                 {{ order.rentPeriod?.startTime }} - {{ order.rentPeriod?.endTime }}
               </text>
-
               <view class="flex items-center justify-between">
                 <view class="flex items-center">
-                  <text class="i-material-symbols-location-on mr-[12rpx] text-[24rpx] text-purple-600" />
-                  <text class="text-[26rpx] text-black font-medium">
+                  <text class="i-material-symbols-location-on mr-[8rpx] text-[22rpx] text-purple-600" />
+                  <text class="text-[24rpx] text-black font-medium">
                     取车地点
                   </text>
                 </view>
-                <view class="rounded-[12rpx] bg-purple-100 px-[16rpx] py-[8rpx] active:scale-95" @tap="openNavigation(order.location)">
+                <view class="flex cursor-pointer items-center rounded-full bg-purple-100 px-[16rpx] py-[8rpx] transition-colors active:bg-purple-200" @tap="openNavigation(order.location)">
+                  <text class="i-material-symbols-near-me mr-[8rpx] text-[22rpx] text-purple-600" />
                   <text class="text-[22rpx] text-purple-600 font-medium">
                     导航
                   </text>
                 </view>
               </view>
-              <text class="mt-[8rpx] block text-[24rpx] text-gray-700">
+              <text class="mt-[6rpx] block truncate text-[22rpx] text-gray-700">
                 {{ order.location }}
               </text>
             </view>
-
             <!-- 超时警告 -->
             <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="mb-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
               <view class="flex items-center">
-                <text class="i-material-symbols-warning mr-[12rpx] text-[24rpx] text-red-600" />
+                <image
+                  src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/deadline.png"
+                  class="mr-[16rpx] h-[40rpx] w-[40rpx] flex-shrink-0"
+                  mode="aspectFit"
+                  alt="超时警告"
+                />
                 <text class="text-[24rpx] text-red-800 font-medium">
                   {{ (order.originalStatus || order.status) === 'paid' ? '取车时间已超时，请尽快联系客服' : '订单已超时，请尽快还车' }}
                 </text>
               </view>
             </view>
-
             <!-- 取车码区域 -->
-            <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status) && order.pickupCode" class="mb-[24rpx] rounded-[16rpx] bg-purple-50 p-[20rpx]">
-              <view class="flex items-center justify-between">
-                <view class="flex-1">
-                  <view class="mb-[8rpx] flex items-center">
-                    <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[20rpx] text-purple-600" />
-                    <text class="text-[24rpx] text-purple-800 font-medium">
-                      取车码
-                    </text>
-                    <text v-if="(order.originalStatus || order.status) === 'picked'" class="ml-[8rpx] rounded-[6rpx] bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">
-                      已使用
-                    </text>
-                  </view>
-                  <text class="text-[40rpx] text-purple-600 font-bold tracking-wider">
-                    {{ order.pickupCode }}
+            <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status) && order.pickupCode" class="mb-[20rpx] flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
+              <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
+              <view class="flex-1">
+                <view class="mb-[4rpx] flex items-center">
+                  <text class="text-[24rpx] text-purple-800 font-medium">
+                    取车码
+                  </text>
+                  <text v-if="(order.originalStatus || order.status) === 'picked'" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">
+                    已使用
                   </text>
                 </view>
-                <view v-if="order.pickupDeadline" class="text-right">
-                  <text class="mb-[4rpx] block text-[20rpx] text-gray-500">
+                <text class="text-[36rpx] text-purple-600 font-bold tracking-wider">
+                  {{ order.pickupCode }}
+                </text>
+              </view>
+              <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
+                <view class="mb-[2rpx] flex items-center">
+                  <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'" />
+                  <text class="text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
                     {{ (order.originalStatus || order.status) === 'paid' ? '取车截止' : '截止时间' }}
                   </text>
-                  <text class="text-[22rpx] font-medium" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
-                    {{ formatTime(order.pickupDeadline) }}
-                  </text>
-                  <text v-if="isPickupExpired(order.pickupDeadline)" class="mt-[2rpx] block text-[16rpx] text-red-500">
-                    已超时
-                  </text>
                 </view>
+                <text class="text-[20rpx] font-medium" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
+                  {{ formatTime(order.pickupDeadline) }}
+                </text>
+                <text v-if="isPickupExpired(order.pickupDeadline)" class="mt-[2rpx] block text-[16rpx] text-red-500">
+                  已超时
+                </text>
               </view>
             </view>
-
             <!-- 操作按钮 -->
-            <view v-if="order.actions && order.actions.length > 0" class="flex space-x-[16rpx]">
+            <view v-if="order.actions && order.actions.length > 0" class="mt-[8rpx] flex space-x-[16rpx]">
               <view
                 v-for="action in order.actions"
                 :key="action.type"
-                class="flex-1 rounded-[20rpx] py-[20rpx] text-center text-[26rpx] font-medium transition-all duration-200 active:scale-95"
+                class="flex-1 rounded-full py-[20rpx] text-center text-[26rpx] font-medium transition-colors duration-200"
                 :class="{
                   'bg-gray-100 text-gray-600': action.style === 'secondary',
                   'bg-purple-600 text-white': action.style === 'primary',
@@ -545,9 +601,8 @@ async function openNavigation(location: string) {
 
       <!-- 触底加载动画覆盖层 -->
       <view
-        v-if="orderListStatus === 'loading' && orderList.length > 0"
         class="absolute bottom-0 left-0 right-0 border-t border-gray-100 bg-white/90 shadow-lg backdrop-blur-sm transition-transform duration-300 ease-out"
-        :class="orderListStatus === 'loading' ? 'translate-y-0' : 'translate-y-full'"
+        :class="orderListStatus === 'loading' && orderList.length > 0 ? 'translate-y-0' : 'translate-y-full'"
       >
         <view class="flex items-center justify-center py-[32rpx]">
           <text class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />

@@ -283,15 +283,6 @@ function goToVehicleDetail(vehicleId: number) {
   })
 }
 
-// 距离格式化
-function formatDistance(distance?: number) {
-  if (!distance)
-    return ''
-  if (distance < 1)
-    return `${Math.round(distance * 1000)}m`
-  return `${distance.toFixed(1)}km`
-}
-
 // 切换数组筛选项
 function toggleArrayFilter(key: keyof typeof filters.value, value: any) {
   const array = filters.value[key] as any[]
@@ -324,18 +315,6 @@ function selectPriceRange(range: number[]) {
   selectedPriceRange.value = range
   filters.value.minPrice = range[0]
   filters.value.maxPrice = range[1] === 9999 ? undefined : range[1]
-}
-
-// 获取标签样式
-function getTagStyle(tagType: string) {
-  const styles: Record<string, string> = {
-    hot: 'bg-red-500',
-    new: 'bg-green-500',
-    luxury: 'bg-purple-500',
-    discount: 'bg-orange-500',
-    featured: 'bg-blue-500',
-  }
-  return styles[tagType] || 'bg-gray-500'
 }
 
 // 能源类型显示（后端已返回中文，直接使用）
@@ -393,15 +372,6 @@ function getMonthlyDiscount(dailyPrice: number, monthlyPrice?: number) {
     originalPrice: monthlyByDaily,
     monthlyPrice,
   }
-}
-
-// 格式化时间范围
-function formatTimeRange() {
-  if (!searchParams.value.startTime || !searchParams.value.endTime)
-    return ''
-  const start = new Date(searchParams.value.startTime)
-  const end = new Date(searchParams.value.endTime)
-  return `${start.getMonth() + 1}月${start.getDate()}日 ${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')} - ${end.getMonth() + 1}月${end.getDate()}日 ${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`
 }
 
 // 快速预订
@@ -585,60 +555,39 @@ function handleAddressConfirm(data: {
           <view
             v-for="vehicle in vehicles"
             :key="vehicle.vehicleId"
-            class="flex flex-col overflow-hidden rounded-[24rpx] bg-white shadow-sm"
+            class="mb-[24rpx] flex flex-col overflow-hidden rounded-[28rpx] bg-white shadow-[0_8rpx_24rpx_rgba(139,92,246,0.08)]"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
             <!-- 上半部分：图片和车辆信息 -->
             <view class="flex">
               <!-- 车辆图片 -->
               <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
-                <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[24rpx]" />
-                <!-- 促销标签 -->
-                <view class="absolute left-[12rpx] top-[12rpx] flex flex-col space-y-[6rpx]">
-                  <view
-                    v-for="tag in vehicle.tags.slice(0, 2)"
-                    :key="tag.tagName"
-                    class="w-max rounded-[12rpx] px-[12rpx] py-[4rpx] text-[18rpx] text-white font-medium"
-                    :class="getTagStyle(tag.tagType)"
-                  >
-                    {{ tag.tagName }}
-                  </view>
+                <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[28rpx]" />
+                <!-- 距离信息（右下角，固定2.3km） -->
+                <view class="absolute bottom-[12rpx] right-[12rpx] flex items-center rounded-full bg-white/80 px-[12rpx] py-[4rpx]">
+                  <text class="i-material-symbols-location-on mr-[4rpx] text-[20rpx] text-purple-500" />
+                  <text class="text-[20rpx] text-gray-600">
+                    2.3km
+                  </text>
                 </view>
               </view>
 
               <!-- 车辆基本信息 -->
               <view class="flex flex-1 flex-col justify-center p-[20rpx]">
-                <text class="block text-[28rpx] text-black font-semibold leading-[40rpx]">
+                <text class="mb-[8rpx] block text-[30rpx] text-black font-bold">
                   {{ getVehicleDisplayName(vehicle) }}
                 </text>
-
-                <!-- 车牌和基本信息分两行显示 -->
-                <view class="mt-[8rpx] flex flex-col gap-[8rpx] text-[22rpx] text-gray-600">
-                  <text class="flex-shrink-0">
-                    {{ formatLicensePlate(vehicle.licensePlate) }}
-                  </text>
-                  <view class="flex items-center space-x-[12rpx]">
-                    <text class="flex-shrink-0">
-                      {{ vehicle.seats }}座
-                    </text>
-                    <text class="flex-shrink-0">
-                      {{ getEnergyTypeText(vehicle.energyType) }}
-                    </text>
-                  </view>
+                <view class="mb-[8rpx] flex flex-wrap items-center gap-[16rpx] text-[22rpx] text-gray-600">
+                  <text>{{ formatLicensePlate(vehicle.licensePlate) }}</text>
+                  <text>{{ vehicle.seats }}座</text>
+                  <text>{{ getEnergyTypeText(vehicle.energyType) }}</text>
                 </view>
-
                 <!-- 车辆特性 -->
-                <view class="mt-[12rpx] flex flex-wrap items-center gap-[16rpx]">
+                <view class="mt-auto flex flex-wrap items-center gap-[16rpx]">
                   <view v-if="vehicle.rangeKm" class="flex items-center">
                     <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
                     <text class="text-[20rpx] text-gray-600">
                       {{ vehicle.rangeKm }}km
-                    </text>
-                  </view>
-                  <view v-if="vehicle.distance" class="flex items-center">
-                    <text class="i-material-symbols-location-on mr-[6rpx] text-[20rpx] text-purple-500" />
-                    <text class="text-[20rpx] text-gray-600">
-                      {{ formatDistance(vehicle.distance) }}
                     </text>
                   </view>
                   <view class="flex items-center">
@@ -648,6 +597,20 @@ function handleAddressConfirm(data: {
                     </text>
                   </view>
                 </view>
+              </view>
+            </view>
+            <!-- 标签栏（图片和价格栏之间，横向排列） -->
+            <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[12rpx] px-[20rpx] pb-[8rpx] pt-[20rpx]">
+              <view
+                v-for="tag in vehicle.tags.slice(0, 2)"
+                :key="tag.tagName"
+                class="flex items-center rounded-[12rpx] bg-gray-100 px-[16rpx] py-[6rpx] text-[20rpx] font-medium text-gray-700"
+              >
+                <view
+                  class="mr-[8rpx] h-[12rpx] w-[12rpx] rounded-full"
+                  :style="{ backgroundColor: tag.tagColor || '#9ca3af' }"
+                />
+                {{ tag.tagName }}
               </view>
             </view>
 
@@ -681,7 +644,8 @@ function handleAddressConfirm(data: {
               </view>
 
               <!-- 快速预订按钮 -->
-              <view class="flex rounded-[20rpx] bg-purple-600 px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+              <view class="flex rounded-[20rpx] from-purple-500 to-purple-400 bg-gradient-to-r px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+                <text class="i-material-symbols-bolt mr-[8rpx] text-[24rpx] text-white" />
                 <text class="text-[24rpx] text-white font-medium">
                   立即预订
                 </text>

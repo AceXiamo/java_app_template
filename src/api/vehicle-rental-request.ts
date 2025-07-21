@@ -161,6 +161,13 @@ export function getMyRequests(): Promise<BaseRes<VehicleRentalRequest[]>> {
 }
 
 /**
+ * 获取申请历史记录（别名）
+ */
+export function getApplicationHistory(): Promise<BaseRes<VehicleRentalRequest[]>> {
+  return getMyRequests()
+}
+
+/**
  * 根据申请单号获取申请详情
  */
 export function getRequestDetail(applicationNo: string): Promise<BaseRes<VehicleRentalRequest>> {

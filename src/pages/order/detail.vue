@@ -411,36 +411,31 @@ onUnmounted(() => {
           </view>
 
           <!-- 取车码显示 -->
-          <view v-if="orderDetail.pickupCode && ['paid', 'picked', 'returned', 'completed'].includes(orderDetail.status)" class="mt-[24rpx] rounded-[16rpx] bg-purple-50 p-[24rpx]">
-            <view class="flex items-center justify-between">
-              <view>
-                <view class="mb-[12rpx] flex items-center">
-                  <text class="i-material-symbols-qr-code-scanner mr-[8rpx] text-[24rpx] text-purple-600" />
-                  <text class="text-[26rpx] text-purple-800 font-medium">
-                    取车码
-                  </text>
-                  <text v-if="orderDetail.status === 'picked'" class="ml-[8rpx] rounded-[6rpx] bg-green-100 px-[8rpx] py-[2rpx] text-[20rpx] text-green-600">
-                    已使用
-                  </text>
-                </view>
-                <text class="text-[56rpx] text-purple-600 font-bold tracking-wider">
-                  {{ orderDetail.pickupCode }}
-                </text>
+          <view v-if="orderDetail.pickupCode && ['paid', 'picked', 'returned', 'completed'].includes(orderDetail.status)" class="mt-[24rpx] flex items-center rounded-[16rpx] bg-purple-50 p-[24rpx]">
+            <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
+            <view class="flex-1">
+              <view class="mb-[4rpx] flex items-center">
+                <text class="text-[24rpx] text-purple-800 font-medium">取车码</text>
+                <text v-if="orderDetail.status === 'picked'" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">已使用</text>
               </view>
-              <view v-if="orderDetail.pickupDeadline && ['paid', 'picked'].includes(orderDetail.status)" class="text-right">
-                <text class="mb-[8rpx] block text-[22rpx] text-gray-600">
+              <text class="text-[56rpx] text-purple-600 font-bold tracking-wider font-mono">{{ orderDetail.pickupCode }}</text>
+            </view>
+            <view v-if="orderDetail.pickupDeadline && ['paid', 'picked'].includes(orderDetail.status)" class="ml-[16rpx] flex flex-col items-end text-right">
+              <view class="mb-[2rpx] flex items-center">
+                <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="getCountdownColor()" />
+                <text class="text-[18rpx]" :class="getCountdownColor()">
                   {{ orderDetail.status === 'paid' ? '取车截止' : '剩余时间' }}
                 </text>
-                <text class="text-[28rpx] font-bold font-mono" :class="getCountdownColor()">
-                  {{ formatCountdown() }}
-                </text>
-                <text v-if="!countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-gray-500">
-                  {{ formatTime(orderDetail.pickupDeadline) }}
-                </text>
-                <text v-if="countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-red-500">
-                  已超过截止时间
-                </text>
               </view>
+              <text class="text-[28rpx] font-bold font-mono" :class="getCountdownColor()">
+                {{ formatCountdown() }}
+              </text>
+              <text v-if="!countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-gray-500">
+                {{ formatTime(orderDetail.pickupDeadline) }}
+              </text>
+              <text v-if="countdown.isExpired" class="mt-[4rpx] block text-[18rpx] text-red-500">
+                已超过截止时间
+              </text>
             </view>
           </view>
 
@@ -780,7 +775,7 @@ onUnmounted(() => {
         <!-- 支付信息 (已支付订单显示) -->
         <view v-if="orderDetail.paymentInfo.payTime" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
           <view class="mb-[24rpx] flex items-center">
-            <text class="i-material-symbols-payment mr-[12rpx] text-[24rpx] text-purple-600" />
+            <text class="i-material-symbols-credit-card mr-[12rpx] text-[24rpx] text-purple-600" />
             <text class="text-[28rpx] text-black font-semibold">
               支付信息
             </text>

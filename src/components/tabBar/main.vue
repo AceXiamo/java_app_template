@@ -305,9 +305,9 @@ onMounted(() => {
           style="background: linear-gradient(to bottom,rgba(255, 255, 255, 0.6) 0%,rgba(255, 255, 255, 1) 20%);"
         >
           <!-- 地点选择 -->
-          <view class="mb-[48rpx] flex items-center justify-between" @tap="showAddressPicker">
+          <view class="mb-[48rpx] gap-[20rpx] flex items-center justify-between" @tap="showAddressPicker">
             <view class="min-w-0 flex flex-1 items-center">
-              <view i-material-symbols:location-on class="text-[36rpx] text-purple-600" />
+              <view i-material-symbols:location-on class="text-[36rpx] text-purple-600 flex-none" />
               <text class="ml-[16rpx] truncate text-[36rpx] text-black font-medium">
                 {{ searchForm.address }}
               </text>
@@ -371,41 +371,108 @@ onMounted(() => {
         </view>
       </view>
 
+      <view class="px-[40rpx] pb-[32rpx]">
+        <view
+          class="relative h-[280rpx] overflow-hidden rounded-[24rpx]"
+          style="background-image: url(http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_3.jpg); background-size: auto 100%; background-position: right center; background-repeat: no-repeat;"
+        >
+          <!-- 渐变遮罩层 - 只在左侧40%区域 -->
+          <view class="absolute left-0 top-0 z-[1] h-full w-[50%] from-white/90 via-white/70 to-transparent bg-gradient-to-r" />
+
+          <!-- 文字内容层 - 限制在左侧40%区域 -->
+          <view class="absolute left-0 top-0 z-10 h-full w-[50%] flex flex-col justify-between p-[25rpx] pr-0 box-border">
+            <!-- 顶部标题区域 -->
+            <view>
+              <view class="mb-[16rpx] flex items-center">
+                <text class="text-[28rpx] text-[#333] font-bold leading-tight">
+                  一站式出行服务
+                </text>
+              </view>
+              <text class="mb-[10rpx] text-[22rpx] text-[#666] leading-relaxed">
+                更快 · 更便捷 · 更安心
+              </text>
+            </view>
+
+            <!-- 底部服务特色区域 -->
+            <view>
+              <!-- 服务特色标签 - 垂直排列以适应宽度限制 -->
+              <view class="grid grid-cols-2 mb-[10rpx] gap-[12rpx]">
+                <view class="flex items-center">
+                  <view i-material-symbols:schedule class="mr-[8rpx] text-[18rpx] text-purple-600" />
+                  <text class="text-[18rpx] text-[#666]">
+                    即租即走
+                  </text>
+                </view>
+                <view class="flex items-center">
+                  <view i-material-symbols:verified-user class="mr-[8rpx] text-[18rpx] text-purple-600" />
+                  <text class="text-[18rpx] text-[#666]">
+                    安全保障
+                  </text>
+                </view>
+                <view class="flex items-center">
+                  <view i-material-symbols:support-agent class="mr-[8rpx] text-[18rpx] text-purple-600" />
+                  <text class="text-[18rpx] text-[#666]">
+                    24小时服务
+                  </text>
+                </view>
+              </view>
+
+              <!-- 底部引导文字 -->
+              <view>
+                <text class="block text-[18rpx] text-purple-600 font-medium">
+                  为您提供更好的出行体验
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 特色功能栏 -->
       <view class="px-[40rpx] pb-[48rpx]">
         <view class="grid grid-cols-2 gap-[32rpx]">
           <!-- 超值月租 -->
           <view
-            class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+            class="relative overflow-hidden rounded-[32rpx] shadow-sm"
             @tap="goToMonthlyRental"
           >
-            <view class="mb-[16rpx] flex items-center justify-between">
-              <view
-                i-material-symbols:calendar-month
-                class="text-[48rpx] text-orange-600"
-              />
-              <text
-                class="rounded-full bg-orange-100 px-[16rpx] py-[8rpx] text-[24rpx] text-orange-600"
-              >
-                HOT
+            <!-- 背景图片 -->
+            <image
+              src="http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_1.png"
+              class="absolute inset-0 h-full w-full object-cover"
+              mode="aspectFill"
+            />
+
+            <!-- 内容层 -->
+            <view class="relative z-10 p-[32rpx]">
+              <view class="mb-[16rpx] flex items-center justify-between">
+                <view
+                  i-lets-icons:calendar-duotone
+                  class="text-[48rpx] text-white drop-shadow-sm"
+                />
+                <text
+                  class="rounded-full bg-white/90 px-[16rpx] py-[8rpx] text-[24rpx] text-orange-600 font-medium"
+                >
+                  HOT
+                </text>
+              </view>
+              <text class="mb-[8rpx] block text-[28rpx] text-white font-semibold drop-shadow-sm">
+                超值月租
+              </text>
+              <text class="text-[24rpx] text-white/90 drop-shadow-sm">
+                低至8折优惠
               </text>
             </view>
-            <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
-              超值月租
-            </text>
-            <text class="text-[24rpx] text-gray-600">
-              低至8折优惠
-            </text>
           </view>
 
-          <!-- 百元盲盒 -->
+          <!-- 神秘盲盒 -->
           <view
             class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
             @tap="goToMysteryBox"
           >
             <view class="mb-[16rpx] flex items-center justify-between">
               <view
-                i-material-symbols:card-giftcard
+                i-lets-icons:box-duotone
                 class="text-[48rpx] text-purple-600"
               />
               <text
@@ -415,7 +482,7 @@ onMounted(() => {
               </text>
             </view>
             <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
-              百元盲盒
+              神秘盲盒
             </text>
             <text class="text-[24rpx] text-gray-600">
               惊喜车型等你解锁
@@ -428,7 +495,7 @@ onMounted(() => {
             @tap="goToRanking"
           >
             <view class="mb-[16rpx] flex items-center justify-between">
-              <view i-material-symbols:trending-up class="text-[48rpx] text-green-600" />
+              <view i-lets-icons:chart-duotone class="text-[48rpx] text-green-600" />
               <text
                 class="rounded-full bg-green-100 px-[16rpx] py-[8rpx] text-[24rpx] text-green-600"
               >
@@ -445,26 +512,36 @@ onMounted(() => {
 
           <!-- 车主认证 -->
           <view
-            class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+            class="relative overflow-hidden rounded-[32rpx] shadow-sm"
             @tap="goToOwnerCertification"
           >
-            <view class="mb-[16rpx] flex items-center justify-between">
-              <view
-                i-material-symbols:verified-user
-                class="text-[48rpx] text-purple-600"
-              />
-              <text
-                class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600"
-              >
-                认证
+            <!-- 背景图片 -->
+            <image
+              src="http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_2.png"
+              class="absolute inset-0 h-full w-full object-cover"
+              mode="aspectFill"
+            />
+
+            <!-- 内容层 -->
+            <view class="relative z-10 p-[32rpx]">
+              <view class="mb-[16rpx] flex items-center justify-between">
+                <view
+                  i-lets-icons:user-duotone
+                  class="text-[48rpx] text-white drop-shadow-sm"
+                />
+                <text
+                  class="rounded-full bg-white/90 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600 font-medium"
+                >
+                  认证
+                </text>
+              </view>
+              <text class="mb-[8rpx] block text-[28rpx] text-white font-semibold drop-shadow-sm">
+                车主认证
+              </text>
+              <text class="text-[24rpx] text-white/90 drop-shadow-sm">
+                成为车主赚收益
               </text>
             </view>
-            <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
-              车主认证
-            </text>
-            <text class="text-[24rpx] text-gray-600">
-              成为车主赚收益
-            </text>
           </view>
         </view>
       </view>

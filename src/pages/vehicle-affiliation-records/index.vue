@@ -1,38 +1,70 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import HeadBar from '@/components/HeadBar.vue'
-import type { ApplicationRecord } from '@/api/vehicle-affiliation'
-import { getApplicationRecords } from '@/api/vehicle-affiliation'
+import type { VehicleRentalRequest } from '@/api/vehicle-rental-request'
+import { getApplicationHistory } from '@/api/vehicle-rental-request'
 
 // 页面状态
-const loading = ref(false)
-const records = ref<ApplicationRecord[]>([])
-const total = ref(0)
+const refreshing = ref(false)
+const records = ref<VehicleRentalRequest[]>([])
+
+// 状态映射
+const statusMap = {
+  pending: { text: '待处理', color: 'orange' },
+  processing: { text: '处理中', color: 'blue' },
+  approved: { text: '已通过', color: 'green' },
+  rejected: { text: '已拒绝', color: 'red' },
+  cancelled: { text: '已取消', color: 'gray' },
+}
+
+// 获取状态显示信息
+function getStatusInfo(status: string) {
+  return statusMap[status as keyof typeof statusMap] || { text: status, color: 'gray' }
+}
 
 // 获取状态样式
 function getStatusStyle(status: string) {
-  switch (status) {
-    case 'pending':
+  const statusInfo = getStatusInfo(status)
+  switch (statusInfo.color) {
+    case 'orange':
       return 'bg-orange-100 text-orange-600'
-    case 'approved':
+    case 'blue':
+      return 'bg-blue-100 text-blue-600'
+    case 'green':
       return 'bg-green-100 text-green-600'
-    case 'rejected':
+    case 'red':
       return 'bg-red-100 text-red-600'
-    case 'cancelled':
+    case 'gray':
       return 'bg-gray-100 text-gray-600'
     default:
       return 'bg-gray-100 text-gray-600'
   }
 }
 
+// 格式化时间
+function formatTime(timeStr: string) {
+  if (!timeStr)
+    return ''
+  try {
+    const date = new Date(timeStr)
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  }
+  catch {
+    return timeStr
+  }
+}
+
 // 加载申请记录
 async function loadRecords() {
   try {
-    loading.value = true
-    const response = await getApplicationRecords()
+    if (!refreshing.value) {
+      uni.showLoading({
+        title: '加载中...',
+      })
+    }
+
+    const response = await getApplicationHistory()
     if (response.code === 200) {
-      records.value = response.data.records
-      total.value = response.data.total
+      records.value = response.data || []
     }
   }
   catch (error) {
@@ -43,19 +75,24 @@ async function loadRecords() {
     })
   }
   finally {
-    loading.value = false
+    if (!refreshing.value) {
+      uni.hideLoading()
+    }
   }
 }
 
-// 查看申请详情
-function viewDetail(record: ApplicationRecord) {
-  uni.navigateTo({
-    url: `/pages/vehicle-affiliation-detail/index?id=${record.applicationId}`,
-  })
+// 下拉刷新
+async function onRefresh() {
+  refreshing.value = true
+  try {
+    await loadRecords()
+  }
+  finally {
+    refreshing.value = false
+  }
 }
 
-// 重新申请
-function reapply() {
+function back() {
   uni.navigateBack()
 }
 
@@ -71,32 +108,25 @@ onMounted(() => {
     <HeadBar bg-color="white">
       <view class="relative h-full flex items-center">
         <!-- 返回按钮 -->
-        <view class="absolute left-0 z-10 h-full w-[80rpx] flex items-center justify-center" @tap="() => uni.navigateBack()">
+        <view class="absolute left-0 z-10 h-full w-[80rpx] flex items-center justify-center" @tap="back">
           <text class="i-material-symbols-arrow-back text-[36rpx] text-black" />
         </view>
 
         <!-- 页面标题 -->
         <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
-          填写记录
+          申请记录
         </text>
-
-        <!-- 新申请按钮 -->
-        <view class="absolute right-0 z-10 h-full flex items-center pr-[24rpx]">
-          <view
-            class="flex items-center rounded-full bg-purple-600 px-[20rpx] py-[12rpx] transition-transform active:scale-95 space-x-[8rpx]"
-            @tap="reapply"
-          >
-            <text class="i-material-symbols-add text-[20rpx] text-white" />
-            <text class="text-[24rpx] text-white font-medium">
-              新申请
-            </text>
-          </view>
-        </view>
       </view>
     </HeadBar>
 
     <!-- 主要内容区域 -->
-    <scroll-view scroll-y class="h-0 flex-1">
+    <scroll-view
+      scroll-y
+      class="h-0 flex-1"
+      refresher-enabled
+      :refresher-triggered="refreshing"
+      @refresherrefresh="onRefresh"
+    >
       <view class="p-[24rpx] space-y-[24rpx]">
         <!-- 统计信息 -->
         <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
@@ -109,7 +139,7 @@ onMounted(() => {
           <view class="grid grid-cols-3 gap-[16rpx] text-center">
             <view class="rounded-[16rpx] bg-gray-50 p-[20rpx]">
               <text class="mb-[4rpx] block text-[32rpx] text-purple-600 font-bold">
-                {{ total }}
+                {{ records.length }}
               </text>
               <text class="text-[22rpx] text-gray-600">
                 总申请
@@ -135,58 +165,134 @@ onMounted(() => {
         </view>
 
         <!-- 申请记录列表 -->
-        <view v-if="records.length > 0" class="space-y-[12rpx]">
+        <view v-if="records.length > 0" class="space-y-[16rpx]">
           <view
             v-for="record in records"
             :key="record.applicationId"
-            class="rounded-[24rpx] bg-white p-[24rpx] shadow-sm transition-all duration-150 active:scale-99"
-            @tap="viewDetail(record)"
+            class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm"
           >
-            <view class="mb-[16rpx] flex items-center justify-between">
+            <!-- 状态和申请编号 -->
+            <view class="mb-[24rpx] flex items-center justify-between">
               <view class="flex items-center space-x-[12rpx]">
-                <text class="text-[28rpx] text-black font-semibold">
-                  {{ record.applicationNo }}
-                </text>
                 <text
-                  class="rounded-full px-[12rpx] py-[4rpx] text-[20rpx] font-medium"
+                  class="rounded-[8rpx] px-[12rpx] py-[4rpx] text-[22rpx] font-medium"
                   :class="getStatusStyle(record.status)"
                 >
-                  {{ record.statusText }}
+                  {{ getStatusInfo(record.status).text }}
                 </text>
               </view>
-              <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
-            </view>
-
-            <view class="mb-[16rpx] space-y-[8rpx]">
-              <text class="block text-[24rpx] text-gray-700">
-                车辆：{{ record.vehicleInfo.brand }} {{ record.vehicleInfo.model }}
-              </text>
-              <text class="block text-[24rpx] text-gray-700">
-                车牌：{{ record.vehicleInfo.licensePlate }}
-              </text>
-              <text class="block text-[24rpx] text-gray-700">
-                运营模式：{{ record.vehicleInfo.operationMode === 'agent' ? '代理运营' : '自运营' }}
+              <text class="text-[22rpx] text-gray-500">
+                {{ record.applicationNo }}
               </text>
             </view>
 
-            <view class="flex items-center justify-between text-[22rpx] text-gray-500">
-              <text>提交时间：{{ record.submitTime }}</text>
-              <text v-if="record.reviewTime">
-                审核时间：{{ record.reviewTime }}
+            <!-- 申请信息 -->
+            <view class="mb-[24rpx] space-y-[16rpx]">
+              <view class="flex items-center justify-between">
+                <text class="text-[26rpx] text-gray-600">
+                  提交时间
+                </text>
+                <text class="text-[26rpx] text-black font-medium">
+                  {{ formatTime(record.timeInfo.submitTime) }}
+                </text>
+              </view>
+
+              <view class="flex items-center justify-between">
+                <text class="text-[26rpx] text-gray-600">
+                  运营套餐
+                </text>
+                <text class="text-[26rpx] text-black font-medium">
+                  {{ record.operationMode }}
+                </text>
+              </view>
+
+              <view class="flex items-center justify-between">
+                <text class="text-[26rpx] text-gray-600">
+                  联系电话
+                </text>
+                <text class="text-[26rpx] text-black font-medium">
+                  {{ record.contactInfo.contactPhone }}
+                </text>
+              </view>
+
+              <view v-if="record.contactInfo.contactAddress" class="flex items-start justify-between">
+                <text class="text-[26rpx] text-gray-600">
+                  联系地址
+                </text>
+                <text class="min-w-0 flex-1 text-right text-[26rpx] text-black font-medium">
+                  {{ record.contactInfo.contactAddress }}
+                </text>
+              </view>
+            </view>
+
+            <!-- 套餐详情 -->
+            <view v-if="record.packageInfo" class="rounded-[16rpx] bg-purple-50 p-[20rpx]">
+              <view class="mb-[12rpx] flex items-center">
+                <text class="i-material-symbols-business-center mr-[8rpx] text-[24rpx] text-purple-600" />
+                <text class="text-[24rpx] text-purple-800 font-medium">
+                  套餐详情
+                </text>
+              </view>
+              <text class="mb-[8rpx] block text-[22rpx] text-purple-700">
+                {{ record.packageInfo.packageDescription }}
               </text>
+              <view class="flex items-center justify-between">
+                <text class="text-[22rpx] text-purple-600">
+                  车主分成比例
+                </text>
+                <text class="text-[22rpx] text-purple-800 font-medium">
+                  {{ (record.packageInfo.revenueShareRate * 100).toFixed(0) }}%
+                </text>
+              </view>
+            </view>
+
+            <!-- 状态说明 -->
+            <view v-if="record.status === 'pending'" class="mt-[16rpx] rounded-[16rpx] bg-orange-50 p-[20rpx]">
+              <view class="flex items-center">
+                <text class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-orange-600" />
+                <text class="text-[24rpx] text-orange-800 font-medium">
+                  我们将在1-3个工作日内联系您进行详细沟通
+                </text>
+              </view>
+            </view>
+
+            <view v-else-if="record.status === 'processing'" class="mt-[16rpx] rounded-[16rpx] bg-blue-50 p-[20rpx]">
+              <view class="flex items-center">
+                <text class="i-material-symbols-sync mr-[12rpx] text-[24rpx] text-blue-600" />
+                <text class="text-[24rpx] text-blue-800 font-medium">
+                  正在处理您的申请，请耐心等待
+                </text>
+              </view>
+            </view>
+
+            <view v-else-if="record.status === 'approved'" class="mt-[16rpx] rounded-[16rpx] bg-green-50 p-[20rpx]">
+              <view class="flex items-center">
+                <text class="i-material-symbols-check-circle mr-[12rpx] text-[24rpx] text-green-600" />
+                <text class="text-[24rpx] text-green-800 font-medium">
+                  恭喜！您的申请已通过审核
+                </text>
+              </view>
             </view>
 
             <!-- 拒绝原因 -->
-            <view v-if="record.status === 'rejected' && record.rejectReason" class="mt-[12rpx] rounded-lg bg-red-50 p-[12rpx]">
-              <text class="text-[22rpx] text-red-600">
-                拒绝原因：{{ record.rejectReason }}
-              </text>
+            <view v-else-if="record.status === 'rejected'" class="mt-[16rpx] rounded-[16rpx] bg-red-50 p-[20rpx]">
+              <view class="flex items-start">
+                <text class="i-material-symbols-cancel mr-[12rpx] mt-[2rpx] flex-shrink-0 text-[24rpx] text-red-600" />
+                <view class="flex-1">
+                  <text class="block text-[24rpx] text-red-800 font-medium">
+                    很抱歉，您的申请未通过审核
+                  </text>
+                  <text v-if="record.processInfo?.rejectReason" class="mt-[8rpx] block text-[22rpx] text-red-700">
+                    拒绝原因：{{ record.processInfo.rejectReason }}
+                  </text>
+                </view>
+              </view>
             </view>
           </view>
         </view>
 
         <!-- 空状态 -->
-        <view v-else-if="!loading" class="rounded-2xl bg-white p-[48rpx] text-center shadow-sm">
+        <view v-else class="rounded-2xl bg-white p-[48rpx] text-center shadow-sm">
           <text class="i-material-symbols-description mb-[16rpx] block text-[80rpx] text-gray-300" />
           <text class="mb-[8rpx] block text-[28rpx] text-gray-600">
             暂无申请记录
@@ -200,18 +306,6 @@ onMounted(() => {
         <view class="h-[40rpx]" />
       </view>
     </scroll-view>
-
-    <!-- 加载状态 -->
-    <view v-if="loading" class="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <view class="rounded-xl bg-white p-[40rpx] shadow-lg">
-        <view class="flex items-center space-x-[16rpx]">
-          <view class="h-[32rpx] w-[32rpx] animate-spin border-2 border-purple-600 border-t-transparent rounded-full" />
-          <text class="text-[28rpx] text-gray-700">
-            加载中...
-          </text>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
