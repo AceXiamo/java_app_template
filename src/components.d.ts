@@ -29,6 +29,7 @@ declare module '@vue/runtime-core' {
     InputConfirm: typeof import('./components/InputConfirm.vue')['default']
     MapAddressPicker: typeof import('./components/MapAddressPicker.vue')['default']
     MyHeadBar: typeof import('./components/My/HeadBar.vue')['default']
+    OwnerFooter: typeof import('./components/OwnerFooter.vue')['default']
     PageActivityHomeHead: typeof import('./components/page/activity/home/Head.vue')['default']
     PageActivityListHead: typeof import('./components/page/activity/list/Head.vue')['default']
     PageActivityReleaseHead: typeof import('./components/page/activity/release/Head.vue')['default']
@@ -68,6 +69,10 @@ declare module '@vue/runtime-core' {
     TabBarMain: typeof import('./components/tabBar/main.vue')['default']
     TabBarMy: typeof import('./components/tabBar/my.vue')['default']
     TabBarOrder: typeof import('./components/tabBar/order.vue')['default']
+    TabBarOwnerHome: typeof import('./components/tabBar/ownerHome.vue')['default']
+    TabBarOwnerOrders: typeof import('./components/tabBar/ownerOrders.vue')['default']
+    TabBarOwnerRevenue: typeof import('./components/tabBar/ownerRevenue.vue')['default']
+    TabBarOwnerSettings: typeof import('./components/tabBar/ownerSettings.vue')['default']
     Toast: typeof import('./components/Toast.vue')['default']
     VerticalPage: typeof import('./components/VerticalPage.vue')['default']
   }

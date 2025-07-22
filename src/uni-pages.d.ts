@@ -9,11 +9,13 @@ interface NavigateToOptions {
        "/pages/feedback-form/index" |
        "/pages/group/activity" |
        "/pages/group/home" |
+       "/pages/invoice/apply" |
        "/pages/member/home" |
        "/pages/monthly-rental/index" |
        "/pages/my/about" |
        "/pages/my/activity" |
        "/pages/my/documents" |
+       "/pages/my/invoice" |
        "/pages/my/member" |
        "/pages/my/notifications" |
        "/pages/my/order" |
@@ -23,6 +25,12 @@ interface NavigateToOptions {
        "/pages/mystery-box/index" |
        "/pages/news-detail/index" |
        "/pages/order/detail" |
+       "/pages/owner/home" |
+       "/pages/owner/index" |
+       "/pages/owner/order-detail" |
+       "/pages/owner/orders" |
+       "/pages/owner/revenue" |
+       "/pages/owner/settings" |
        "/pages/owner-certification/index" |
        "/pages/ranking/index" |
        "/pages/search/index" |

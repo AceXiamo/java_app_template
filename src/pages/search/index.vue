@@ -459,6 +459,36 @@ function handleAddressConfirm(data: {
   // 重新搜索
   searchVehicleList()
 }
+
+// 计算两点间距离（球面距离公式，单位：公里）
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const radLat1 = (lat1 * Math.PI) / 180
+  const radLat2 = (lat2 * Math.PI) / 180
+  const a = radLat1 - radLat2
+  const b = (lng1 * Math.PI) / 180 - (lng2 * Math.PI) / 180
+  const s = 2 * Math.asin(Math.sqrt(Math.sin(a / 2) ** 2 + Math.cos(radLat1) * Math.cos(radLat2) * Math.sin(b / 2) ** 2))
+  return Number((s * 6378.137).toFixed(2)) // 地球半径为6378.137km
+}
+
+// 计算车辆距离当前位置的距离
+function getVehicleDistance(vehicle: Vehicle): string {
+  if (!searchParams.value.latitude || !searchParams.value.longitude
+    || !vehicle.location?.latitude || !vehicle.location?.longitude) {
+    return '距离未知'
+  }
+
+  const distance = calculateDistance(
+    searchParams.value.latitude,
+    searchParams.value.longitude,
+    vehicle.location.latitude,
+    vehicle.location.longitude,
+  )
+
+  if (distance < 1) {
+    return `${Math.round(distance * 1000)}m`
+  }
+  return `${distance.toFixed(1)}km`
+}
 </script>
 
 <template>
@@ -563,11 +593,11 @@ function handleAddressConfirm(data: {
               <!-- 车辆图片 -->
               <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
                 <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[28rpx]" />
-                <!-- 距离信息（右下角，固定2.3km） -->
+                <!-- 距离信息（右下角，真实距离） -->
                 <view class="absolute bottom-[12rpx] right-[12rpx] flex items-center rounded-full bg-white/80 px-[12rpx] py-[4rpx]">
                   <text class="i-material-symbols-location-on mr-[4rpx] text-[20rpx] text-purple-500" />
                   <text class="text-[20rpx] text-gray-600">
-                    2.3km
+                    {{ getVehicleDistance(vehicle) }}
                   </text>
                 </view>
               </view>
@@ -600,14 +630,14 @@ function handleAddressConfirm(data: {
               </view>
             </view>
             <!-- 标签栏（图片和价格栏之间，横向排列） -->
-            <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[12rpx] px-[20rpx] pb-[8rpx] pt-[20rpx]">
+            <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[12rpx] px-[20rpx] pt-[20rpx]">
               <view
                 v-for="tag in vehicle.tags.slice(0, 2)"
                 :key="tag.tagName"
-                class="flex items-center rounded-[12rpx] bg-gray-100 px-[16rpx] py-[6rpx] text-[20rpx] font-medium text-gray-700"
+                class="flex items-center rounded-[12rpx] bg-gray-50 px-[16rpx] py-[6rpx] text-[20rpx] font-medium text-gray-700"
               >
                 <view
-                  class="mr-[8rpx] h-[12rpx] w-[12rpx] rounded-full"
+                  class="mr-[8rpx] h-[12rpx] w-[12rpx] rounded-full opacity-50"
                   :style="{ backgroundColor: tag.tagColor || '#9ca3af' }"
                 />
                 {{ tag.tagName }}

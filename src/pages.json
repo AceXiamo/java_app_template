@@ -25,6 +25,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/invoice/apply",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/member/home",
       "type": "page",
       "layout": "home"
@@ -46,6 +51,11 @@
     },
     {
       "path": "pages/my/documents",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/my/invoice",
       "type": "page",
       "layout": "home"
     },
@@ -93,6 +103,32 @@
       "path": "pages/order/detail",
       "type": "page",
       "layout": "home"
+    },
+    {
+      "path": "pages/owner/home",
+      "type": "page"
+    },
+    {
+      "path": "pages/owner/index",
+      "type": "page",
+      "layout": "owner"
+    },
+    {
+      "path": "pages/owner/order-detail",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/owner/orders",
+      "type": "page"
+    },
+    {
+      "path": "pages/owner/revenue",
+      "type": "page"
+    },
+    {
+      "path": "pages/owner/settings",
+      "type": "page"
     },
     {
       "path": "pages/owner-certification/index",

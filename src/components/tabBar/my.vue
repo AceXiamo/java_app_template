@@ -24,6 +24,10 @@ function goToOwnerCertification() {
   uni.navigateTo({ url: '/pages/owner-certification/index' })
 }
 
+function goToOwnerCenter() {
+  uni.navigateTo({ url: '/pages/owner/index' })
+}
+
 function goToSettings() {
   uni.navigateTo({ url: '/pages/settings/index' })
 }
@@ -34,6 +38,10 @@ function goToNotifications() {
 
 function goToAbout() {
   uni.navigateTo({ url: '/pages/my/about' })
+}
+
+function goToInvoice() {
+  uni.navigateTo({ url: '/pages/my/invoice' })
 }
 
 // 联系客服
@@ -134,12 +142,6 @@ function handleLogout() {
             <view class="mb-[8rpx] flex items-center space-x-[16rpx]">
               <text class="text-[36rpx] text-white font-semibold">
                 {{ profileData.userInfo.nickname }}
-              </text>
-              <text
-                v-if="profileData.userInfo.isVerified"
-                class="rounded-full bg-green-100 px-[16rpx] py-[4rpx] text-[20rpx] text-green-600"
-              >
-                已认证
               </text>
             </view>
             <text class="mb-[16rpx] block text-[24rpx] text-white/80">
@@ -303,7 +305,45 @@ function handleLogout() {
             </view>
           </view>
 
-          <!-- 车主认证入口 -->
+          <!-- 发票管理 -->
+          <view class="flex items-center justify-between" @tap="goToInvoice">
+            <view class="flex items-center space-x-[24rpx]">
+              <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
+                <text class="i-material-symbols-receipt-long text-[36rpx] text-blue-600" />
+              </view>
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  发票管理
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  申请开具发票，下载电子发票
+                </text>
+              </view>
+            </view>
+            <view class="flex items-center space-x-[16rpx]">
+              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+            </view>
+          </view>
+
+          <!-- 车主中心 -->
+          <view class="flex items-center justify-between" @tap="goToOwnerCenter">
+            <view class="flex items-center space-x-[24rpx]">
+              <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
+                <text class="i-material-symbols-directions-car text-[36rpx] text-purple-600" />
+              </view>
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  车主中心
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  管理我的车辆，查看收益情况
+                </text>
+              </view>
+            </view>
+            <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+          </view>
+
+          <!-- 车辆挂靠入口 -->
           <view class="flex items-center justify-between" @tap="goToOwnerCertification">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
@@ -311,10 +351,10 @@ function handleLogout() {
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
-                  车主认证
+                  车辆挂靠
                 </text>
                 <text class="text-[24rpx] text-gray-500">
-                  {{ profileData?.services.certification.ownerCertification.description || '成为车主赚收益' }}
+                  {{ profileData?.services.certification.ownerCertification.description || '将车辆挂靠至平台，轻松获得收益' }}
                 </text>
               </view>
             </view>
@@ -322,7 +362,7 @@ function handleLogout() {
               <text
                 class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600"
               >
-                {{ profileData?.services.certification.ownerCertification.statusText || '立即认证' }}
+                {{ profileData?.services.certification.ownerCertification.statusText || '立即申请' }}
               </text>
               <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
             </view>
