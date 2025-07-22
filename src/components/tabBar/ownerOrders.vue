@@ -334,7 +334,7 @@ function submitVerification() {
 <template>
   <view class="relative h-full flex flex-col bg-gray-50">
     <!-- 头部导航栏 -->
-    <HeadBar bg-color="white">
+    <HeadBar bg-color="transparent">
       <view class="relative h-full flex items-center">
         <!-- 页面标题 -->
         <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
