@@ -5,49 +5,18 @@ import { useOwnerStore } from '@/store/owner'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
-const { ownerInfo, revenueData, vehicles } = storeToRefs(ownerStore)
+const { ownerInfo, revenueData, vehicles, loading } = storeToRefs(ownerStore)
 
 // 设置当前页面为首页
 ownerStore.setActive('home')
 
-// 示例车辆数据
-const vehicleList = ref([
-  {
-    id: 1,
-    name: '特斯拉 Model 3',
-    licensePlate: '沪A·12345',
-    image: '/static/vite.png',
-    status: 'available',
-    statusText: '可租用',
-    pricePerDay: 299,
-    todayOrders: 1,
-    monthlyOrders: 12,
-    operationType: 'owner',
-  },
-  {
-    id: 2,
-    name: '比亚迪汉EV',
-    licensePlate: '沪A·67890',
-    image: '/static/vite.png',
-    status: 'rented',
-    statusText: '租用中',
-    pricePerDay: 199,
-    remainingTime: '2天3小时',
-    operationType: 'platform',
-  },
-  {
-    id: 3,
-    name: '理想L7',
-    licensePlate: '沪A·11111',
-    image: '/static/vite.png',
-    status: 'maintenance',
-    statusText: '维护中',
-    pricePerDay: 359,
-    todayOrders: 0,
-    monthlyOrders: 8,
-    operationType: 'owner',
-  },
-])
+// 车辆列表数据，现在从store获取
+const vehicleList = computed(() => vehicles.value)
+
+// 页面加载时获取数据
+onMounted(async () => {
+  await ownerStore.loadOwnerData()
+})
 
 // 导航方法
 function goToVehicleDetail(vehicleId: number) {
@@ -187,15 +156,15 @@ function getStatusStyle(status: string) {
         <view class="px-[32rpx] pb-[32rpx] space-y-[24rpx]">
           <view
             v-for="vehicle in vehicleList"
-            :key="vehicle.id"
+            :key="vehicle.vehicleId"
             class="border border-white/30 rounded-xl bg-white/50 p-[24rpx] backdrop-blur-sm"
-            @tap="goToVehicleDetail(vehicle.id)"
+            @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
             <view class="flex items-start space-x-[24rpx]">
               <!-- 车辆图片 -->
               <view class="h-[120rpx] w-[120rpx] flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                 <image
-                  :src="vehicle.image"
+                  :src="vehicle.imageUrl"
                   class="h-full w-full object-cover"
                   mode="aspectFill"
                 />
@@ -205,7 +174,7 @@ function getStatusStyle(status: string) {
               <view class="min-w-0 flex-1">
                 <view class="mb-[8rpx] flex items-center justify-between">
                   <text class="truncate text-[28rpx] text-gray-800 font-semibold">
-                    {{ vehicle.name }}
+                    {{ vehicle.brand }} {{ vehicle.model }}
                   </text>
                   <text
                     class="rounded-full px-[16rpx] py-[6rpx] text-[20rpx] font-medium"
@@ -221,14 +190,14 @@ function getStatusStyle(status: string) {
 
                 <view class="flex items-center justify-between">
                   <text class="text-[24rpx] text-purple-600 font-medium">
-                    ¥{{ vehicle.pricePerDay }}/天
+                    ¥{{ vehicle.dailyPrice }}/天
                   </text>
                   <view class="flex items-center space-x-[8rpx]">
                     <text
                       class="rounded-full px-[12rpx] py-[4rpx] text-[18rpx]"
                       :class="vehicle.operationType === 'owner' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'"
                     >
-                      {{ vehicle.operationType === 'owner' ? '自运营' : '平台代运营' }}
+                      {{ vehicle.operationTypeText }}
                     </text>
                   </view>
                 </view>

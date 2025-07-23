@@ -1,12 +1,18 @@
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
+import { useUserStore } from '@/store/user'
+import { getOwnerOrders, type OwnerOrderQueryParams, type OwnerOrder } from '@/api/owner-orders'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
+
+// 使用 user store
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
 
 // 设置当前页面
 ownerStore.setActive('orders')
@@ -32,176 +38,65 @@ const sliderStyle = computed(() => {
   }
 })
 
-// 订单列表
-const orderList = reactive([
-  {
-    order_id: 1,
-    order_no: 'RO20250720001',
-    user_id: 101,
-    vehicle_id: 1,
-    start_time: '2025-07-20 14:30:00',
-    end_time: '2025-07-20 18:00:00',
-    pickup_deadline: '2025-07-20 14:00:00',
-    rental_days: 1,
-    total_amount: 299,
-    final_amount: 254,
-    pickup_code: 'A1B2C3',
-    pickup_location: '徐汇区漕河泾开发区停车场',
-    pickup_method: 'self',
-    status: 'completed',
-    statusText: '已完成',
-    order_type: 'daily',
-    user: {
-      name: '张三',
-      phone: '139****5678',
-      avatar: '/static/vite.png',
-    },
-    vehicle: {
-      vehicle_id: 1,
-      name: '特斯拉 Model 3',
-      brand: '特斯拉',
-      model: 'Model 3',
-      license_plate: '沪A·12345',
-      car_type: '轿车',
-      energy_type: '纯电动',
-      seats: 5,
-      image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/tesla_model3.jpg',
-      rating: 4.8,
-      rating_count: 128,
-    },
-  },
-  {
-    order_id: 2,
-    order_no: 'RO20250721001',
-    user_id: 102,
-    vehicle_id: 2,
-    start_time: '2025-07-21 09:00:00',
-    end_time: '2025-07-21 11:00:00',
-    pickup_deadline: '2025-07-21 08:30:00',
-    rental_days: 1,
-    total_amount: 199,
-    final_amount: 169,
-    pickup_code: 'D4E5F6',
-    delivery_address: '浦东新区陆家嘴环路1000号',
-    delivery_distance: 8.5,
-    delivery_fee: 15.0,
-    pickup_method: 'delivery',
-    status: 'paid',
-    statusText: '待取车',
-    order_type: 'daily',
-    user: {
-      name: '李四',
-      phone: '138****1234',
-      avatar: '/static/vite.png',
-    },
-    vehicle: {
-      vehicle_id: 2,
-      name: '比亚迪汉 EV',
-      brand: '比亚迪',
-      model: '汉 EV',
-      license_plate: '沪A·67890',
-      car_type: 'SUV',
-      energy_type: '纯电动',
-      seats: 5,
-      image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/byd_han.jpg',
-      rating: 4.6,
-      rating_count: 85,
-    },
-  },
-  {
-    order_id: 3,
-    order_no: 'RO20250719001',
-    user_id: 103,
-    vehicle_id: 3,
-    start_time: '2025-07-19 16:00:00',
-    end_time: '2025-07-19 20:00:00',
-    pickup_deadline: '2025-07-19 15:30:00',
-    rental_days: 1,
-    total_amount: 359,
-    final_amount: 305,
-    return_code: 'G7H8I9',
-    pickup_location: '静安区南京西路1788号停车场',
-    pickup_method: 'self',
-    status: 'completed',
-    statusText: '已完成',
-    order_type: 'daily',
-    user: {
-      name: '王五',
-      phone: '137****9999',
-      avatar: '/static/vite.png',
-    },
-    vehicle: {
-      vehicle_id: 3,
-      name: '理想 L7',
-      brand: '理想',
-      model: 'L7',
-      license_plate: '沪A·11111',
-      car_type: 'SUV',
-      energy_type: '增程式',
-      seats: 6,
-      image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/lixiang_l7.jpg',
-      rating: 4.9,
-      rating_count: 156,
-    },
-  },
-  {
-    order_id: 4,
-    order_no: 'RO20250722001',
-    user_id: 104,
-    vehicle_id: 1,
-    start_time: '2025-07-22 10:00:00',
-    end_time: '2025-07-22 18:00:00',
-    pickup_deadline: '2025-07-22 09:30:00',
-    rental_days: 1,
-    total_amount: 299,
-    final_amount: 254,
-    return_code: 'H9J1K2',
-    pickup_location: '徐汇区漕河泾开发区停车场',
-    pickup_method: 'self',
-    status: 'picked',
-    statusText: '使用中',
-    order_type: 'daily',
-    user: {
-      name: '赵六',
-      phone: '136****7777',
-      avatar: '/static/vite.png',
-    },
-    vehicle: {
-      vehicle_id: 1,
-      name: '特斯拉 Model 3',
-      brand: '特斯拉',
-      model: 'Model 3',
-      license_plate: '沪A·12345',
-      car_type: '轿车',
-      energy_type: '纯电动',
-      seats: 5,
-      image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/tesla_model3.jpg',
-      rating: 4.8,
-      rating_count: 128,
-    },
-  },
-])
+// 订单列表 - 从API获取
+const orderList = ref<OwnerOrder[]>([])
+const loading = ref(false)
 
-// 过滤后的订单
-const filteredOrders = computed(() => {
-  if (currentFilter.value === 'all') {
-    return orderList
-  }
-
-  // 根据筛选条件映射到实际状态
-  const statusMapping: Record<string, string[]> = {
-    ongoing: ['paid', 'picked'], // 进行中包含已支付和已取车
-    completed: ['returned', 'completed'], // 已完成包含已还车和已完成
-    cancelled: ['cancelled'], // 已取消
-  }
-
-  const targetStatuses = statusMapping[currentFilter.value]
-  if (targetStatuses) {
-    return orderList.filter(order => targetStatuses.includes(order.status))
-  }
-
-  return orderList.filter(order => order.status === currentFilter.value)
+// 页面初始化时加载数据
+onMounted(async () => {
+  await loadOrders()
 })
+
+// 加载订单数据
+async function loadOrders() {
+  try {
+    loading.value = true
+    const ownerId = user.value?.userId
+    if (!ownerId) 
+      return
+
+    const params: OwnerOrderQueryParams = {
+      ownerId,
+      status: currentFilter.value === 'all' ? undefined : getApiStatus(currentFilter.value),
+      pageNum: 1,
+      pageSize: 50,
+    }
+
+    const response = await getOwnerOrders(params)
+    if (response.code === 200 && response.data) {
+      orderList.value = response.data.records || []
+    }
+  }
+  catch (error) {
+    console.error('加载订单数据失败', error)
+    uni.showToast({
+      title: '加载订单失败',
+      icon: 'none',
+    })
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// 将前端状态映射到API状态
+function getApiStatus(filterKey: string): string | undefined {
+  const statusMapping: Record<string, string> = {
+    ongoing: 'paid,picked', // 进行中包含已支付和已取车
+    completed: 'completed', // 已完成
+    cancelled: 'cancelled', // 已取消
+  }
+  return statusMapping[filterKey]
+}
+
+// 过滤后的订单 - 现在直接从API获取已过滤的数据
+const filteredOrders = computed(() => orderList.value)
+
+// 切换标签时重新加载数据
+async function switchTab(tabKey: string) {
+  currentFilter.value = tabKey
+  await loadOrders()
+}
 
 // 导航方法
 function goToOrderDetail(orderNo: string) {
@@ -216,10 +111,6 @@ function contactUser(phone: string) {
   uni.makePhoneCall({
     phoneNumber: phone.replace('*', ''),
   })
-}
-
-function switchTab(tabKey: string) {
-  currentFilter.value = tabKey
 }
 
 // 状态样式映射
@@ -316,7 +207,7 @@ function submitVerification() {
     photoDrawerVisible.value = false
 
     // 更新订单状态
-    const order = orderList.find(o => o.order_id === currentOrder.value.order_id)
+    const order = orderList.value.find(o => o.orderId === currentOrder.value.orderId)
     if (order) {
       if (currentAction.value === 'pickup') {
         order.status = 'picked'
@@ -370,7 +261,7 @@ function submitVerification() {
           <view v-if="filteredOrders.length" class="pb-[32rpx] space-y-[24rpx]">
             <view
               v-for="order in filteredOrders"
-              :key="order.order_id"
+              :key="order.orderId"
               class="overflow-hidden rounded-[20rpx] bg-white p-[32rpx] shadow-sm"
             >
               <!-- 头部：订单状态和订单号 -->
@@ -384,7 +275,7 @@ function submitVerification() {
                   </text>
                 </view>
                 <text class="text-[22rpx] text-gray-400">
-                  {{ order.order_no }}
+                  {{ order.orderNo }}
                 </text>
               </view>
 
@@ -392,40 +283,40 @@ function submitVerification() {
               <view class="mb-[20rpx] flex">
                 <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
                   <image
-                    :src="order.vehicle.image_url"
+                    :src="order.vehicle?.imageUrl"
                     mode="aspectFill"
                     class="h-full w-full rounded-[12rpx]"
                   />
                 </view>
                 <view class="ml-[24rpx] min-w-0 flex flex-1 flex-col justify-center">
                   <text class="truncate text-[28rpx] text-black font-bold">
-                    {{ order.vehicle.name }}
+                    {{ order.vehicle?.name }}
                   </text>
                   <view class="mt-[8rpx] flex items-center gap-x-[16rpx] text-[22rpx] text-gray-600">
                     <text class="rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx] text-[20rpx] text-blue-700 font-medium">
-                      {{ order.vehicle.license_plate }}
+                      {{ order.vehicle?.licensePlate }}
                     </text>
                     <text class="truncate">
-                      {{ order.vehicle.seats }}座 {{ order.vehicle.car_type }}
+                      {{ order.vehicle.seats }}座 {{ order.vehicle?.carType }}
                     </text>
                     <text class="truncate">
-                      {{ order.vehicle.energy_type }}
+                      {{ order.vehicle?.energyType }}
                     </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
                     <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
                     <text class="truncate text-[20rpx] text-gray-600">
-                      {{ order.vehicle.rating }}({{ order.vehicle.rating_count }})
+                      {{ order.vehicle.rating }}({{ order.vehicle?.ratingCount }})
                     </text>
                   </view>
                 </view>
                 <!-- 金额信息 -->
                 <view class="ml-[16rpx] min-w-[80rpx] flex flex-col items-end justify-between text-right">
                   <text class="text-[32rpx] text-purple-600 font-bold">
-                    ¥{{ order.final_amount }}
+                    ¥{{ order.finalAmount }}
                   </text>
                   <text class="mt-[4rpx] block text-[22rpx] text-gray-400">
-                    {{ order.rental_days }}天
+                    {{ order.rentalDays }}天
                   </text>
                 </view>
               </view>
@@ -439,11 +330,11 @@ function submitVerification() {
                   </text>
                 </view>
                 <text class="mb-[10rpx] block text-[22rpx] text-gray-700">
-                  {{ formatDateTime(order.start_time) }} - {{ formatDateTime(order.end_time) }}
+                  {{ formatDateTime(order.startTime) }} - {{ formatDateTime(order.endTime) }}
                 </text>
 
                 <!-- 取车方式分支展示 -->
-                <template v-if="order.pickup_method === 'self'">
+                <template v-if="order.pickupMethod === 'self'">
                   <view class="flex items-center">
                     <text class="i-material-symbols-location-on mr-[8rpx] text-[22rpx] text-purple-600" />
                     <text class="text-[24rpx] text-black font-medium">
@@ -451,7 +342,7 @@ function submitVerification() {
                     </text>
                   </view>
                   <text class="mt-[6rpx] block truncate text-[22rpx] text-gray-700">
-                    {{ order.pickup_location }}
+                    {{ order.pickupLocation }}
                   </text>
                 </template>
                 <template v-else>
@@ -463,39 +354,39 @@ function submitVerification() {
                       </text>
                     </view>
                     <view class="flex items-center text-[20rpx] text-gray-500">
-                      <text v-if="order.delivery_distance">
-                        {{ order.delivery_distance }}km
+                      <text v-if="order.deliveryDistance">
+                        {{ order.deliveryDistance }}km
                       </text>
-                      <text v-if="order.delivery_fee" class="ml-[8rpx]">
-                        服务费¥{{ order.delivery_fee }}
+                      <text v-if="order.deliveryFee" class="ml-[8rpx]">
+                        服务费¥{{ order.deliveryFee }}
                       </text>
                     </view>
                   </view>
                   <text class="mt-[6rpx] block truncate text-[22rpx] text-gray-700">
-                    {{ order.delivery_address }}
+                    {{ order.deliveryAddress }}
                   </text>
                 </template>
               </view>
 
               <!-- 取车码/还车码区域 -->
-              <view v-if="order.pickup_code || order.return_code" class="mb-[20rpx] flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
+              <view v-if="order.pickupCode || order.returnCode" class="mb-[20rpx] flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
                 <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
                 <view class="flex-1">
                   <text class="text-[24rpx] text-purple-800 font-medium">
-                    {{ order.pickup_code ? '取车码' : '还车码' }}
+                    {{ order.pickupCode ? '取车码' : '还车码' }}
                   </text>
                   <text class="block text-[36rpx] text-purple-600 font-bold tracking-wider">
-                    {{ order.pickup_code || order.return_code }}
+                    {{ order.pickupCode || order.returnCode }}
                   </text>
                 </view>
-                <view v-if="order.pickup_deadline" class="ml-[16rpx] flex flex-col items-end text-right">
-                  <text class="text-[18rpx]" :class="isExpired(order.pickup_deadline) ? 'text-red-500' : 'text-gray-500'">
+                <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
+                  <text class="text-[18rpx]" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
                     截止时间
                   </text>
-                  <text class="text-[20rpx] font-medium" :class="isExpired(order.pickup_deadline) ? 'text-red-500' : 'text-gray-700'">
-                    {{ formatDateTime(order.pickup_deadline) }}
+                  <text class="text-[20rpx] font-medium" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
+                    {{ formatDateTime(order.pickupDeadline) }}
                   </text>
-                  <text v-if="isExpired(order.pickup_deadline)" class="mt-[2rpx] text-[16rpx] text-red-500">
+                  <text v-if="isExpired(order.pickupDeadline)" class="mt-[2rpx] text-[16rpx] text-red-500">
                     已超时
                   </text>
                 </view>
@@ -545,13 +436,13 @@ function submitVerification() {
                   </view>
                   <view
                     class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[20rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors duration-200 active:bg-purple-100"
-                    @tap="goToTimeline(order.order_no)"
+                    @tap="goToTimeline(order.orderNo)"
                   >
                     时间线
                   </view>
                   <view
                     class="flex-1 rounded-full bg-purple-600 py-[20rpx] text-center text-[26rpx] text-white font-medium transition-colors duration-200 active:bg-purple-700"
-                    @tap="goToOrderDetail(order.order_no)"
+                    @tap="goToOrderDetail(order.orderNo)"
                   >
                     查看详情
                   </view>

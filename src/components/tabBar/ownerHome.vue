@@ -6,7 +6,7 @@ import { useUserStore } from '@/store/user'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
-const { revenueData } = storeToRefs(ownerStore)
+const { revenueData, vehicles, loading } = storeToRefs(ownerStore)
 
 // 使用 user store
 const userStore = useUserStore()
@@ -15,109 +15,23 @@ const { user } = storeToRefs(userStore)
 // 设置当前页面为首页
 ownerStore.setActive('home')
 
+// 车辆列表数据，现在从store获取
+const vehicleList = computed(() => vehicles.value)
+
+// 页面加载时获取数据
+onMounted(async () => {
+  await ownerStore.loadOwnerData()
+})
+
 // 返回上一页
 function goBack() {
   uni.navigateBack()
 }
 
-// 示例车辆数据
-const vehicleList = ref([
-  {
-    vehicleId: 1,
-    name: '特斯拉 Model 3',
-    brand: '特斯拉',
-    model: 'Model 3',
-    licensePlate: '沪A·12345',
-    imageUrl: '/static/vite.png',
-    carType: '轿车',
-    energyType: '电动',
-    seats: 5,
-    status: 'available',
-    statusText: '可租用',
-    dailyPrice: 299,
-    monthlyPrice: 7500,
-    rating: 4.8,
-    ratingCount: 128,
-    rangeKm: 480,
-    deliveryEnabled: true,
-    operationType: 'owner',
-    operationTypeText: '自运营',
-    todayOrders: 1,
-    monthlyOrders: 12,
-    isMonthlyRental: true,
-  },
-  {
-    vehicleId: 2,
-    name: '比亚迪汉EV',
-    brand: '比亚迪',
-    model: '汉EV',
-    licensePlate: '沪A·67890',
-    imageUrl: '/static/vite.png',
-    carType: '轿车',
-    energyType: '电动',
-    seats: 5,
-    status: 'rented',
-    statusText: '租用中',
-    dailyPrice: 199,
-    monthlyPrice: 5200,
-    rating: 4.6,
-    ratingCount: 89,
-    rangeKm: 550,
-    deliveryEnabled: true,
-    operationType: 'platform',
-    operationTypeText: '平台代运营',
-    remainingTime: '2天3小时',
-    isMonthlyRental: false,
-  },
-  {
-    vehicleId: 3,
-    name: '理想L7',
-    brand: '理想',
-    model: 'L7',
-    licensePlate: '沪A·11111',
-    imageUrl: '/static/vite.png',
-    carType: 'SUV',
-    energyType: '混动',
-    seats: 6,
-    status: 'maintenance',
-    statusText: '维护中',
-    dailyPrice: 359,
-    monthlyPrice: 9500,
-    rating: 4.9,
-    ratingCount: 156,
-    rangeKm: 315,
-    deliveryEnabled: false,
-    operationType: 'owner',
-    operationTypeText: '自运营',
-    todayOrders: 0,
-    monthlyOrders: 8,
-    isMonthlyRental: true,
-  },
-  {
-    vehicleId: 4,
-    name: '宝马X3',
-    brand: '宝马',
-    model: 'X3',
-    licensePlate: '沪A·22222',
-    imageUrl: '/static/vite.png',
-    carType: 'SUV',
-    energyType: '汽油',
-    seats: 5,
-    status: 'available',
-    statusText: '可租用',
-    dailyPrice: 420,
-    monthlyPrice: 11200,
-    rating: 4.7,
-    ratingCount: 203,
-    rangeKm: null,
-    deliveryEnabled: true,
-    operationType: 'platform',
-    operationTypeText: '平台代运营',
-    todayOrders: 2,
-    monthlyOrders: 15,
-    isMonthlyRental: true,
-  },
-])
+// 刷新数据
+async function handleRefresh() {
+  await ownerStore.loadOwnerData()
+}
 
 // 导航方法
 function goToVehicleDetail(vehicleId: number) {
@@ -228,14 +142,20 @@ function getGreeting() {
       <view class="pointer-events-none absolute inset-0 from-transparent via-white/40 to-white bg-gradient-to-b" />
 
       <!-- 滚动内容区域 -->
-      <scroll-view scroll-y class="w-full h-full">
+      <scroll-view
+        scroll-y
+        class="h-full w-full"
+        refresher-enabled
+        :refresher-triggered="loading"
+        @refresherrefresh="handleRefresh"
+      >
         <view class="content px-[32rpx] pt-[32rpx]">
           <!-- 收益概览卡片 -->
           <view class="mb-[40rpx] border border-white/20 rounded-lg bg-white/80 p-[40rpx] shadow-md backdrop-blur-md">
             <!-- 标题区 -->
             <view class="mb-[32rpx] flex items-start justify-between">
               <view>
-                <view class="flex items-center space-x-[8rpx] mb-[4rpx]">
+                <view class="mb-[4rpx] flex items-center space-x-[8rpx]">
                   <text class="i-material-symbols-trending-up text-[28rpx] text-purple-600" />
                   <text class="text-[32rpx] text-gray-900 font-bold">
                     收益概览
@@ -259,7 +179,7 @@ function getGreeting() {
                     元
                   </text>
                 </view>
-                <text class="block text-[22rpx] text-gray-600 mb-[6rpx]">
+                <text class="mb-[6rpx] block text-[22rpx] text-gray-600">
                   今日收益
                 </text>
                 <view class="flex items-center justify-center space-x-[4rpx]">
@@ -283,7 +203,7 @@ function getGreeting() {
                     元
                   </text>
                 </view>
-                <text class="block text-[22rpx] text-gray-600 mb-[6rpx]">
+                <text class="mb-[6rpx] block text-[22rpx] text-gray-600">
                   本月收益
                 </text>
                 <view class="flex items-center justify-center space-x-[4rpx]">
@@ -307,7 +227,7 @@ function getGreeting() {
                     元
                   </text>
                 </view>
-                <text class="block text-[22rpx] text-gray-600 mb-[6rpx]">
+                <text class="mb-[6rpx] block text-[22rpx] text-gray-600">
                   累计收益
                 </text>
                 <view class="flex items-center justify-center space-x-[4rpx]">
@@ -368,7 +288,7 @@ function getGreeting() {
                 </text>
               </view>
               <view
-                class="flex items-center px-[16rpx] py-[8rpx] transition-all duration-200 space-x-[6rpx] active:scale-95 active:opacity-70"
+                class="flex items-center px-[16rpx] py-[8rpx] transition-all duration-200 active:scale-95 space-x-[6rpx] active:opacity-70"
                 @tap="goToAddVehicle"
               >
                 <text class="i-material-symbols-add-circle-outline text-[22rpx] text-gray-600" />
@@ -387,7 +307,7 @@ function getGreeting() {
                 >
                   <view class="flex items-start space-x-[20rpx]">
                     <!-- 车辆图片 -->
-                    <view class="h-[100rpx] w-[100rpx] flex-shrink-0 overflow-hidden rounded-lg bg-gray-200 shadow-md relative">
+                    <view class="relative h-[100rpx] w-[100rpx] flex-shrink-0 overflow-hidden rounded-lg bg-gray-200 shadow-md">
                       <image
                         :src="vehicle.imageUrl"
                         class="h-full w-full object-cover"
@@ -395,7 +315,7 @@ function getGreeting() {
                       />
                       <!-- 能源类型角标 -->
                       <view
-                        class="absolute top-[4rpx] left-[4rpx] rounded px-[6rpx] py-[2rpx] text-[14rpx] text-white font-medium"
+                        class="absolute left-[4rpx] top-[4rpx] rounded px-[6rpx] py-[2rpx] text-[14rpx] text-white font-medium"
                         :class="{
                           'bg-green-500': vehicle.energyType === '电动',
                           'bg-blue-500': vehicle.energyType === '混动',
@@ -408,17 +328,17 @@ function getGreeting() {
                     <!-- 车辆信息 -->
                     <view class="min-w-0 flex-1">
                       <view class="mb-[6rpx] flex items-center justify-between">
-                        <view class="flex items-center space-x-[8rpx] flex-1 min-w-0">
+                        <view class="min-w-0 flex flex-1 items-center space-x-[8rpx]">
                           <text class="truncate text-[26rpx] text-gray-900 font-semibold">
                             {{ vehicle.brand }} {{ vehicle.model }}
                           </text>
                           <!-- 座位数 -->
-                          <text class="text-[18rpx] text-gray-400 shrink-0">
+                          <text class="shrink-0 text-[18rpx] text-gray-400">
                             {{ vehicle.seats }}座
                           </text>
                         </view>
                         <text
-                          class="rounded-full px-[14rpx] py-[4rpx] text-[18rpx] font-medium shadow-sm shrink-0"
+                          class="shrink-0 rounded-full px-[14rpx] py-[4rpx] text-[18rpx] font-medium shadow-sm"
                           :class="getStatusStyle(vehicle.status)"
                         >
                           {{ vehicle.statusText }}

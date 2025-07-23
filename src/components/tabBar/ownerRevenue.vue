@@ -4,10 +4,17 @@ import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
+import { useUserStore } from '@/store/user'
+import { getOwnerRevenueRecords, type OwnerRevenueQueryParams } from '@/api/owner-revenue'
+import { getOwnerWithdrawalMethods, type OwnerWithdrawalMethod } from '@/api/owner-withdrawal'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
 const { revenueData } = storeToRefs(ownerStore)
+
+// 使用 user store
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
 
 // 设置当前页面
 ownerStore.setActive('revenue')
@@ -15,166 +22,16 @@ ownerStore.setActive('revenue')
 // 滚动状态
 const isTabSticky = ref(false)
 
-// 收益详情数据
+// 收益详情数据 - 从API获取
 const detailsData = reactive({
-  revenueDetails: [
-    {
-      id: 1,
-      date: '2025-07-20',
-      orderNo: 'RO20250720001',
-      totalAmount: 299,
-      commission: 254,
-      commissionRate: 85,
-      packageType: '基础托管套餐',
-      status: 'settled',
-      vehicle: {
-        name: '特斯拉 Model 3',
-        license_plate: '沪A·12345',
-        brand: '特斯拉',
-        model: 'Model 3',
-        image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/tesla_model3.jpg',
-      },
-      user: {
-        name: '张三',
-        phone: '139****5678',
-      },
-    },
-    {
-      id: 2,
-      date: '2025-07-19',
-      orderNo: 'RO20250719001',
-      totalAmount: 199,
-      commission: 149,
-      commissionRate: 75,
-      packageType: '标准托管套餐',
-      status: 'settled',
-      vehicle: {
-        name: '比亚迪汉 EV',
-        license_plate: '沪A·67890',
-        brand: '比亚迪',
-        model: '汉 EV',
-        image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/byd_han.jpg',
-      },
-      user: {
-        name: '李四',
-        phone: '138****1234',
-      },
-    },
-    {
-      id: 3,
-      date: '2025-07-18',
-      orderNo: 'RO20250718001',
-      totalAmount: 359,
-      commission: 305,
-      commissionRate: 85,
-      packageType: '基础托管套餐',
-      status: 'pending',
-      vehicle: {
-        name: '理想 L7',
-        license_plate: '沪A·11111',
-        brand: '理想',
-        model: 'L7',
-        image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/lixiang_l7.jpg',
-      },
-      user: {
-        name: '王五',
-        phone: '137****9999',
-      },
-    },
-    {
-      id: 4,
-      date: '2025-07-17',
-      orderNo: 'RO20250717001',
-      totalAmount: 429,
-      commission: 365,
-      commissionRate: 85,
-      packageType: '基础托管套餐',
-      status: 'settled',
-      vehicle: {
-        name: '蔚来ES6',
-        license_plate: '沪A·88888',
-        brand: '蔚来',
-        model: 'ES6',
-        image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/nio_es6.jpg',
-      },
-      user: {
-        name: '赵六',
-        phone: '136****7777',
-      },
-    },
-    {
-      id: 5,
-      date: '2025-07-16',
-      orderNo: 'RO20250716001',
-      totalAmount: 269,
-      commission: 175,
-      commissionRate: 65,
-      packageType: '全托管套餐',
-      status: 'settled',
-      vehicle: {
-        name: '小鹏P7',
-        license_plate: '沪A·99999',
-        brand: '小鹏',
-        model: 'P7',
-        image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/xpeng_p7.jpg',
-      },
-      user: {
-        name: '孙七',
-        phone: '135****2222',
-      },
-    },
-  ],
-  withdrawalRecords: [
-    {
-      id: 1,
-      withdrawalNo: 'WD20250715001',
-      amount: 1500.00,
-      fee: 5.00,
-      actualAmount: 1495.00,
-      bankName: '招商银行',
-      bankAccount: '****1234',
-      status: 'completed',
-      applyTime: '2025-07-15 10:30',
-      completeTime: '2025-07-15 16:45',
-    },
-    {
-      id: 2,
-      withdrawalNo: 'WD20250710001',
-      amount: 800.00,
-      fee: 3.00,
-      actualAmount: 797.00,
-      bankName: '工商银行',
-      bankAccount: '****5678',
-      status: 'processing',
-      applyTime: '2025-07-10 14:20',
-      completeTime: null,
-    },
-    {
-      id: 3,
-      withdrawalNo: 'WD20250705001',
-      amount: 1200.00,
-      fee: 4.00,
-      actualAmount: 1196.00,
-      bankName: '建设银行',
-      bankAccount: '****9876',
-      status: 'completed',
-      applyTime: '2025-07-05 09:15',
-      completeTime: '2025-07-05 15:30',
-    },
-    {
-      id: 4,
-      withdrawalNo: 'WD20250701001',
-      amount: 650.00,
-      fee: 2.50,
-      actualAmount: 647.50,
-      bankName: '农业银行',
-      bankAccount: '****5432',
-      status: 'failed',
-      applyTime: '2025-07-01 11:45',
-      completeTime: null,
-    },
-  ],
+  revenueDetails: [] as any[],
+  withdrawalRecords: [] as any[],
 })
+
+// 加载状态
+const loading = ref(false)
+const revenueLoading = ref(false)
+const withdrawalLoading = ref(false)
 
 // 当前显示模式
 const currentTab = ref('revenue') // revenue | withdrawal
@@ -184,33 +41,75 @@ const withdrawalDrawerVisible = ref(false)
 const withdrawalAmount = ref('')
 const selectedWithdrawalMethod = ref<any>(null)
 
-// 模拟提现方式数据
-const withdrawalMethods = reactive([
-  {
-    id: 1,
-    type: 'bank',
-    name: '招商银行',
-    account: '****1234',
-    icon: 'i-material-symbols-account-balance',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    type: 'wechat',
-    name: '微信收款码',
-    account: '微信号: wx****8888',
-    iconUrl: 'https://img.icons8.com/color/48/wechat.png',
-    isDefault: false,
-  },
-  {
-    id: 3,
-    type: 'alipay',
-    name: '支付宝收款码',
-    account: '支付宝: ali****6666',
-    iconUrl: 'https://img.icons8.com/color/48/alipay.png',
-    isDefault: false,
-  },
-])
+// 提现方式数据 - 从API获取  
+const withdrawalMethods = ref<any[]>([])
+
+// 页面初始化时加载数据
+onMounted(async () => {
+  await Promise.all([
+    loadRevenueDetails(),
+    loadWithdrawalMethods(),
+    ownerStore.loadOwnerData(), // 确保收益数据是最新的
+  ])
+})
+
+// 加载收益明细
+async function loadRevenueDetails() {
+  try {
+    revenueLoading.value = true
+    const ownerId = user.value?.userId
+    if (!ownerId) 
+      return
+
+    const params: OwnerRevenueQueryParams = {
+      ownerId,
+      pageNum: 1,
+      pageSize: 20,
+    }
+
+    const response = await getOwnerRevenueRecords(params)
+    if (response.code === 200 && response.data) {
+      detailsData.revenueDetails = response.data.records || []
+    }
+  }
+  catch (error) {
+    console.error('加载收益明细失败', error)
+    uni.showToast({
+      title: '加载收益明细失败',
+      icon: 'none',
+    })
+  }
+  finally {
+    revenueLoading.value = false
+  }
+}
+
+// 加载提现方式
+async function loadWithdrawalMethods() {
+  try {
+    const ownerId = user.value?.userId
+    if (!ownerId) 
+      return
+
+    const response = await getOwnerWithdrawalMethods(ownerId)
+    if (response.code === 200 && response.data) {
+      withdrawalMethods.value = response.data.map(method => ({
+        ...method,
+        // 为了兼容模板中的字段
+        id: method.methodId,
+        type: method.methodType,
+        name: method.methodName,
+        account: method.accountInfo,
+        icon: method.methodType === 'bank' ? 'i-material-symbols-account-balance' : '',
+        iconUrl: method.methodType === 'wechat' ? 'https://img.icons8.com/color/48/wechat.png'
+          : method.methodType === 'alipay' ? 'https://img.icons8.com/color/48/alipay.png' : '',
+      }))
+    }
+  }
+  catch (error) {
+    console.error('加载提现方式失败', error)
+  }
+}
 
 // 导航方法
 function goToWithdraw() {
@@ -481,7 +380,7 @@ function onScroll(e: any) {
       <view v-if="currentTab === 'revenue'" class="px-[32rpx] pb-[48rpx] pt-[24rpx] space-y-[24rpx]">
         <view
           v-for="item in detailsData.revenueDetails"
-          :key="item.id"
+          :key="item.revenueId || item.id"
           class="overflow-hidden rounded-[20rpx] bg-white shadow-sm"
         >
           <!-- 头部：日期和状态 -->
@@ -505,7 +404,7 @@ function onScroll(e: any) {
             <view class="mb-[20rpx] flex">
               <view class="h-[100rpx] w-[140rpx] flex-shrink-0">
                 <image
-                  :src="item.vehicle.image_url"
+                  :src="item.vehicle?.imageUrl || item.vehicle?.image_url"
                   mode="aspectFill"
                   class="h-full w-full rounded-[12rpx]"
                 />
@@ -516,23 +415,23 @@ function onScroll(e: any) {
                 </text>
                 <view class="mt-[8rpx] flex items-center gap-x-[12rpx]">
                   <text class="rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx] text-[20rpx] text-blue-700 font-medium">
-                    {{ item.vehicle.license_plate }}
+                    {{ item.vehicle?.licensePlate || item.vehicle?.license_plate }}
                   </text>
                 </view>
                 <view class="mt-[6rpx] flex items-center">
                   <text class="i-material-symbols-person mr-[4rpx] text-[18rpx] text-gray-500" />
                   <text class="text-[22rpx] text-gray-600">
-                    {{ item.user.name }}
+                    {{ item.user?.name || item.userNickname }}
                   </text>
                 </view>
               </view>
               <!-- 收益金额 -->
               <view class="ml-[16rpx] min-w-[80rpx] flex flex-col items-end justify-between text-right">
                 <text class="text-[32rpx] text-green-600 font-bold">
-                  ¥{{ item.commission }}
+                  ¥{{ item.finalRevenueAmount || item.commission }}
                 </text>
                 <text class="mt-[4rpx] block text-[20rpx] text-gray-400">
-                  {{ item.commissionRate }}% 分成
+                  {{ item.platformCommissionRate || item.commissionRate }}% 分成
                 </text>
               </view>
             </view>
@@ -547,10 +446,10 @@ function onScroll(e: any) {
               </view>
               <view class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
-                  订单总额：¥{{ item.totalAmount }}
+                  订单总额：¥{{ item.orderTotalAmount || item.totalAmount }}
                 </text>
                 <text class="rounded-full bg-purple-100 px-[12rpx] py-[4rpx] text-[18rpx] text-purple-600">
-                  {{ item.packageType }}
+                  {{ item.packageType || '日租订单' }}
                 </text>
               </view>
             </view>
@@ -616,7 +515,7 @@ function onScroll(e: any) {
                 到账银行
               </text>
               <text class="text-[26rpx] text-gray-800">
-                {{ record.bankName }} {{ record.bankAccount }}
+                {{ record.bankName || record.methodName }} {{ record.bankAccount || record.accountInfo }}
               </text>
             </view>
 

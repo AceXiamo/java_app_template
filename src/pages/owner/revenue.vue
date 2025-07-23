@@ -11,6 +11,9 @@ const { revenueData } = storeToRefs(ownerStore)
 // 设置当前页面
 ownerStore.setActive('revenue')
 
+// 注意：此页面使用占位数据，实际应该从API获取收益明细
+// 建议使用 ownerRevenue.vue 组件或创建专门的API调用
+
 // 收益详情数据
 const detailsData = reactive({
   revenueDetails: [

@@ -12,6 +12,9 @@ const { orderStatistics } = storeToRefs(ownerStore)
 // 设置当前页面
 ownerStore.setActive('orders')
 
+// 注意：此页面使用占位数据，实际应该从API获取订单列表
+// 建议使用 ownerOrders.vue 组件或创建专门的API调用
+
 // 筛选选项
 const filterOptions = [
   { label: '全部', value: 'all' },
