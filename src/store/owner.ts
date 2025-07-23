@@ -56,9 +56,24 @@ export const useOwnerStore = defineStore('owner', () => {
   }
 
   // 加载车主首页数据
-  async function loadOwnerData() {
+  async function loadOwnerData(forceRefresh = false) {
     try {
+      // 防重复调用检查
+      if (isLoading.value) {
+        console.log('数据正在加载中，跳过重复请求')
+        return
+      }
+
+      // 缓存检查：如果数据已加载且在缓存期内，跳过请求
+      const now = Date.now()
+      if (!forceRefresh && isDataLoaded.value && (now - lastLoadTime.value) < CACHE_DURATION) {
+        console.log('使用缓存数据，跳过API请求')
+        return
+      }
+
+      isLoading.value = true
       loading.value = true
+      
       const userStore = useUserStore()
       const ownerId = userStore.user?.userId
       
@@ -67,6 +82,7 @@ export const useOwnerStore = defineStore('owner', () => {
         return
       }
 
+      console.log('开始加载车主数据...', { ownerId, forceRefresh })
       const response = await getOwnerHomeData(ownerId)
       
       if (response.code === 200 && response.data) {
@@ -80,6 +96,10 @@ export const useOwnerStore = defineStore('owner', () => {
         
         // 更新订单统计
         orderStatistics.value = data.orderStatistics
+        
+        // 更新加载状态
+        isDataLoaded.value = true
+        lastLoadTime.value = now
         
         console.log('车主数据加载成功', data)
       } else {
@@ -97,10 +117,11 @@ export const useOwnerStore = defineStore('owner', () => {
       })
     } finally {
       loading.value = false
+      isLoading.value = false
     }
   }
 
-  // 刷新收益数据
+  // 刷新收益数据（强制刷新）
   async function refreshRevenueData() {
     try {
       const userStore = useUserStore()
@@ -108,10 +129,17 @@ export const useOwnerStore = defineStore('owner', () => {
       
       if (!ownerId) return
       
-      await loadOwnerData()
+      // 强制刷新数据
+      await loadOwnerData(true)
     } catch (error) {
       console.error('刷新收益数据失败', error)
     }
+  }
+  
+  // 清除缓存
+  function clearCache() {
+    isDataLoaded.value = false
+    lastLoadTime.value = 0
   }
 
   return {
@@ -121,8 +149,10 @@ export const useOwnerStore = defineStore('owner', () => {
     vehicles,
     orderStatistics,
     loading,
+    isDataLoaded,
     setActive,
     loadOwnerData,
-    refreshRevenueData
+    refreshRevenueData,
+    clearCache
   }
 })

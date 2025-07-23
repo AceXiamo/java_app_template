@@ -6,7 +6,7 @@ import { useUserStore } from '@/store/user'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
-const { revenueData, vehicles, loading } = storeToRefs(ownerStore)
+const { revenueData, vehicles, loading, isDataLoaded } = storeToRefs(ownerStore)
 
 // 使用 user store
 const userStore = useUserStore()
@@ -18,19 +18,15 @@ ownerStore.setActive('home')
 // 车辆列表数据，现在从store获取
 const vehicleList = computed(() => vehicles.value)
 
-// 页面加载时获取数据
-onMounted(async () => {
-  await ownerStore.loadOwnerData()
-})
-
 // 返回上一页
 function goBack() {
   uni.navigateBack()
 }
 
-// 刷新数据
+// 刷新数据（强制刷新）
 async function handleRefresh() {
-  await ownerStore.loadOwnerData()
+  // 使用专门的刷新方法，强制重新获取数据
+  await ownerStore.refreshRevenueData()
 }
 
 // 导航方法
@@ -48,10 +44,6 @@ function goToOrders() {
 
 function goToRevenue() {
   ownerStore.setActive('revenue')
-}
-
-function _goToSettings() {
-  ownerStore.setActive('settings')
 }
 
 // 状态样式映射
@@ -151,7 +143,7 @@ function getGreeting() {
       >
         <view class="content px-[32rpx] pt-[32rpx]">
           <!-- 收益概览卡片 -->
-          <view class="mb-[40rpx] border border-white/20 rounded-lg bg-white/80 p-[40rpx] shadow-md backdrop-blur-md">
+          <view class="mb-[40rpx] border border-white/20 rounded-lg bg-white/80 p-[40rpx] shadow-md backdrop-blur-md" :class="{ 'opacity-50': loading && !isDataLoaded }">
             <!-- 标题区 -->
             <view class="mb-[32rpx] flex items-start justify-between">
               <view>
