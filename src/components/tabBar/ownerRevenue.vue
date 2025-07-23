@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
+import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 
 // 使用 owner store
@@ -178,9 +179,46 @@ const detailsData = reactive({
 // 当前显示模式
 const currentTab = ref('revenue') // revenue | withdrawal
 
+// 提现弹窗相关
+const withdrawalDrawerVisible = ref(false)
+const withdrawalAmount = ref('')
+const selectedWithdrawalMethod = ref<any>(null)
+
+// 模拟提现方式数据
+const withdrawalMethods = reactive([
+  {
+    id: 1,
+    type: 'bank',
+    name: '招商银行',
+    account: '****1234',
+    icon: 'i-material-symbols-account-balance',
+    isDefault: true,
+  },
+  {
+    id: 2,
+    type: 'wechat',
+    name: '微信收款码',
+    account: '微信号: wx****8888',
+    iconUrl: 'https://img.icons8.com/color/48/wechat.png',
+    isDefault: false,
+  },
+  {
+    id: 3,
+    type: 'alipay',
+    name: '支付宝收款码',
+    account: '支付宝: ali****6666',
+    iconUrl: 'https://img.icons8.com/color/48/alipay.png',
+    isDefault: false,
+  },
+])
+
 // 导航方法
 function goToWithdraw() {
-  uni.navigateTo({ url: '/pages/owner/withdraw' })
+  withdrawalDrawerVisible.value = true
+}
+
+function goToWithdrawalMethods() {
+  uni.navigateTo({ url: '/pages/owner/withdrawal-methods' })
 }
 
 function goToWithdrawalRecords() {
@@ -230,12 +268,43 @@ function getWithdrawalStatusText(status: string) {
   return statusMap[status] || status
 }
 
-// 统计功能
-function handleStatistics() {
-  uni.showToast({
-    title: '统计功能开发中',
-    icon: 'none',
-  })
+// 提现相关功能
+function selectWithdrawalMethod(method: any) {
+  selectedWithdrawalMethod.value = method
+}
+
+function submitWithdrawal() {
+  if (!withdrawalAmount.value) {
+    uni.showToast({ title: '请输入提现金额', icon: 'none' })
+    return
+  }
+
+  const amount = Number.parseFloat(withdrawalAmount.value)
+  if (amount <= 0) {
+    uni.showToast({ title: '请输入正确的金额', icon: 'none' })
+    return
+  }
+
+  if (amount > revenueData.value.balance) {
+    uni.showToast({ title: '提现金额不能超过可用余额', icon: 'none' })
+    return
+  }
+
+  if (!selectedWithdrawalMethod.value) {
+    uni.showToast({ title: '请选择提现方式', icon: 'none' })
+    return
+  }
+
+  // TODO: 调用提现API
+  uni.showLoading({ title: '提交中...' })
+
+  setTimeout(() => {
+    uni.hideLoading()
+    uni.showToast({ title: '提现申请已提交', icon: 'success' })
+    withdrawalDrawerVisible.value = false
+    withdrawalAmount.value = ''
+    selectedWithdrawalMethod.value = null
+  }, 2000)
 }
 
 // 滚动监听
@@ -281,22 +350,41 @@ function onScroll(e: any) {
               ¥{{ revenueData.balance.toFixed(2) }}
             </text>
 
-            <view class="flex items-center justify-end space-x-[16rpx]">
-              <view
-                class="border border-white/40 rounded-full bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm transition-all duration-200 active:scale-95"
-                @tap="goToWithdrawalRecords"
-              >
-                <text class="text-[24rpx] text-white font-medium">
-                  提现记录
+            <view class="space-y-[16rpx]">
+              <!-- 提现方式设置 -->
+              <view class="flex items-center justify-between">
+                <text class="text-[20rpx] text-white/80">
+                  提现方式
                 </text>
+                <view
+                  class="flex items-center border border-white/40 rounded-full bg-white/20 px-[16rpx] py-[8rpx] backdrop-blur-sm transition-all duration-200 active:scale-95 space-x-[8rpx]"
+                  @tap="goToWithdrawalMethods"
+                >
+                  <text class="i-material-symbols-settings text-[20rpx] text-white" />
+                  <text class="text-[20rpx] text-white">
+                    设置
+                  </text>
+                </view>
               </view>
-              <view
-                class="rounded-full bg-white px-[24rpx] py-[12rpx] transition-all duration-200 active:scale-95"
-                @tap="goToWithdraw"
-              >
-                <text class="text-[24rpx] text-purple-600 font-medium">
-                  立即提现
-                </text>
+
+              <!-- 操作按钮 -->
+              <view class="flex items-center justify-end space-x-[16rpx]">
+                <view
+                  class="border border-white/40 rounded-full bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm transition-all duration-200 active:scale-95"
+                  @tap="goToWithdrawalRecords"
+                >
+                  <text class="text-[24rpx] text-white font-medium">
+                    提现记录
+                  </text>
+                </view>
+                <view
+                  class="rounded-full bg-white px-[24rpx] py-[12rpx] transition-all duration-200 active:scale-95"
+                  @tap="goToWithdraw"
+                >
+                  <text class="text-[24rpx] text-purple-600 font-medium">
+                    立即提现
+                  </text>
+                </view>
               </view>
             </view>
           </view>
@@ -358,7 +446,7 @@ function onScroll(e: any) {
 
       <!-- 标签切换 - sticky固定 -->
       <view
-        class="sticky -top-[1rpx] z-10 px-[32rpx] py-[16rpx] transition-all duration-300"
+        class="sticky z-10 px-[32rpx] py-[16rpx] transition-all duration-300 -top-[1rpx]"
         :class="isTabSticky ? 'bg-gray-50 backdrop-blur-sm border-b border-gray-100 shadow-sm' : 'bg-transparent'"
       >
         <view class="flex items-center rounded-[10rpx] bg-gray-50 p-[8rpx]">
@@ -555,5 +643,153 @@ function onScroll(e: any) {
         </view>
       </view>
     </scroll-view>
+
+    <!-- 提现弹窗 -->
+    <BottomDrawer
+      v-model:visible="withdrawalDrawerVisible"
+      title="立即提现"
+      height="700rpx"
+    >
+      <view class="pt-[30rpx] space-y-[32rpx]">
+        <!-- 可提现金额显示 -->
+        <view class="rounded-[16rpx] from-purple-50 to-blue-50 bg-gradient-to-r p-[24rpx]">
+          <view class="mb-[8rpx] flex items-center justify-between">
+            <text class="text-[24rpx] text-gray-600">
+              可提现余额
+            </text>
+            <text class="text-[32rpx] text-purple-600 font-bold">
+              ¥{{ revenueData.balance.toFixed(2) }}
+            </text>
+          </view>
+          <text class="text-[20rpx] text-gray-500">
+            提现金额将扣除相应手续费
+          </text>
+        </view>
+
+        <!-- 提现金额输入 -->
+        <view>
+          <text class="mb-[16rpx] block text-[26rpx] font-semibold">
+            提现金额
+          </text>
+          <view class="relative">
+            <input
+              v-model="withdrawalAmount"
+              class="w-full border border-gray-300 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[20rpx] text-[28rpx] placeholder:text-gray-400"
+              placeholder="请输入提现金额"
+              type="digit"
+            >
+            <view
+              class="absolute right-[16rpx] top-1/2 transform border border-purple-600 rounded-[8rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600 -translate-y-1/2"
+              @tap="withdrawalAmount = revenueData.balance.toString()"
+            >
+              全部
+            </view>
+          </view>
+        </view>
+
+        <!-- 提现方式选择 -->
+        <view>
+          <view class="mb-[16rpx] flex items-center justify-between">
+            <text class="text-[26rpx] font-semibold">
+              提现方式
+            </text>
+            <view
+              class="flex items-center border border-purple-600 rounded-[8rpx] bg-purple-50 px-[12rpx] py-[6rpx] text-[20rpx] text-purple-600 space-x-[8rpx]"
+              @tap="goToWithdrawalMethods"
+            >
+              <text class="i-material-symbols-add text-[16rpx]" />
+              <text>添加</text>
+            </view>
+          </view>
+
+          <view class="space-y-[12rpx]">
+            <view
+              v-for="method in withdrawalMethods"
+              :key="method.id"
+              class="border rounded-[12rpx] bg-white p-[20rpx] transition-all duration-200"
+              :class="selectedWithdrawalMethod?.id === method.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
+              @tap="selectWithdrawalMethod(method)"
+            >
+              <view class="flex items-center justify-between">
+                <view class="flex items-center space-x-[16rpx]">
+                  <image
+                    v-if="method.iconUrl"
+                    :src="method.iconUrl"
+                    class="h-[32rpx] w-[32rpx]"
+                    mode="aspectFit"
+                  />
+                  <text
+                    v-else
+                    class="text-[32rpx]"
+                    :class="method.icon"
+                    :style="{ color: method.type === 'bank' ? '#1976d2' : method.type === 'wechat' ? '#4caf50' : '#ff9800' }"
+                  />
+                  <view>
+                    <text class="block text-[24rpx] font-medium">
+                      {{ method.name }}
+                    </text>
+                    <text class="text-[20rpx] text-gray-500">
+                      {{ method.account }}
+                    </text>
+                  </view>
+                </view>
+                <view class="flex items-center space-x-[8rpx]">
+                  <text v-if="method.isDefault" class="rounded-full bg-orange-100 px-[8rpx] py-[2rpx] text-[18rpx] text-orange-600">
+                    默认
+                  </text>
+                  <view
+                    class="h-[20rpx] w-[20rpx] border-2 rounded-full"
+                    :class="selectedWithdrawalMethod?.id === method.id ? 'border-purple-600 bg-purple-600' : 'border-gray-300'"
+                  >
+                    <view
+                      v-if="selectedWithdrawalMethod?.id === method.id"
+                      class="h-full w-full scale-50 rounded-full bg-white"
+                    />
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 提现说明 -->
+        <view class="rounded-[12rpx] bg-yellow-50 p-[16rpx]">
+          <view class="mb-[8rpx] flex items-center space-x-[8rpx]">
+            <text class="i-material-symbols-info text-[20rpx] text-yellow-600" />
+            <text class="text-[22rpx] text-yellow-800 font-medium">
+              提现说明
+            </text>
+          </view>
+          <view class="text-[20rpx] text-yellow-700 space-y-[4rpx]">
+            <text class="block">
+              • 提现手续费：每笔2-5元
+            </text>
+            <text class="block">
+              • 到账时间：工作日1-3小时，节假日顺延
+            </text>
+            <text class="block">
+              • 单笔限额：最低10元，最高50,000元
+            </text>
+          </view>
+        </view>
+
+        <!-- 提交按钮 -->
+        <view class="flex space-x-[16rpx]">
+          <view
+            class="flex-1 border border-gray-300 rounded-full bg-white py-[24rpx] text-center text-[26rpx] text-gray-600 font-medium"
+            @tap="withdrawalDrawerVisible = false"
+          >
+            取消
+          </view>
+          <view
+            class="flex-1 rounded-full py-[24rpx] text-center text-[26rpx] text-white font-medium"
+            :class="withdrawalAmount && selectedWithdrawalMethod ? 'bg-purple-600' : 'bg-gray-300'"
+            @tap="submitWithdrawal"
+          >
+            确认提现
+          </view>
+        </view>
+      </view>
+    </BottomDrawer>
   </view>
 </template>

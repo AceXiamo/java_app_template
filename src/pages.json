@@ -105,6 +105,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/owner/add-withdrawal-method",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/owner/home",
       "type": "page"
     },
@@ -129,6 +134,11 @@
     {
       "path": "pages/owner/settings",
       "type": "page"
+    },
+    {
+      "path": "pages/owner/withdrawal-methods",
+      "type": "page",
+      "layout": "home"
     },
     {
       "path": "pages/owner-certification/index",

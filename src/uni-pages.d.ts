@@ -25,12 +25,14 @@ interface NavigateToOptions {
        "/pages/mystery-box/index" |
        "/pages/news-detail/index" |
        "/pages/order/detail" |
+       "/pages/owner/add-withdrawal-method" |
        "/pages/owner/home" |
        "/pages/owner/index" |
        "/pages/owner/order-detail" |
        "/pages/owner/orders" |
        "/pages/owner/revenue" |
        "/pages/owner/settings" |
+       "/pages/owner/withdrawal-methods" |
        "/pages/owner-certification/index" |
        "/pages/ranking/index" |
        "/pages/search/index" |
