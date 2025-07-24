@@ -68,7 +68,6 @@ export interface OwnerRevenueRecord {
 
 // 收益查询参数接口
 export interface OwnerRevenueQueryParams {
-  ownerId: number
   startDate?: string
   endDate?: string
   status?: string
@@ -98,36 +97,37 @@ export interface OwnerHomeData {
 
 /**
  * 获取车主首页全部数据
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerHomeData(ownerId: number): Promise<BaseRes<OwnerHomeData>> {
+export function getOwnerHomeData(): Promise<BaseRes<OwnerHomeData>> {
   return request.get({
-    url: `${host}/owner/home/data`,
-    params: { ownerId }
+    url: `${host}/owner/home/data`
   })
 }
 
 /**
  * 获取车主收益概览
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerRevenueSummary(ownerId: number): Promise<BaseRes<OwnerRevenueSummary>> {
+export function getOwnerRevenueSummary(): Promise<BaseRes<OwnerRevenueSummary>> {
   return request.get({
-    url: `${host}/owner/revenue/summary`,
-    params: { ownerId }
+    url: `${host}/owner/revenue/summary`
   })
 }
 
 /**
  * 获取车主车辆统计列表
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerVehicleStats(ownerId: number): Promise<BaseRes<OwnerVehicleStats[]>> {
+export function getOwnerVehicleStats(): Promise<BaseRes<OwnerVehicleStats[]>> {
   return request.get({
-    url: `${host}/owner/revenue/vehicles`,
-    params: { ownerId }
+    url: `${host}/owner/revenue/vehicles`
   })
 }
 
 /**
  * 分页查询收益记录
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
 export function getOwnerRevenueRecords(params: OwnerRevenueQueryParams): Promise<BaseRes<any>> {
   return request.post({
@@ -138,40 +138,41 @@ export function getOwnerRevenueRecords(params: OwnerRevenueQueryParams): Promise
 
 /**
  * 获取收益趋势数据
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerRevenueTrend(ownerId: number, days: number = 30): Promise<BaseRes<any[]>> {
+export function getOwnerRevenueTrend(days: number = 30): Promise<BaseRes<any[]>> {
   return request.get({
     url: `${host}/owner/revenue/trend`,
-    params: { ownerId, days }
+    params: { days }
   })
 }
 
 /**
  * 获取车主余额信息
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerBalance(ownerId: number): Promise<BaseRes<any>> {
+export function getOwnerBalance(): Promise<BaseRes<any>> {
   return request.get({
-    url: `${host}/owner/revenue/balance`,
-    params: { ownerId }
+    url: `${host}/owner/revenue/balance`
   })
 }
 
 /**
  * 获取车主车辆概况统计
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerVehicleSummary(ownerId: number): Promise<BaseRes<any>> {
+export function getOwnerVehicleSummary(): Promise<BaseRes<any>> {
   return request.get({
-    url: `${host}/owner/revenue/vehicle-summary`,
-    params: { ownerId }
+    url: `${host}/owner/revenue/vehicle-summary`
   })
 }
 
 /**
  * 获取车主订单统计
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerOrderStats(ownerId: number): Promise<BaseRes<any>> {
+export function getOwnerOrderStats(): Promise<BaseRes<any>> {
   return request.get({
-    url: `${host}/owner/revenue/order-stats`,
-    params: { ownerId }
+    url: `${host}/owner/revenue/order-stats`
   })
 }

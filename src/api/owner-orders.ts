@@ -62,7 +62,6 @@ export interface OwnerOrder {
 
 // 订单查询参数接口
 export interface OwnerOrderQueryParams {
-  ownerId: number
   status?: string
   orderType?: string
   startDate?: string
@@ -73,36 +72,42 @@ export interface OwnerOrderQueryParams {
 
 /**
  * 获取车主订单列表
- * 注意：当前使用管理端API，后续需要后端提供专门的车主订单API
+ * 使用车主专用API，后端通过 SecurityUtils 自动获取当前用户ID
  */
 export function getOwnerOrders(params: OwnerOrderQueryParams): Promise<BaseRes<any>> {
-  return request.post({
-    url: `${host}/admin/order/rental/list`,
-    data: {
-      ...params,
-      // 添加车主筛选条件
-      ownerId: params.ownerId
+  return request.get({
+    url: `${host}/owner/orders/list`,
+    params: {
+      status: params.status || 'all',
+      pageNum: params.pageNum || 1,
+      pageSize: params.pageSize || 20
     }
   })
 }
 
 /**
- * 获取订单详情
+ * 获取车主订单详情
+ * 后端通过 SecurityUtils 自动获取当前用户ID，只能查看自己车辆的订单详情
  */
 export function getOwnerOrderDetail(orderNo: string): Promise<BaseRes<OwnerOrder>> {
   return request.get({
-    url: `${host}/admin/order/rental/detail`,
-    params: { orderNo }
+    url: `${host}/owner/orders/detail`,
+    params: { 
+      orderNo
+    }
   })
 }
 
 /**
- * 获取订单时间线
+ * 获取车主订单时间线
+ * 后端通过 SecurityUtils 自动获取当前用户ID，只能查看自己车辆的订单时间线
  */
 export function getOrderTimeline(orderNo: string): Promise<BaseRes<any[]>> {
   return request.get({
-    url: `${host}/admin/order/rental/timeline`,
-    params: { orderNo }
+    url: `${host}/owner/orders/timeline`,
+    params: { 
+      orderNo
+    }
   })
 }
 

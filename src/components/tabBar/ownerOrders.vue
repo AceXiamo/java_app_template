@@ -51,20 +51,17 @@ onMounted(async () => {
 async function loadOrders() {
   try {
     loading.value = true
-    const ownerId = user.value?.userId
-    if (!ownerId) 
-      return
 
     const params: OwnerOrderQueryParams = {
-      ownerId,
-      status: currentFilter.value === 'all' ? undefined : getApiStatus(currentFilter.value),
+      status: currentFilter.value,  // 直接传递状态，后端处理映射
       pageNum: 1,
       pageSize: 50,
     }
 
     const response = await getOwnerOrders(params)
     if (response.code === 200 && response.data) {
-      orderList.value = response.data.records || []
+      // 根据新的数据结构更新
+      orderList.value = response.data.list || []
     }
   }
   catch (error) {
@@ -79,15 +76,7 @@ async function loadOrders() {
   }
 }
 
-// 将前端状态映射到API状态
-function getApiStatus(filterKey: string): string | undefined {
-  const statusMapping: Record<string, string> = {
-    ongoing: 'paid,picked', // 进行中包含已支付和已取车
-    completed: 'completed', // 已完成
-    cancelled: 'cancelled', // 已取消
-  }
-  return statusMapping[filterKey]
-}
+// 注意：状态映射已由后端处理，前端直接传递状态值
 
 // 过滤后的订单 - 现在直接从API获取已过滤的数据
 const filteredOrders = computed(() => orderList.value)
@@ -283,30 +272,30 @@ function submitVerification() {
               <view class="mb-[20rpx] flex">
                 <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
                   <image
-                    :src="order.vehicle?.imageUrl"
+                    :src="order.vehicleImage"
                     mode="aspectFill"
                     class="h-full w-full rounded-[12rpx]"
                   />
                 </view>
                 <view class="ml-[24rpx] min-w-0 flex flex-1 flex-col justify-center">
                   <text class="truncate text-[28rpx] text-black font-bold">
-                    {{ order.vehicle?.name }}
+                    {{ order.vehicleName }}
                   </text>
                   <view class="mt-[8rpx] flex items-center gap-x-[16rpx] text-[22rpx] text-gray-600">
                     <text class="rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx] text-[20rpx] text-blue-700 font-medium">
-                      {{ order.vehicle?.licensePlate }}
+                      {{ order.licensePlate }}
                     </text>
                     <text class="truncate">
-                      {{ order.vehicle.seats }}座 {{ order.vehicle?.carType }}
+                      {{ order.seats }}座 {{ order.carType }}
                     </text>
                     <text class="truncate">
-                      {{ order.vehicle?.energyType }}
+                      {{ order.energyType }}
                     </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
                     <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
                     <text class="truncate text-[20rpx] text-gray-600">
-                      {{ order.vehicle.rating }}({{ order.vehicle?.ratingCount }})
+                      {{ order.rating }}({{ order.ratingCount }})
                     </text>
                   </view>
                 </view>
@@ -404,7 +393,7 @@ function submitVerification() {
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.user.phone)"
+                    @tap="contactUser(order.userPhone)"
                   >
                     联系用户
                   </view>
@@ -420,7 +409,7 @@ function submitVerification() {
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.user.phone)"
+                    @tap="contactUser(order.userPhone)"
                   >
                     联系用户
                   </view>
@@ -430,7 +419,7 @@ function submitVerification() {
                 <template v-else>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.user.phone)"
+                    @tap="contactUser(order.userPhone)"
                   >
                     联系用户
                   </view>
@@ -481,7 +470,7 @@ function submitVerification() {
               订单号
             </text>
             <text class="text-[24rpx] font-medium">
-              {{ currentOrder?.order_no }}
+              {{ currentOrder?.orderNo }}
             </text>
           </view>
           <view class="mb-[8rpx] flex items-center justify-between">
@@ -489,7 +478,7 @@ function submitVerification() {
               用户
             </text>
             <text class="text-[24rpx] font-medium">
-              {{ currentOrder?.user.name }}
+              {{ currentOrder?.userNickname }}
             </text>
           </view>
         </view>
@@ -509,7 +498,7 @@ function submitVerification() {
               车牌号码
             </text>
             <text class="rounded-[8rpx] bg-blue-600 px-[12rpx] py-[4rpx] text-[24rpx] text-white font-bold tracking-wider">
-              {{ currentOrder?.vehicle.license_plate }}
+              {{ currentOrder?.licensePlate }}
             </text>
           </view>
 
@@ -519,7 +508,7 @@ function submitVerification() {
               车辆名称
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              {{ currentOrder?.vehicle.name }}
+              {{ currentOrder?.vehicleName }}
             </text>
           </view>
           <view class="mb-[8rpx] flex items-center justify-between">
@@ -527,7 +516,7 @@ function submitVerification() {
               品牌车型
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              {{ currentOrder?.vehicle.brand }} {{ currentOrder?.vehicle.model }}
+              车辆信息
             </text>
           </view>
           <view class="flex items-center justify-between">
@@ -535,7 +524,7 @@ function submitVerification() {
               车辆配置
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              {{ currentOrder?.vehicle.seats }}座 {{ currentOrder?.vehicle.car_type }} {{ currentOrder?.vehicle.energy_type }}
+              {{ currentOrder?.seats }}座 {{ currentOrder?.carType }} {{ currentOrder?.energyType }}
             </text>
           </view>
         </view>

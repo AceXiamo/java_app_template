@@ -57,12 +57,8 @@ onMounted(async () => {
 async function loadRevenueDetails() {
   try {
     revenueLoading.value = true
-    const ownerId = user.value?.userId
-    if (!ownerId) 
-      return
 
     const params: OwnerRevenueQueryParams = {
-      ownerId,
       pageNum: 1,
       pageSize: 20,
     }
@@ -87,11 +83,7 @@ async function loadRevenueDetails() {
 // 加载提现方式
 async function loadWithdrawalMethods() {
   try {
-    const ownerId = user.value?.userId
-    if (!ownerId) 
-      return
-
-    const response = await getOwnerWithdrawalMethods(ownerId)
+    const response = await getOwnerWithdrawalMethods()
     if (response.code === 200 && response.data) {
       withdrawalMethods.value = response.data.map(method => ({
         ...method,

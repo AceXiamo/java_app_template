@@ -42,21 +42,21 @@ export interface OwnerWithdrawalRecord {
 
 /**
  * 获取车主提现方式列表
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerWithdrawalMethods(ownerId: number): Promise<BaseRes<OwnerWithdrawalMethod[]>> {
+export function getOwnerWithdrawalMethods(): Promise<BaseRes<OwnerWithdrawalMethod[]>> {
   return request.get({
-    url: `${host}/owner/withdrawal/methods`,
-    params: { ownerId }
+    url: `${host}/owner/withdrawal/methods`
   })
 }
 
 /**
  * 获取车主默认提现方式
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function getOwnerDefaultWithdrawalMethod(ownerId: number): Promise<BaseRes<OwnerWithdrawalMethod>> {
+export function getOwnerDefaultWithdrawalMethod(): Promise<BaseRes<OwnerWithdrawalMethod>> {
   return request.get({
-    url: `${host}/owner/withdrawal/default-method`,
-    params: { ownerId }
+    url: `${host}/owner/withdrawal/default-method`
   })
 }
 
@@ -72,20 +72,22 @@ export function addOwnerWithdrawalMethod(method: Partial<OwnerWithdrawalMethod>)
 
 /**
  * 设置默认提现方式
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function setDefaultWithdrawalMethod(ownerId: number, methodId: number): Promise<BaseRes<string>> {
+export function setDefaultWithdrawalMethod(methodId: number): Promise<BaseRes<string>> {
   return request.put({
     url: `${host}/owner/withdrawal/default-method`,
-    params: { ownerId, methodId }
+    params: { methodId }
   })
 }
 
 /**
  * 删除提现方式
+ * 后端通过 SecurityUtils 自动获取当前用户ID
  */
-export function deleteWithdrawalMethod(ownerId: number, methodId: number): Promise<BaseRes<string>> {
+export function deleteWithdrawalMethod(methodId: number): Promise<BaseRes<string>> {
   return request.delete({
     url: `${host}/owner/withdrawal/methods`,
-    params: { ownerId, methodId }
+    params: { methodId }
   })
 }

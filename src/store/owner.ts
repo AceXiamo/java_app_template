@@ -73,17 +73,9 @@ export const useOwnerStore = defineStore('owner', () => {
 
       isLoading.value = true
       loading.value = true
-      
-      const userStore = useUserStore()
-      const ownerId = userStore.user?.userId
-      
-      if (!ownerId) {
-        console.error('用户未登录或无车主ID')
-        return
-      }
 
-      console.log('开始加载车主数据...', { ownerId, forceRefresh })
-      const response = await getOwnerHomeData(ownerId)
+      console.log('开始加载车主数据...', { forceRefresh })
+      const response = await getOwnerHomeData()
       
       if (response.code === 200 && response.data) {
         const data = response.data
@@ -124,11 +116,6 @@ export const useOwnerStore = defineStore('owner', () => {
   // 刷新收益数据（强制刷新）
   async function refreshRevenueData() {
     try {
-      const userStore = useUserStore()
-      const ownerId = userStore.user?.userId
-      
-      if (!ownerId) return
-      
       // 强制刷新数据
       await loadOwnerData(true)
     } catch (error) {
