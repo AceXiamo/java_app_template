@@ -35,9 +35,6 @@ watch(() => props.visible, (v) => {
     v-if="containerVisible" absolute inset-0 bg="black/20" z-9999 flex flex-col justify-end transition-all duration-200 @tap="$emit('update:visible', false)"
   >
     <view flex flex-col rounded-t-[32rpx] bg-white p-[30rpx] :class="className" :style="{ minHeight: heightVal }" @tap.stop>
-      <!-- 顶部拖拽指示器 -->
-      <view class="mx-auto mb-[20rpx] h-[8rpx] w-[80rpx] rounded-full bg-gray-300" />
-
       <view relative flex items-center justify-center>
         <text text-[32rpx] font-bold>
           {{ $props.title || '' }}

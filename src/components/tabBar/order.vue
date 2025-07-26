@@ -245,6 +245,43 @@ function isPickupExpired(pickupDeadline: string) {
   return deadline < now
 }
 
+// 检查还车是否超时 (基于实际取车时间 + 租用天数)
+function isReturnExpired(order: any) {
+  if (!order.actualStartTime || !order.rentalDays) {
+    return false
+  }
+  
+  try {
+    const actualStartTime = new Date(order.actualStartTime).getTime()
+    const rentalDays = parseInt(order.rentalDays)
+    const returnDeadline = actualStartTime + (rentalDays * 24 * 60 * 60 * 1000) // 租用天数转毫秒
+    const now = new Date().getTime()
+    
+    return now > returnDeadline
+  } catch (error) {
+    console.error('计算还车超时失败:', error)
+    return false
+  }
+}
+
+// 计算还车截止时间
+function getReturnDeadline(order: any) {
+  if (!order.actualStartTime || !order.rentalDays) {
+    return null
+  }
+  
+  try {
+    const actualStartTime = new Date(order.actualStartTime)
+    const rentalDays = parseInt(order.rentalDays)
+    const returnDeadline = new Date(actualStartTime.getTime() + (rentalDays * 24 * 60 * 60 * 1000))
+    
+    return returnDeadline.toISOString()
+  } catch (error) {
+    console.error('计算还车截止时间失败:', error)
+    return null
+  }
+}
+
 // 打开导航
 async function openNavigation(location: string) {
   if (!location) {
@@ -397,10 +434,15 @@ async function openNavigation(location: string) {
                   <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx]" />
                   神秘盲盒
                 </view>
-                <!-- 超时提示 -->
-                <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] flex items-center rounded-full bg-red-100 px-[14rpx] py-[4rpx] text-[20rpx] text-red-700 font-medium">
+                <!-- 取车超时提示 (仅paid状态) -->
+                <view v-if="order.pickupDeadline && (order.originalStatus || order.status) === 'paid' && isPickupExpired(order.pickupDeadline)" class="ml-[8rpx] flex items-center rounded-full bg-red-100 px-[14rpx] py-[4rpx] text-[20rpx] text-red-700 font-medium">
                   <text class="i-material-symbols-warning mr-[4rpx] text-[16rpx]" />
-                  已超时
+                  取车超时
+                </view>
+                <!-- 还车超时提示 (仅picked状态) -->
+                <view v-if="(order.originalStatus || order.status) === 'picked' && isReturnExpired(order)" class="ml-[8rpx] flex items-center rounded-full bg-orange-100 px-[14rpx] py-[4rpx] text-[20rpx] text-orange-700 font-medium">
+                  <text class="i-material-symbols-warning mr-[4rpx] text-[16rpx]" />
+                  还车超时
                 </view>
               </view>
               <text class="text-[22rpx] text-gray-400">
@@ -526,49 +568,100 @@ async function openNavigation(location: string) {
                 {{ order.location }}
               </text>
             </view>
-            <!-- 超时警告 -->
-            <view v-if="order.pickupDeadline && ['paid', 'picked'].includes(order.originalStatus || order.status) && isPickupExpired(order.pickupDeadline)" class="mb-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
+            <!-- 取车超时警告 (仅paid状态) -->
+            <view v-if="order.pickupDeadline && (order.originalStatus || order.status) === 'paid' && isPickupExpired(order.pickupDeadline)" class="mb-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
               <view class="flex items-center">
                 <image
                   src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/deadline.png"
                   class="mr-[16rpx] h-[40rpx] w-[40rpx] flex-shrink-0"
                   mode="aspectFit"
-                  alt="超时警告"
+                  alt="取车超时警告"
                 />
                 <text class="text-[24rpx] text-red-800 font-medium">
-                  {{ (order.originalStatus || order.status) === 'paid' ? '取车时间已超时，请尽快联系客服' : '订单已超时，请尽快还车' }}
+                  取车时间已超时，请尽快联系客服或进行取车
                 </text>
               </view>
             </view>
-            <!-- 取车码区域 -->
-            <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status) && order.pickupCode" class="mb-[20rpx] flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
-              <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
-              <view class="flex-1">
-                <view class="mb-[4rpx] flex items-center">
-                  <text class="text-[24rpx] text-purple-800 font-medium">
-                    取车码
-                  </text>
-                  <text v-if="(order.originalStatus || order.status) === 'picked'" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">
-                    已使用
-                  </text>
-                </view>
-                <text class="text-[36rpx] text-purple-600 font-bold tracking-wider">
-                  {{ order.pickupCode }}
+            
+            <!-- 还车超时警告 (仅picked状态) -->
+            <view v-if="(order.originalStatus || order.status) === 'picked' && isReturnExpired(order)" class="mb-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
+              <view class="flex items-center">
+                <image
+                  src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/deadline.png"
+                  class="mr-[16rpx] h-[40rpx] w-[40rpx] flex-shrink-0"
+                  mode="aspectFit"
+                  alt="还车超时警告"
+                />
+                <text class="text-[24rpx] text-orange-800 font-medium">
+                  还车时间已超时，请尽快归还车辆
                 </text>
               </view>
-              <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
-                <view class="mb-[2rpx] flex items-center">
-                  <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'" />
-                  <text class="text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
-                    {{ (order.originalStatus || order.status) === 'paid' ? '取车截止' : '截止时间' }}
+            </view>
+            <!-- 取车码/还车码区域 -->
+            <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status)" class="mb-[20rpx] space-y-[12rpx]">
+              <!-- 取车码显示 (仅paid状态) -->
+              <view v-if="order.pickupCode && (order.originalStatus || order.status) === 'paid'" class="flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
+                <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
+                <view class="flex-1">
+                  <view class="mb-[4rpx] flex items-center">
+                    <text class="text-[24rpx] text-purple-800 font-medium">
+                      取车码
+                    </text>
+                  </view>
+                  <text class="text-[36rpx] text-purple-600 font-bold tracking-wider">
+                    {{ order.pickupCode }}
                   </text>
                 </view>
-                <text class="text-[20rpx] font-medium" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
-                  {{ formatTime(order.pickupDeadline) }}
-                </text>
-                <text v-if="isPickupExpired(order.pickupDeadline)" class="mt-[2rpx] block text-[16rpx] text-red-500">
-                  已超时
-                </text>
+                
+                <!-- paid状态：显示取车截止时间 -->
+                <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
+                  <view class="mb-[2rpx] flex items-center">
+                    <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'" />
+                    <text class="text-[18rpx]" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
+                      取车截止
+                    </text>
+                  </view>
+                  <text class="text-[20rpx] font-medium" :class="isPickupExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
+                    {{ formatTime(order.pickupDeadline) }}
+                  </text>
+                  <text v-if="isPickupExpired(order.pickupDeadline)" class="mt-[2rpx] block text-[16rpx] text-red-500">
+                    已超时
+                  </text>
+                </view>
+              </view>
+
+              <!-- 还车码显示 (仅picked状态) -->
+              <view v-if="(order.originalStatus || order.status) === 'picked' && order.returnCode" class="flex items-center rounded-[14rpx] bg-green-50 p-[20rpx]">
+                <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-green-600" />
+                <view class="flex-1">
+                  <view class="mb-[4rpx] flex items-center">
+                    <text class="text-[24rpx] text-green-800 font-medium">
+                      还车码
+                    </text>
+                    <text class="ml-[8rpx] rounded-full bg-orange-100 px-[8rpx] py-[2rpx] text-[18rpx] text-orange-600">
+                      使用中
+                    </text>
+                  </view>
+                  <text class="text-[36rpx] text-green-600 font-bold tracking-wider">
+                    {{ order.returnCode }}
+                  </text>
+                </view>
+                
+                <!-- picked状态：显示还车截止时间 -->
+                <view v-if="getReturnDeadline(order)" class="ml-[16rpx] flex flex-col items-end text-right">
+                  <view class="mb-[2rpx] flex items-center">
+                    <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="isReturnExpired(order) ? 'text-orange-500' : 'text-green-500'" />
+                    <text class="text-[18rpx]" :class="isReturnExpired(order) ? 'text-orange-500' : 'text-green-500'">
+                      还车截止
+                    </text>
+                  </view>
+                  <text class="text-[20rpx] font-medium" :class="isReturnExpired(order) ? 'text-orange-500' : 'text-green-700'">
+                    {{ formatTime(getReturnDeadline(order)) }}
+                  </text>
+                  <text v-if="isReturnExpired(order)" class="mt-[2rpx] block text-[16rpx] text-orange-500">
+                    已超时
+                  </text>
+                </view>
               </view>
             </view>
             <!-- 操作按钮 -->

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
@@ -93,8 +93,8 @@ async function loadWithdrawalMethods() {
         name: method.methodName,
         account: method.accountInfo,
         icon: method.methodType === 'bank' ? 'i-material-symbols-account-balance' : '',
-        iconUrl: method.methodType === 'wechat' ? 'https://img.icons8.com/color/48/wechat.png'
-          : method.methodType === 'alipay' ? 'https://img.icons8.com/color/48/alipay.png' : '',
+        iconUrl: method.methodType === 'wechat' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/wechat.png'
+          : method.methodType === 'alipay' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/alipay.png' : '',
       }))
     }
   }

@@ -3,7 +3,7 @@ import { getOwnerHomeData, type OwnerHomeData, type OwnerVehicleStats } from '@/
 import { useUserStore } from '@/store/user'
 
 // 车主应用的导航
-export type OwnerActiveMenu = 'home' | 'orders' | 'revenue' | 'settings'
+export type OwnerActiveMenu = 'home' | 'orders' | 'revenue'
 
 export const useOwnerStore = defineStore('owner', () => {
   const active = ref<OwnerActiveMenu>('home')

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
+import {
+  type OwnerWithdrawalMethod,
+  addOwnerWithdrawalMethod,
+  getOwnerWithdrawalMethods,
+} from '@/api/owner-withdrawal'
+import { uploadFileToOss } from '@/utils/alioss'
 
 // 获取页面参数
 const { id, type } = defineProps<{
@@ -164,13 +170,34 @@ function onBankCardInput(e: any) {
 }
 
 // 上传收款码
-function uploadQRCode() {
+async function uploadQRCode() {
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
     sourceType: ['camera', 'album'],
-    success: (res) => {
-      formData.qrCodeImage = res.tempFilePaths[0]
+    success: async (res) => {
+      const tempFilePath = res.tempFilePaths[0]
+
+      try {
+        uni.showLoading({ title: '上传中...' })
+
+        // 生成文件名和路径
+        const timestamp = Date.now()
+        const fileName = `qrcode_${timestamp}.jpg`
+        const ossPath = `withdrawal/${formData.type}/${fileName}`
+
+        // 上传到阿里云OSS
+        const uploadedUrl = await uploadFileToOss(tempFilePath, ossPath)
+
+        formData.qrCodeImage = uploadedUrl
+        uni.hideLoading()
+        uni.showToast({ title: '上传成功', icon: 'success' })
+      }
+      catch (error) {
+        console.error('上传失败:', error)
+        uni.hideLoading()
+        uni.showToast({ title: '上传失败', icon: 'none' })
+      }
     },
     fail: () => {
       uni.showToast({ title: '选择图片失败', icon: 'none' })
@@ -188,37 +215,157 @@ async function submitForm() {
   uni.showLoading({ title: isEdit.value ? '更新中...' : '添加中...' })
 
   try {
-    // TODO: 调用API保存提现方式
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // 构建提交数据
+    const submitData: Partial<OwnerWithdrawalMethod> = {
+      methodType: formData.type,
+      methodName: getMethodName(),
+      accountInfo: getAccountInfo(),
+      holderName: formData.holderName,
+      holderPhone: formData.holderPhone,
+      isDefault: formData.isDefault,
+    }
 
-    uni.hideLoading()
-    uni.showToast({
-      title: isEdit.value ? '更新成功' : '添加成功',
-      icon: 'success',
-    })
+    // 根据类型设置特定字段
+    if (formData.type === 'bank') {
+      submitData.bankName = formData.bankName
+      submitData.bankAccount = formData.accountNumber.replace(/\s/g, '') // 去除空格
+    }
+    else if (formData.type === 'wechat') {
+      submitData.wechatAccount = formData.wechatAccount
+      if (formData.qrCodeImage) {
+        submitData.qrCodeImageUrl = formData.qrCodeImage // 已上传到OSS的URL
+      }
+    }
+    else if (formData.type === 'alipay') {
+      submitData.alipayAccount = formData.alipayAccount
+      if (formData.qrCodeImage) {
+        submitData.qrCodeImageUrl = formData.qrCodeImage // 已上传到OSS的URL
+      }
+    }
 
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
+    // 目前只支持添加，编辑功能待后端API支持
+    if (isEdit.value) {
+      uni.hideLoading()
+      uni.showToast({ title: '编辑功能暂未开放', icon: 'none' })
+      return
+    }
+
+    const response = await addOwnerWithdrawalMethod(submitData)
+
+    if (response.code === 200) {
+      uni.hideLoading()
+      uni.showToast({
+        title: '添加成功',
+        icon: 'success',
+      })
+
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    }
+    else {
+      throw new Error(response.msg || '提交失败')
+    }
   }
   catch (error) {
     console.error('提交失败:', error)
     uni.hideLoading()
-    uni.showToast({ title: '提交失败', icon: 'none' })
+    uni.showToast({
+      title: error instanceof Error ? error.message : '提交失败',
+      icon: 'none',
+    })
   }
   finally {
     loading.value = false
   }
 }
 
-// 页面初始化
-onMounted(() => {
-  if (isEdit.value && id) {
-    // TODO: 根据 id 加载现有数据
-    formData.type = currentType.value
+// 获取方式名称
+function getMethodName(): string {
+  if (formData.type === 'bank') {
+    return formData.bankName
   }
-  else {
-    formData.type = currentType.value
+  else if (formData.type === 'wechat') {
+    return '微信收款码'
+  }
+  else if (formData.type === 'alipay') {
+    return '支付宝收款码'
+  }
+  return ''
+}
+
+// 获取账户信息
+function getAccountInfo(): string {
+  if (formData.type === 'bank') {
+    const account = formData.accountNumber.replace(/\s/g, '')
+    return `****${account.slice(-4)}` // 显示后4位
+  }
+  else if (formData.type === 'wechat') {
+    return `微信号: ${formData.wechatAccount}`
+  }
+  else if (formData.type === 'alipay') {
+    return `支付宝: ${formData.alipayAccount}`
+  }
+  return ''
+}
+
+// 加载现有数据（编辑模式）
+async function loadExistingData() {
+  if (!isEdit.value || !id)
+    return
+
+  try {
+    uni.showLoading({ title: '加载中...' })
+    const response = await getOwnerWithdrawalMethods()
+
+    if (response.code === 200 && response.data) {
+      const method = response.data.find(m => m.methodId.toString() === id)
+      if (method) {
+        // 填充表单数据
+        formData.type = method.methodType
+        currentType.value = method.methodType
+        formData.holderName = method.holderName
+        formData.holderPhone = method.holderPhone
+        formData.isDefault = method.isDefault
+
+        if (method.methodType === 'bank') {
+          formData.bankName = method.bankName || ''
+          formData.accountNumber = method.bankAccount || ''
+          // 找到对应的银行索引
+          const bankIndex = bankList.findIndex(bank => bank === method.bankName)
+          if (bankIndex !== -1) {
+            bankPickerIndex.value = bankIndex
+          }
+        }
+        else if (method.methodType === 'wechat') {
+          formData.wechatAccount = method.wechatAccount || ''
+          if (method.qrCodeImageUrl) {
+            formData.qrCodeImage = method.qrCodeImageUrl
+          }
+        }
+        else if (method.methodType === 'alipay') {
+          formData.alipayAccount = method.alipayAccount || ''
+          if (method.qrCodeImageUrl) {
+            formData.qrCodeImage = method.qrCodeImageUrl
+          }
+        }
+      }
+    }
+    uni.hideLoading()
+  }
+  catch (error) {
+    console.error('加载数据失败:', error)
+    uni.hideLoading()
+    uni.showToast({ title: '加载数据失败', icon: 'none' })
+  }
+}
+
+// 页面初始化
+onMounted(async () => {
+  formData.type = currentType.value
+
+  if (isEdit.value && id) {
+    await loadExistingData()
   }
 })
 </script>
@@ -388,12 +535,12 @@ onMounted(() => {
               <view class="flex items-center space-x-[16rpx]">
                 <view
                   v-if="formData.qrCodeImage"
-                  class="relative h-[120rpx] w-[120rpx] overflow-hidden rounded-[12rpx]"
+                  class="relative h-[120rpx] w-[120rpx] rounded-[12rpx]"
                 >
                   <image
                     :src="formData.qrCodeImage"
                     mode="aspectFill"
-                    class="h-full w-full"
+                    class="h-full w-full rounded-[12rpx]"
                   />
                   <view
                     class="absolute h-[24rpx] w-[24rpx] flex items-center justify-center rounded-full bg-red-500 -right-[8rpx] -top-[8rpx]"

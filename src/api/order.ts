@@ -337,6 +337,29 @@ export interface OrderDetail {
   createTime: string
   updateTime: string
   remark: string
+  
+  // 保险信息
+  insurance?: Array<{
+    product_id: number
+    product_name: string
+    price: number
+    coverage_amount: number
+    coverage_description: string
+  }>
+  
+  // 增值服务信息
+  services?: Array<{
+    service_id: number
+    service_name: string
+    price: number
+    quantity: number
+    total_amount: number
+    description: string
+  }>
+  
+  // 费用汇总
+  insurance_fee?: number
+  service_fee?: number
 }
 
 /**

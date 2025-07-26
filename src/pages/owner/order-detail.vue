@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
+import { type OwnerOrderDetail, getOwnerOrderDetail } from '@/api/owner-orders'
 
 // 页面参数
 const props = defineProps<{
@@ -8,78 +9,7 @@ const props = defineProps<{
 }>()
 
 // 订单详情数据
-const orderDetail = ref({
-  order_id: 1,
-  order_no: 'RO20250720001',
-  user_id: 101,
-  vehicle_id: 1,
-  owner_id: 1001,
-  start_time: '2025-07-20 14:30:00',
-  end_time: '2025-07-20 18:00:00',
-  actual_start_time: '2025-07-20 14:32:00',
-  actual_end_time: '2025-07-20 17:58:00',
-  pickup_deadline: '2025-07-20 15:00:00',
-  rental_days: 1,
-  daily_price: 299.00,
-  total_amount: 314.00,
-  discount_amount: 20.00,
-  delivery_fee: 15.00,
-  late_pickup_fee: 0.00,
-  overtime_fee: 0.00,
-  final_amount: 294.00,
-  pickup_code: 'A1B2C3',
-  return_code: 'D4E5F6',
-  pickup_location: '徐汇区漕河泾开发区停车场A区15号',
-  delivery_address: '浦东新区陆家嘴环路1000号',
-  delivery_distance: 8.5,
-  payment_time: '2025-07-20 10:05:00',
-  payment_method: 'wechat',
-  wechat_transaction_id: '4200001234567890123',
-  status: 'completed',
-  statusText: '已完成',
-  order_type: 'daily',
-  pickup_method: 'delivery',
-  dispute_status: 'none',
-  remark: '用户要求准时到达，车辆已清洁完成',
-  create_time: '2025-07-20 10:00:00',
-
-  // 关联用户信息
-  user: {
-    user_id: 101,
-    nickname: '张三',
-    phone: '139****5678',
-    avatar: '/static/vite.png',
-    real_name: '张*三',
-    gender: '男',
-    age: 28,
-  },
-
-  // 关联车辆信息
-  vehicle: {
-    vehicle_id: 1,
-    name: '特斯拉 Model 3',
-    brand: '特斯拉',
-    model: 'Model 3',
-    license_plate: '沪A·12345',
-    car_type: '轿车',
-    energy_type: '纯电动',
-    seats: 5,
-    image_url: 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/tesla_model3.jpg',
-    rating: 4.8,
-    rating_count: 128,
-    operation_type: 'owner',
-    operation_type_text: '自运营',
-  },
-
-  // 验证照片
-  pickup_verification_photos: [
-    'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/verification1.jpg',
-    'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/verification2.jpg',
-  ],
-  return_verification_photos: [
-    'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/verification3.jpg',
-  ],
-})
+const orderDetail = ref<OwnerOrderDetail>({} as OwnerOrderDetail)
 
 const loading = ref(false)
 
@@ -93,25 +23,73 @@ const statusColor = computed(() => {
     completed: 'text-green-600 bg-green-100',
     cancelled: 'text-red-600 bg-red-100',
   }
-  return statusMap[orderDetail.value.status] || 'text-gray-600 bg-gray-100'
+  return statusMap[orderDetail.value?.status] || 'text-gray-600 bg-gray-100'
 })
 
 const pickupMethodText = computed(() => {
-  return orderDetail.value.pickup_method === 'delivery' ? '送车服务' : '自取'
+  return orderDetail.value?.pickup_method === 'delivery' ? '送车服务' : '自取'
 })
 
 const isExpired = computed(() => {
-  if (!orderDetail.value.pickup_deadline)
+  if (!orderDetail.value?.pickup_deadline)
     return false
   return new Date(orderDetail.value.pickup_deadline).getTime() < new Date().getTime()
 })
 
+// 计算最晚还车时间（实际开始时间 + 租用天数）
+const latestReturnTime = computed(() => {
+  if (!orderDetail.value?.actual_start_time || !orderDetail.value?.rental_days)
+    return null
+
+  const actualStart = new Date(orderDetail.value.actual_start_time)
+  const returnTime = new Date(actualStart)
+  returnTime.setDate(actualStart.getDate() + orderDetail.value.rental_days)
+
+  return returnTime
+})
+
+// 计算实际用车时长（小时）
+const actualUsageHours = computed(() => {
+  if (!orderDetail.value?.actual_start_time)
+    return null
+
+  const startTime = new Date(orderDetail.value.actual_start_time)
+  const now = new Date()
+  const diff = now.getTime() - startTime.getTime()
+
+  return Math.floor(diff / (1000 * 60 * 60)) // 转换为小时
+})
+
+// 是否超时还车
+const isOverdueReturn = computed(() => {
+  if (!latestReturnTime.value || orderDetail.value?.status !== 'picked')
+    return false
+
+  return new Date().getTime() > latestReturnTime.value.getTime()
+})
+
 // 方法
-function formatDateTime(dateTimeStr: string) {
+function formatDateTime(dateTimeStr: string | Date) {
   if (!dateTimeStr)
     return ''
-  const date = new Date(dateTimeStr)
+  const date = typeof dateTimeStr === 'string' ? new Date(dateTimeStr) : dateTimeStr
+
+  // 检查是否为有效日期
+  if (Number.isNaN(date.getTime())) {
+    return '无效日期'
+  }
+
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
+
+// 格式化用车时长
+function formatUsageTime(hours: number) {
+  if (hours < 24) {
+    return `${hours}小时`
+  }
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  return remainingHours > 0 ? `${days}天${remainingHours}小时` : `${days}天`
 }
 
 function goBack() {
@@ -119,14 +97,30 @@ function goBack() {
 }
 
 function contactUser() {
+  const phone = orderDetail.value?.user?.phone
+  if (!phone) {
+    uni.showToast({
+      title: '用户电话信息不可用',
+      icon: 'none',
+    })
+    return
+  }
   uni.makePhoneCall({
-    phoneNumber: orderDetail.value.user.phone.replace(/\*/g, '1'),
+    phoneNumber: phone.replace(/\*/g, '1'),
   })
 }
 
 function goToTimeline() {
+  const orderNo = orderDetail.value?.order_no
+  if (!orderNo) {
+    uni.showToast({
+      title: '订单信息不完整',
+      icon: 'none',
+    })
+    return
+  }
   uni.navigateTo({
-    url: `/pages/owner/order-timeline?orderNo=${orderDetail.value.order_no}`,
+    url: `/pages/owner/order-timeline?orderNo=${orderNo}`,
   })
 }
 
@@ -138,13 +132,19 @@ function previewImage(urls: string[], current: string) {
 }
 
 function openMap() {
-  const { delivery_address } = orderDetail.value
-  if (delivery_address) {
+  const deliveryAddress = orderDetail.value?.delivery_address
+  if (deliveryAddress) {
     uni.openLocation({
       name: '送车地址',
-      address: delivery_address,
+      address: deliveryAddress,
       latitude: 31.235929,
       longitude: 121.501940,
+    })
+  }
+  else {
+    uni.showToast({
+      title: '地址信息不可用',
+      icon: 'none',
     })
   }
 }
@@ -157,14 +157,31 @@ onMounted(() => {
 })
 
 async function loadOrderDetail() {
+  if (!props.orderNo) {
+    console.error('订单号不能为空')
+    return
+  }
+
   loading.value = true
   try {
-    // TODO: 调用API获取订单详情
-    // const response = await api.getOwnerOrderDetail(props.orderNo)
-    // orderDetail.value = response.data
+    const response = await getOwnerOrderDetail(props.orderNo)
+    if (response.code === 200) {
+      orderDetail.value = response.data
+    }
+    else {
+      console.error('获取订单详情失败:', response.msg)
+      uni.showToast({
+        title: response.msg || '获取订单详情失败',
+        icon: 'none',
+      })
+    }
   }
   catch (error) {
     console.error('加载订单详情失败:', error)
+    uni.showToast({
+      title: '网络错误，请稍后重试',
+      icon: 'none',
+    })
   }
   finally {
     loading.value = false
@@ -197,7 +214,18 @@ uni.setNavigationBarTitle({
 
     <!-- 滚动内容区 -->
     <scroll-view scroll-y class="h-0 flex-1">
-      <view class="p-[32rpx] space-y-[32rpx]">
+      <!-- 加载中状态 -->
+      <view v-if="loading" class="h-full flex items-center justify-center">
+        <view class="text-center">
+          <view class="mx-auto mb-[20rpx] h-[80rpx] w-[80rpx] animate-spin border-4 border-purple-200 border-t-purple-600 rounded-full" />
+          <text class="text-[24rpx] text-gray-600">
+            加载中...
+          </text>
+        </view>
+      </view>
+
+      <!-- 订单详情内容 -->
+      <view v-else-if="orderDetail?.order_id" class="p-[32rpx] space-y-[32rpx]">
         <!-- 订单状态卡片 -->
         <view class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
           <view class="mb-[24rpx] flex items-center justify-between">
@@ -236,7 +264,7 @@ uni.setNavigationBarTitle({
                   ¥{{ orderDetail.daily_price }} × {{ orderDetail.rental_days }}天
                 </text>
               </view>
-              <view v-if="orderDetail.delivery_fee > 0" class="flex items-center justify-between">
+              <view v-if="orderDetail.delivery_fee && orderDetail.delivery_fee > 0" class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
                   送车服务费
                 </text>
@@ -244,7 +272,7 @@ uni.setNavigationBarTitle({
                   ¥{{ orderDetail.delivery_fee }}
                 </text>
               </view>
-              <view v-if="orderDetail.discount_amount > 0" class="flex items-center justify-between">
+              <view v-if="orderDetail.discount_amount && orderDetail.discount_amount > 0" class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
                   优惠金额
                 </text>
@@ -252,7 +280,7 @@ uni.setNavigationBarTitle({
                   -¥{{ orderDetail.discount_amount }}
                 </text>
               </view>
-              <view v-if="orderDetail.late_pickup_fee > 0" class="flex items-center justify-between">
+              <view v-if="orderDetail.late_pickup_fee && orderDetail.late_pickup_fee > 0" class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
                   延迟取车费
                 </text>
@@ -260,12 +288,28 @@ uni.setNavigationBarTitle({
                   +¥{{ orderDetail.late_pickup_fee }}
                 </text>
               </view>
-              <view v-if="orderDetail.overtime_fee > 0" class="flex items-center justify-between">
+              <view v-if="orderDetail.overtime_fee && orderDetail.overtime_fee > 0" class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
                   超时费用
                 </text>
                 <text class="text-[22rpx] text-red-600">
                   +¥{{ orderDetail.overtime_fee }}
+                </text>
+              </view>
+              <view v-if="orderDetail.insurance_fee && orderDetail.insurance_fee > 0" class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  保险费用
+                </text>
+                <text class="text-[22rpx] text-gray-800">
+                  ¥{{ orderDetail.insurance_fee }}
+                </text>
+              </view>
+              <view v-if="orderDetail.service_fee && orderDetail.service_fee > 0" class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  增值服务费
+                </text>
+                <text class="text-[22rpx] text-gray-800">
+                  ¥{{ orderDetail.service_fee }}
                 </text>
               </view>
               <view class="flex items-center justify-between border-t border-purple-200 pt-[8rpx]">
@@ -297,7 +341,7 @@ uni.setNavigationBarTitle({
             </view>
           </view>
 
-          <view class="flex items-center space-x-[20rpx]">
+          <view v-if="orderDetail.user" class="flex items-center space-x-[20rpx]">
             <image
               :src="orderDetail.user.avatar"
               class="h-[80rpx] w-[80rpx] rounded-full bg-gray-200"
@@ -308,8 +352,8 @@ uni.setNavigationBarTitle({
                 <text class="text-[26rpx] text-gray-900 font-medium">
                   {{ orderDetail.user.nickname }}
                 </text>
-                <text class="text-[20rpx] text-gray-500">
-                  {{ orderDetail.user.gender }} · {{ orderDetail.user.age }}岁
+                <text v-if="orderDetail.user.gender || orderDetail.user.age" class="text-[20rpx] text-gray-500">
+                  {{ orderDetail.user.gender }}{{ orderDetail.user.age ? ` · ${orderDetail.user.age}岁` : '' }}
                 </text>
               </view>
               <text class="text-[24rpx] text-gray-600">
@@ -325,7 +369,7 @@ uni.setNavigationBarTitle({
             租用车辆
           </text>
 
-          <view class="flex items-start space-x-[20rpx]">
+          <view v-if="orderDetail.vehicle" class="flex items-start space-x-[20rpx]">
             <view class="h-[90rpx] w-[120rpx] flex-shrink-0 overflow-hidden rounded-[12rpx] bg-gray-200">
               <image
                 :src="orderDetail.vehicle.image_url"
@@ -338,19 +382,19 @@ uni.setNavigationBarTitle({
                 {{ orderDetail.vehicle.name }}
               </text>
               <view class="mb-[8rpx] flex items-center text-[20rpx] text-gray-600 space-x-[16rpx]">
-                <text>{{ orderDetail.vehicle.license_plate }}</text>
-                <text>{{ orderDetail.vehicle.seats }}座</text>
-                <text>{{ orderDetail.vehicle.car_type }}</text>
-                <text>{{ orderDetail.vehicle.energy_type }}</text>
+                <text v-if="orderDetail.vehicle.license_plate">{{ orderDetail.vehicle.license_plate }}</text>
+                <text v-if="orderDetail.vehicle.seats">{{ orderDetail.vehicle.seats }}座</text>
+                <text v-if="orderDetail.vehicle.car_type">{{ orderDetail.vehicle.car_type }}</text>
+                <text v-if="orderDetail.vehicle.energy_type">{{ orderDetail.vehicle.energy_type }}</text>
               </view>
               <view class="flex items-center justify-between">
-                <view class="flex items-center space-x-[8rpx]">
+                <view v-if="orderDetail.vehicle.rating && orderDetail.vehicle.rating_count" class="flex items-center space-x-[8rpx]">
                   <text class="i-material-symbols-star text-[18rpx] text-yellow-500" />
                   <text class="text-[20rpx] text-gray-600">
                     {{ orderDetail.vehicle.rating }} ({{ orderDetail.vehicle.rating_count }}评价)
                   </text>
                 </view>
-                <text class="rounded-full bg-blue-50 px-[12rpx] py-[4rpx] text-[16rpx] text-blue-600">
+                <text v-if="orderDetail.vehicle.operation_type_text" class="rounded-full bg-blue-50 px-[12rpx] py-[4rpx] text-[16rpx] text-blue-600">
                   {{ orderDetail.vehicle.operation_type_text }}
                 </text>
               </view>
@@ -384,8 +428,55 @@ uni.setNavigationBarTitle({
               </view>
             </view>
 
-            <!-- 实际租期（如果有） -->
-            <view v-if="orderDetail.actual_start_time && orderDetail.actual_end_time" class="flex items-start space-x-[16rpx]">
+            <!-- 取车截止时间（已支付未取车状态） -->
+            <view v-if="orderDetail.status === 'paid' && orderDetail.pickup_deadline" class="flex items-start space-x-[16rpx]">
+              <text
+                class="mt-[4rpx] text-[24rpx]"
+                :class="isExpired ? 'i-material-symbols-warning text-red-600' : 'i-material-symbols-alarm text-orange-600'"
+              />
+              <view class="flex-1">
+                <text class="mb-[4rpx] block text-[24rpx] text-gray-700 font-medium">
+                  取车截止时间
+                </text>
+                <text
+                  class="block text-[20rpx]"
+                  :class="isExpired ? 'text-red-600' : 'text-gray-600'"
+                >
+                  {{ formatDateTime(orderDetail.pickup_deadline) }}
+                  <text v-if="isExpired" class="ml-[8rpx] text-[16rpx]">
+                    已超时
+                  </text>
+                </text>
+                <text v-if="!isExpired" class="mt-[4rpx] block text-[18rpx] text-orange-600">
+                  请提醒用户及时取车
+                </text>
+              </view>
+            </view>
+
+            <!-- 实际用车时间（已取车未还车状态） -->
+            <view v-if="orderDetail.status === 'picked' && orderDetail.actual_start_time" class="flex items-start space-x-[16rpx]">
+              <text class="i-material-symbols-directions-car mt-[4rpx] text-[24rpx] text-blue-600" />
+              <view class="flex-1">
+                <text class="mb-[4rpx] block text-[24rpx] text-gray-700 font-medium">
+                  实际用车时间
+                </text>
+                <text class="block text-[20rpx] text-gray-600">
+                  开始：{{ formatDateTime(orderDetail.actual_start_time) }}
+                </text>
+                <text class="block text-[20rpx] text-gray-600">
+                  已用车：{{ formatUsageTime(actualUsageHours || 0) }}
+                </text>
+                <text v-if="latestReturnTime" class="mt-[4rpx] block text-[18rpx]" :class="isOverdueReturn ? 'text-red-600' : 'text-blue-600'">
+                  最晚还车：{{ formatDateTime(latestReturnTime) }}
+                  <text v-if="isOverdueReturn" class="ml-[8rpx]">
+                    (已超时)
+                  </text>
+                </text>
+              </view>
+            </view>
+
+            <!-- 实际租期（已还车或已完成状态） -->
+            <view v-if="(orderDetail.status === 'returned' || orderDetail.status === 'completed') && orderDetail.actual_start_time && orderDetail.actual_end_time" class="flex items-start space-x-[16rpx]">
               <text class="i-material-symbols-check-circle mt-[4rpx] text-[24rpx] text-green-600" />
               <view class="flex-1">
                 <text class="mb-[4rpx] block text-[24rpx] text-gray-700 font-medium">
@@ -397,27 +488,21 @@ uni.setNavigationBarTitle({
                 <text class="block text-[20rpx] text-gray-600">
                   至 {{ formatDateTime(orderDetail.actual_end_time) }}
                 </text>
+                <text class="mt-[4rpx] block text-[18rpx] text-green-600">
+                  实际用车 {{ formatUsageTime(Math.ceil((new Date(orderDetail.actual_end_time).getTime() - new Date(orderDetail.actual_start_time).getTime()) / (1000 * 60 * 60))) }}
+                </text>
               </view>
             </view>
 
-            <!-- 取车截止时间 -->
-            <view v-if="orderDetail.pickup_deadline" class="flex items-start space-x-[16rpx]">
-              <text
-                class="mt-[4rpx] text-[24rpx]"
-                :class="isExpired ? 'i-material-symbols-warning text-red-600' : 'i-material-symbols-alarm text-orange-600'"
-              />
+            <!-- 部分取车信息（如果只有开始时间没有结束时间） -->
+            <view v-if="orderDetail.actual_start_time && !orderDetail.actual_end_time && orderDetail.status !== 'picked'" class="flex items-start space-x-[16rpx]">
+              <text class="i-material-symbols-info mt-[4rpx] text-[24rpx] text-blue-600" />
               <view class="flex-1">
                 <text class="mb-[4rpx] block text-[24rpx] text-gray-700 font-medium">
-                  取车截止
+                  取车时间
                 </text>
-                <text
-                  class="block text-[20rpx]"
-                  :class="isExpired ? 'text-red-600' : 'text-gray-600'"
-                >
-                  {{ formatDateTime(orderDetail.pickup_deadline) }}
-                  <text v-if="isExpired" class="ml-[8rpx] text-[16rpx]">
-                    已超时
-                  </text>
+                <text class="block text-[20rpx] text-gray-600">
+                  {{ formatDateTime(orderDetail.actual_start_time) }}
                 </text>
               </view>
             </view>
@@ -442,7 +527,7 @@ uni.setNavigationBarTitle({
                   {{ orderDetail.pickup_method === 'delivery' ? '送车地址' : '取车地点' }}
                 </text>
                 <text class="text-[22rpx] text-gray-800 leading-relaxed">
-                  {{ orderDetail.pickup_method === 'delivery' ? orderDetail.delivery_address : orderDetail.pickup_location }}
+                  {{ orderDetail.pickup_method === 'delivery' ? (orderDetail.delivery_address || '暂无地址') : (orderDetail.pickup_location || '暂无地点') }}
                 </text>
 
                 <!-- 送车额外信息 -->
@@ -562,7 +647,7 @@ uni.setNavigationBarTitle({
                 支付方式
               </text>
               <text class="text-[22rpx] text-gray-800">
-                {{ orderDetail.payment_method === 'wechat' ? '微信支付' : '支付宝' }}
+                {{ orderDetail.payment_method === 'wechat' ? '微信支付' : (orderDetail.payment_method === 'alipay' ? '支付宝' : '未知') }}
               </text>
             </view>
             <view v-if="orderDetail.payment_time" class="flex items-center justify-between">
@@ -580,6 +665,94 @@ uni.setNavigationBarTitle({
               <text class="text-[20rpx] text-gray-500 font-mono">
                 {{ orderDetail.wechat_transaction_id }}
               </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 保险信息 -->
+        <view v-if="orderDetail.insurance?.length" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
+          <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
+            保险信息
+          </text>
+          
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="(insurance, index) in orderDetail.insurance"
+              :key="index"
+              class="rounded-[16rpx] bg-blue-50 p-[20rpx]"
+            >
+              <view class="mb-[8rpx] flex items-center justify-between">
+                <view class="flex items-center space-x-[12rpx]">
+                  <text class="i-material-symbols-security text-[24rpx] text-blue-600" />
+                  <text class="text-[24rpx] text-blue-800 font-medium">
+                    {{ insurance.product_name }}
+                  </text>
+                </view>
+                <text class="text-[24rpx] text-blue-600 font-bold">
+                  ¥{{ insurance.price }}
+                </text>
+              </view>
+              <view class="space-y-[4rpx]">
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    保额
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    ¥{{ insurance.coverage_amount }}
+                  </text>
+                </view>
+                <text class="text-[18rpx] text-gray-600 leading-relaxed">
+                  {{ insurance.coverage_description }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 增值服务信息 -->
+        <view v-if="orderDetail.services?.length" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
+          <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
+            增值服务
+          </text>
+          
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="(service, index) in orderDetail.services"
+              :key="index"
+              class="rounded-[16rpx] bg-green-50 p-[20rpx]"
+            >
+              <view class="mb-[8rpx] flex items-center justify-between">
+                <view class="flex items-center space-x-[12rpx]">
+                  <text class="i-material-symbols-build text-[24rpx] text-green-600" />
+                  <text class="text-[24rpx] text-green-800 font-medium">
+                    {{ service.service_name }}
+                  </text>
+                </view>
+                <text class="text-[24rpx] text-green-600 font-bold">
+                  ¥{{ service.total_amount }}
+                </text>
+              </view>
+              <view class="space-y-[4rpx]">
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    单价
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    ¥{{ service.price }}
+                  </text>
+                </view>
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    数量
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    {{ service.quantity }}
+                  </text>
+                </view>
+                <text v-if="service.description" class="text-[18rpx] text-gray-600 leading-relaxed">
+                  {{ service.description }}
+                </text>
+              </view>
             </view>
           </view>
         </view>
@@ -608,6 +781,16 @@ uni.setNavigationBarTitle({
           >
             查看时间线
           </view>
+        </view>
+      </view>
+
+      <!-- 数据为空状态 -->
+      <view v-else class="h-full flex items-center justify-center">
+        <view class="text-center">
+          <text class="i-material-symbols-error-outline mb-[20rpx] block text-[80rpx] text-gray-400" />
+          <text class="text-[24rpx] text-gray-600">
+            订单数据不存在
+          </text>
         </view>
       </view>
     </scroll-view>

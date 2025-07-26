@@ -13,6 +13,8 @@ declare module '@vue/runtime-core' {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
     ARating: typeof import('./components/ARating.vue')['default']
     Banner: typeof import('./components/Banner.vue')['default']
+    BookingInsuranceSelector: typeof import('./components/booking/InsuranceSelector.vue')['default']
+    BookingServicesSelector: typeof import('./components/booking/ServicesSelector.vue')['default']
     BottomDrawer: typeof import('./components/BottomDrawer.vue')['default']
     CenterDialog: typeof import('./components/CenterDialog.vue')['default']
     CheckboxItem: typeof import('./components/CheckboxItem.vue')['default']
@@ -72,7 +74,6 @@ declare module '@vue/runtime-core' {
     TabBarOwnerHome: typeof import('./components/tabBar/ownerHome.vue')['default']
     TabBarOwnerOrders: typeof import('./components/tabBar/ownerOrders.vue')['default']
     TabBarOwnerRevenue: typeof import('./components/tabBar/ownerRevenue.vue')['default']
-    TabBarOwnerSettings: typeof import('./components/tabBar/ownerSettings.vue')['default']
     Toast: typeof import('./components/Toast.vue')['default']
     VerticalPage: typeof import('./components/VerticalPage.vue')['default']
   }

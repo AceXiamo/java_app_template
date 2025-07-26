@@ -35,9 +35,6 @@ function goToRevenue() {
   uni.navigateTo({ url: '/pages/owner/revenue' })
 }
 
-function goToSettings() {
-  uni.navigateTo({ url: '/pages/owner/settings' })
-}
 
 // 状态样式映射
 function getStatusStyle(status: string) {
@@ -57,9 +54,6 @@ function getStatusStyle(status: string) {
     <HeadBar bg-color="transparent">
       <template #right>
         <text class="i-material-symbols-notifications text-[48rpx] text-gray-800" />
-        <text class="text-[24rpx] text-gray-800">
-          设置
-        </text>
       </template>
     </HeadBar>
 

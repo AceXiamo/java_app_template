@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import { useOwnerStore } from '@/store/owner'
@@ -79,6 +80,92 @@ function getGreeting() {
 
   return '夜深了'
 }
+
+// 检查用户是否为平台管理人员
+function isPlatformManager() {
+  return user.value?.userRole === 'platform_manager'
+}
+
+// 获取用户角色显示文本
+function getUserRoleText() {
+  if (isPlatformManager()) {
+    return '平台管理员'
+  }
+  return '车主'
+}
+
+// 获取页面标题
+function getPageTitle() {
+  if (isPlatformManager()) {
+    return '平台管理中心'
+  }
+  return '车主中心'
+}
+
+// 获取欢迎词
+function getWelcomeMessage() {
+  if (isPlatformManager()) {
+    return `${getGreeting()}，欢迎使用平台管理系统！`
+  }
+  return `${getGreeting()}，欢迎回来！`
+}
+
+// 获取车辆列表标题
+function getVehicleListTitle() {
+  if (isPlatformManager()) {
+    return '平台车辆'
+  }
+  return '我的车辆'
+}
+
+// 获取添加车辆按钮文本
+function getAddVehicleText() {
+  if (isPlatformManager()) {
+    return '管理车辆'
+  }
+  return '添加车辆'
+}
+
+// 处理添加车辆点击事件
+function handleAddVehicle() {
+  if (isPlatformManager()) {
+    // 平台管理员点击后可以跳转到车辆管理页面
+    // 暂时保持和车主一样的逻辑，后续可以调整
+    goToAddVehicle()
+  }
+  else {
+    goToAddVehicle()
+  }
+}
+
+// 获取空状态提示文本
+function getEmptyVehicleText() {
+  if (isPlatformManager()) {
+    return {
+      title: '暂无平台车辆',
+      description: '当前平台还没有运营车辆',
+    }
+  }
+  return {
+    title: '暂无车辆',
+    description: '点击右上角"添加"按钮，录入您的第一辆车吧！',
+  }
+}
+
+// 获取车辆运营类型显示文本（根据用户角色）
+function getVehicleOperationTypeText(vehicle: any) {
+  if (isPlatformManager()) {
+    // 平台管理员视角：平台运营的车辆显示为"平台自营"
+    if (vehicle.operationType === 'platform') {
+      return '平台自营'
+    } else {
+      return '车主代运营'
+    }
+  } else {
+    // 车主视角：使用原有的显示逻辑
+    return vehicle.operationTypeText || (vehicle.operationType === 'owner' ? '车主自运营' : '平台代运营')
+  }
+}
 </script>
 
 <template>
@@ -94,7 +181,7 @@ function getGreeting() {
         </view>
         <!-- 页面标题 -->
         <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
-          车主中心
+          {{ getPageTitle() }}
         </text>
       </view>
     </HeadBar>
@@ -109,22 +196,18 @@ function getGreeting() {
       <view class="min-w-0 flex-1">
         <view class="flex items-center space-x-[12rpx]">
           <text class="truncate text-[28rpx] text-gray-900 font-bold">
-            {{ user?.nickname || '车主' }}
+            {{ user?.nickname || getUserRoleText() }}
           </text>
-          <template v-if="user?.certificationStatusText">
-            <text class="i-fluent-emoji-check-mark-button ml-[2rpx] align-middle text-[22rpx] text-green-500" />
-            <text class="ml-[2rpx] text-[18rpx] text-green-500">
-              {{ user.certificationStatusText }}
-            </text>
-          </template>
-          <template v-if="user?.isOwner">
-            <text class="ml-[8rpx] rounded bg-purple-50 px-[10rpx] py-[2rpx] text-[18rpx] text-purple-600 font-medium">
-              车主
-            </text>
-          </template>
+          <!-- 角色徽章 -->
+          <text
+            class="ml-[8rpx] rounded px-[10rpx] py-[2rpx] text-[18rpx] font-medium"
+            :class="isPlatformManager() ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'"
+          >
+            {{ getUserRoleText() }}
+          </text>
         </view>
         <text class="mt-[2rpx] block text-[22rpx] text-gray-500">
-          {{ getGreeting() }}，欢迎回来！
+          {{ getWelcomeMessage() }}
         </text>
       </view>
     </view>
@@ -273,7 +356,7 @@ function getGreeting() {
             <view class="flex items-center justify-between p-[32rpx] pb-[20rpx]">
               <view class="flex items-center space-x-[12rpx]">
                 <text class="text-[32rpx] text-gray-900 font-bold">
-                  我的车辆
+                  {{ getVehicleListTitle() }}
                 </text>
                 <text class="rounded-full bg-purple-50/80 px-[16rpx] py-[6rpx] text-[20rpx] text-purple-600 shadow-sm backdrop-blur-sm">
                   {{ vehicleList.length }}辆
@@ -281,11 +364,11 @@ function getGreeting() {
               </view>
               <view
                 class="flex items-center px-[16rpx] py-[8rpx] transition-all duration-200 active:scale-95 space-x-[6rpx] active:opacity-70"
-                @tap="goToAddVehicle"
+                @tap="handleAddVehicle"
               >
                 <text class="i-material-symbols-add-circle-outline text-[22rpx] text-gray-600" />
                 <text class="text-[22rpx] text-gray-700 font-medium">
-                  添加车辆
+                  {{ getAddVehicleText() }}
                 </text>
               </view>
             </view>
@@ -368,7 +451,7 @@ function getGreeting() {
                             class="rounded-full px-[10rpx] py-[2rpx] text-[16rpx] shadow-sm"
                             :class="vehicle.operationType === 'owner' ? 'bg-blue-50/80 text-blue-600' : 'bg-green-50/80 text-green-600'"
                           >
-                            {{ vehicle.operationTypeText }}
+                            {{ getVehicleOperationTypeText(vehicle) }}
                           </text>
                         </view>
                       </view>
@@ -403,10 +486,10 @@ function getGreeting() {
                 <view class="flex flex-col items-center justify-center py-[60rpx]">
                   <text class="i-fluent-emoji-oncoming-automobile mb-[16rpx] text-[64rpx] text-gray-300" />
                   <text class="mb-[8rpx] text-[24rpx] text-gray-400">
-                    暂无车辆
+                    {{ getEmptyVehicleText().title }}
                   </text>
                   <text class="text-[20rpx] text-gray-400">
-                    点击右上角"添加"按钮，录入您的第一辆车吧！
+                    {{ getEmptyVehicleText().description }}
                   </text>
                 </view>
               </template>

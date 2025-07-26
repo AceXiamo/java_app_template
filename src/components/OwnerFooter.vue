@@ -19,9 +19,6 @@ function load() {
     case 'revenue':
       // 加载收益数据
       break
-    case 'settings':
-      // 加载设置数据
-      break
   }
 }
 
@@ -107,22 +104,5 @@ onShow(() => {
       </text>
     </view>
 
-    <!-- 我的 Tab -->
-    <view
-      class="flex flex-col cursor-pointer items-center py-[8rpx]"
-      @tap="menuClick('settings')"
-    >
-      <view
-        i-lets-icons:user-duotone
-        class="mb-[4rpx] text-[40rpx]"
-        :class="active === 'settings' ? 'text-[#8b5cf6]' : 'text-gray-400'"
-      />
-      <text
-        class="text-[20rpx]"
-        :class="active === 'settings' ? 'text-[#8b5cf6]' : 'text-gray-400'"
-      >
-        我的
-      </text>
-    </view>
   </view>
 </template>

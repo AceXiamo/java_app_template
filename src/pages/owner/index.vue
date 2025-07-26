@@ -31,7 +31,6 @@ onLoad(() => {
       <TabBarOwnerHome v-if="ownerStore.active === 'home'" class="h-full" />
       <TabBarOwnerOrders v-if="ownerStore.active === 'orders'" class="h-full" />
       <TabBarOwnerRevenue v-if="ownerStore.active === 'revenue'" class="h-full" />
-      <TabBarOwnerSettings v-if="ownerStore.active === 'settings'" class="h-full" />
     </view>
   </view>
 </template>

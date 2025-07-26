@@ -132,10 +132,6 @@
       "type": "page"
     },
     {
-      "path": "pages/owner/settings",
-      "type": "page"
-    },
-    {
       "path": "pages/owner/withdrawal-methods",
       "type": "page",
       "layout": "home"

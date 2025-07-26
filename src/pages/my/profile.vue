@@ -16,6 +16,7 @@ const gettingPhone = ref(false)
 const userInfo = ref({
   nickname: '',
   phone: '',
+  phoneVerified: false,
   email: '',
   sex: '0', // 0男 1女 2未知
   avatar: '',
@@ -144,8 +145,10 @@ async function onGetPhoneNumber(event: any) {
 
     if (decryptResult.code === 200) {
       userInfo.value.phone = decryptResult.data.phoneNumber
+      userInfo.value.phoneVerified = true
       if (profileData.value?.userInfo) {
         profileData.value.userInfo.phone = decryptResult.data.phoneNumber
+        profileData.value.userInfo.phoneVerified = true
       }
 
       toastRef.value?.success('手机号获取成功')
@@ -343,7 +346,7 @@ onMounted(async () => {
                   {{ profileData?.userInfo?.phone || '未设置' }}
                 </text>
                 <text
-                  v-if="profileData?.userInfo?.phone"
+                  v-if="profileData?.userInfo?.phoneVerified"
                   class="rounded-full bg-green-100 px-[12rpx] py-[4rpx] text-[20rpx] text-green-600"
                 >
                   已验证

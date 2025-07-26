@@ -5,9 +5,11 @@ import PageBookingHead from '@/components/page/booking/Head.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
+import InsuranceSelector from '@/components/booking/InsuranceSelector.vue'
+import ServicesSelector from '@/components/booking/ServicesSelector.vue'
 import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
 import { type Coupon, getAvailableCoupons } from '@/api/coupon'
-import { calculateBookingPrice, createBooking, requestWxPayment } from '@/api/booking'
+import { type InsuranceProduct, type ValueAddedService, calculateBookingPrice, createBooking, getInsuranceProducts, getValueAddedServices, requestWxPayment } from '@/api/booking'
 import { useUserStore } from '@/store/user'
 
 // 页面参数
@@ -62,7 +64,7 @@ const bookingInfo = ref({
   startTime: '',
   endTime: '',
   rentalDays: 1,
-  pickupMethod: 'self', // self自取、delivery送车
+  pickupMethod: 'self' as 'self' | 'delivery', // self自取、delivery送车
   pickupLocation: '',
   deliveryAddress: '',
   deliveryDistance: 0,
@@ -87,6 +89,16 @@ const priceCalculation = ref({
 const selectedCoupon = ref<Coupon | null>(null)
 const availableCoupons = ref<Coupon[]>([])
 
+// 保险和增值服务
+const insuranceProducts = ref<Record<string, InsuranceProduct>>({})
+const valueAddedServices = ref<Record<string, ValueAddedService>>({})
+const selectedInsurance = ref<InsuranceProduct | null>(null)
+const selectedServices = ref<string[]>([])
+
+// 费用计算增强
+const insuranceFee = ref(0)
+const servicesFee = ref(0)
+
 // 弹窗状态
 const showPickupMethodDialog = ref(false)
 const showLocationPicker = ref(false)
@@ -96,6 +108,8 @@ const showTimeSelector = ref(false)
 const showDeliveryServices = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
+const showInsuranceSelector = ref(false)
+const showServicesSelector = ref(false)
 
 // 页面状态
 const loading = ref(false)
@@ -253,6 +267,8 @@ onLoad(async () => {
   await loadVehicleInfo()
   await loadBookingInfo()
   await loadAvailableCoupons()
+  await loadInsuranceProducts()
+  await loadValueAddedServices()
 })
 
 // 加载车辆信息
@@ -298,7 +314,7 @@ async function loadBookingInfo() {
   }
 
   // 默认取车地点为车辆位置
-  bookingInfo.value.pickupLocation = vehicleInfo.value.location.address
+  bookingInfo.value.pickupLocation = vehicleInfo.value.location?.address || ''
 }
 
 // 加载可用优惠券
@@ -321,6 +337,32 @@ async function loadAvailableCoupons() {
   }
   catch (error) {
     console.error('加载优惠券失败:', error)
+  }
+}
+
+// 加载保险产品
+async function loadInsuranceProducts() {
+  try {
+    const response = await getInsuranceProducts()
+    if (response.code === 200 && response.data) {
+      insuranceProducts.value = response.data
+    }
+  }
+  catch (error) {
+    console.error('加载保险产品失败:', error)
+  }
+}
+
+// 加载增值服务
+async function loadValueAddedServices() {
+  try {
+    const response = await getValueAddedServices()
+    if (response.code === 200 && response.data) {
+      valueAddedServices.value = response.data
+    }
+  }
+  catch (error) {
+    console.error('加载增值服务失败:', error)
   }
 }
 
@@ -354,6 +396,8 @@ async function calculatePrice() {
         detailing: deliveryServices.value.detailing,
       },
       couponId: selectedCoupon.value?.couponId,
+      insuranceProductId: selectedInsurance.value?.productId,
+      selectedServices: selectedServices.value,
     })
 
     if (response.code === 200 && response.data) {
@@ -363,8 +407,10 @@ async function calculatePrice() {
       priceCalculation.value.totalAmount = data.totalAmount
       priceCalculation.value.discountAmount = data.discountAmount
       priceCalculation.value.finalAmount = data.finalAmount
+      insuranceFee.value = data.insuranceFee || 0
+      servicesFee.value = data.servicesFee || 0
       bookingInfo.value.rentalDays = data.rentalDays
-      priceCalculation.value.isMonthlyRental = data.rentalDays >= 30 && vehicleInfo.value.monthlyPrice > 0
+      priceCalculation.value.isMonthlyRental = data.rentalDays >= 30 && (vehicleInfo.value.monthlyPrice || 0) > 0
     }
   }
   catch (error) {
@@ -379,26 +425,26 @@ function calculatePriceLocally() {
   const days = bookingInfo.value.rentalDays
 
   // 判断是否月租
-  priceCalculation.value.isMonthlyRental = days >= 30 && vehicleInfo.value.monthlyPrice > 0
+  priceCalculation.value.isMonthlyRental = days >= 30 && (vehicleInfo.value.monthlyPrice || 0) > 0
 
   // 计算基础价格
   if (priceCalculation.value.isMonthlyRental) {
     const months = Math.floor(days / 30)
     const remainingDays = days % 30
     priceCalculation.value.basePrice
-      = months * vehicleInfo.value.monthlyPrice
-      + remainingDays * vehicleInfo.value.dailyPrice
+      = months * (vehicleInfo.value.monthlyPrice || 0)
+      + remainingDays * (vehicleInfo.value.dailyPrice || 0)
   }
   else {
-    priceCalculation.value.basePrice = days * vehicleInfo.value.dailyPrice
+    priceCalculation.value.basePrice = days * (vehicleInfo.value.dailyPrice || 0)
   }
 
   // 计算送车费用
   if (bookingInfo.value.pickupMethod === 'delivery') {
     const distance = bookingInfo.value.deliveryDistance
-    const baseFee = vehicleInfo.value.deliveryBaseFee
-    const freeDistance = vehicleInfo.value.deliveryFreeDistance
-    const pricePerKm = vehicleInfo.value.deliveryPricePerKm
+    const baseFee = vehicleInfo.value.deliveryBaseFee || 0
+    const freeDistance = vehicleInfo.value.deliveryFreeDistance || 0
+    const pricePerKm = vehicleInfo.value.deliveryPricePerKm || 0
 
     priceCalculation.value.deliveryFee = baseFee
     + Math.max(0, distance - freeDistance) * pricePerKm
@@ -439,10 +485,10 @@ function calculateCouponDiscount() {
   const coupon = selectedCoupon.value
   const totalAmount = priceCalculation.value.totalAmount
 
-  if (totalAmount < coupon.minAmount)
+  if (totalAmount < coupon.minOrderAmount)
     return 0
 
-  if (coupon.type === 'discount') {
+  if (coupon.discountType === 'amount') {
     return Math.min(coupon.discountAmount, totalAmount)
   }
 
@@ -450,7 +496,7 @@ function calculateCouponDiscount() {
 }
 
 // 选择取车方式
-async function selectPickupMethod(method: string) {
+async function selectPickupMethod(method: 'self' | 'delivery') {
   bookingInfo.value.pickupMethod = method
   showPickupMethodDialog.value = false
   await calculatePrice()
@@ -572,6 +618,8 @@ async function submitBooking() {
       finalAmount: priceCalculation.value.finalAmount,
       discountAmount: priceCalculation.value.discountAmount,
       remarks: '', // 可以添加备注字段
+      insuranceProductId: selectedInsurance.value?.productId,
+      selectedServices: selectedServices.value,
     }
 
     const response = await createBooking(bookingData, openId)
@@ -756,17 +804,17 @@ function selectAddress(address: any) {
 // 计算送车距离
 async function calculateDeliveryDistance() {
   if (bookingInfo.value.userLocation.latitude && bookingInfo.value.userLocation.longitude
-    && vehicleInfo.value.location.latitude && vehicleInfo.value.location.longitude) {
+    && vehicleInfo.value.location?.latitude && vehicleInfo.value.location?.longitude) {
     // 使用更精确的距离计算公式（球面距离）
     const distance = calculateDistance(
-      vehicleInfo.value.location.latitude,
-      vehicleInfo.value.location.longitude,
+      vehicleInfo.value.location?.latitude || 0,
+      vehicleInfo.value.location?.longitude || 0,
       bookingInfo.value.userLocation.latitude,
       bookingInfo.value.userLocation.longitude,
     )
 
     // 限制距离在合理范围内
-    bookingInfo.value.deliveryDistance = Math.max(0.5, Math.min(distance, vehicleInfo.value.maxDeliveryDistance))
+    bookingInfo.value.deliveryDistance = Math.max(0.5, Math.min(distance, vehicleInfo.value.maxDeliveryDistance || 50))
     console.log('计算送车距离:', bookingInfo.value.deliveryDistance, 'km')
 
     // 重新计算价格
@@ -803,6 +851,28 @@ function getDeliveryServiceFee() {
 function showBookingTerms() {
   showTermsDialog.value = true
 }
+
+// 选择保险产品
+async function selectInsurance(insurance: InsuranceProduct | null) {
+  selectedInsurance.value = insurance
+  await calculatePrice()
+}
+
+// 选择增值服务
+function selectService(serviceId: string) {
+  const existingIndex = selectedServices.value.indexOf(serviceId)
+
+  if (existingIndex > -1) {
+    // 移除服务
+    selectedServices.value.splice(existingIndex, 1)
+  }
+  else {
+    // 添加服务
+    selectedServices.value.push(serviceId)
+  }
+
+  calculatePrice()
+}
 </script>
 
 <template>
@@ -828,21 +898,21 @@ function showBookingTerms() {
             <!-- 车辆信息 -->
             <view class="ml-[24rpx] flex flex-1 flex-col justify-center">
               <text class="text-[28rpx] text-black font-semibold">
-                {{ vehicleInfo.name }}
+                {{ vehicleInfo.name || '无名称' }}
               </text>
               <view
                 class="mt-[8rpx] flex items-center text-[22rpx] text-gray-600 space-x-[16rpx]"
               >
-                <text>{{ vehicleInfo.licensePlate }}</text>
-                <text>{{ vehicleInfo.seats }}座</text>
-                <text>{{ vehicleInfo.energyType }}</text>
+                <text>{{ vehicleInfo.licensePlate || '无车牌' }}</text>
+                <text>{{ vehicleInfo.seats || 5 }}座</text>
+                <text>{{ vehicleInfo.energyType || '燃油' }}</text>
               </view>
               <view class="mt-[8rpx] flex items-center">
                 <text
                   class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500"
                 />
                 <text class="text-[20rpx] text-gray-600">
-                  {{ vehicleInfo.rating }}({{ vehicleInfo.ratingCount }})
+                  {{ vehicleInfo.rating || 0 }}({{ vehicleInfo.ratingCount || 0 }})
                 </text>
               </view>
             </view>
@@ -937,7 +1007,7 @@ function showBookingTerms() {
               </view>
               <view class="mt-[12rpx] flex items-center text-[22rpx] text-gray-600">
                 <text class="i-material-symbols-location-on mr-[8rpx] text-[20rpx]" />
-                <text>{{ vehicleInfo.location.address }}</text>
+                <text>{{ vehicleInfo.location?.address || '无地址' }}</text>
               </view>
             </view>
 
@@ -977,9 +1047,9 @@ function showBookingTerms() {
                   <text class="i-material-symbols-chevron-right ml-[8rpx] text-[24rpx]" />
                 </view>
                 <text class="mt-[8rpx] block text-[20rpx] text-gray-500">
-                  {{ vehicleInfo.deliveryFreeDistance }}公里内¥{{
-                    vehicleInfo.deliveryBaseFee
-                  }}，超出¥{{ vehicleInfo.deliveryPricePerKm }}/公里
+                  {{ vehicleInfo.deliveryFreeDistance || 0 }}公里内¥{{
+                    vehicleInfo.deliveryBaseFee || 0
+                  }}，超出¥{{ vehicleInfo.deliveryPricePerKm || 0 }}/公里
                 </text>
                 <view
                   v-if="bookingInfo.deliveryDistance > 0"
@@ -987,7 +1057,7 @@ function showBookingTerms() {
                 >
                   <text class="i-material-symbols-info mr-[4rpx]" />
                   <text>
-                    预计送车距离：{{ bookingInfo.deliveryDistance.toFixed(1) }}公里
+                    预计送车距离：{{ (bookingInfo.deliveryDistance || 0).toFixed(1) }}公里
                   </text>
                 </view>
               </view>
@@ -1137,6 +1207,113 @@ function showBookingTerms() {
           </view> -->
         </view>
 
+        <!-- 保险选择 -->
+        <view
+          class="overflow-hidden border border-blue-100 rounded-[24rpx] bg-white p-[32rpx] shadow-sm"
+          @tap="showInsuranceSelector = true"
+        >
+          <view class="flex items-center justify-between">
+            <view class="flex items-center">
+              <view class="mr-[12rpx] h-[48rpx] w-[48rpx] flex items-center justify-center rounded-[12rpx] bg-blue-100">
+                <text class="i-material-symbols-security text-[24rpx] text-blue-600" />
+              </view>
+              <view>
+                <text class="text-[28rpx] text-black font-semibold">
+                  保险产品
+                </text>
+                <text class="mt-[2rpx] block text-[20rpx] text-gray-500">
+                  可选额外保障
+                </text>
+              </view>
+            </view>
+            <view class="flex items-center">
+              <view v-if="selectedInsurance" class="mr-[12rpx] text-right">
+                <text
+                  class="block text-[24rpx] font-bold"
+                  :class="selectedInsurance.price === 0 ? 'text-green-600' : 'text-blue-600'"
+                >
+                  {{ selectedInsurance.price === 0 ? '免费' : `¥${selectedInsurance.price}` }}
+                </text>
+                <text class="text-[18rpx] text-gray-500">
+                  已选择
+                </text>
+              </view>
+              <view v-else class="mr-[12rpx] text-right">
+                <text class="block text-[24rpx] text-gray-500">
+                  未选择
+                </text>
+                <text class="text-[18rpx] text-gray-500">
+                  可选购
+                </text>
+              </view>
+              <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
+            </view>
+          </view>
+          <view v-if="selectedInsurance" class="mt-[8rpx] rounded-[12rpx] bg-gray-50 p-[16rpx]">
+            <view class="flex items-center justify-between">
+              <text class="text-[20rpx] text-gray-700 truncate flex-1">
+                {{ selectedInsurance.productName || '保险产品' }}
+              </text>
+              <text class="text-[18rpx] text-orange-600 font-medium ml-[8rpx] flex-shrink-0">
+                ¥{{ selectedInsurance.price || 0 }}
+              </text>
+            </view>
+            <text class="mt-[4rpx] text-[16rpx] text-gray-500">
+              保额¥{{ (selectedInsurance.coverageAmount || 0).toLocaleString() }}
+            </text>
+          </view>
+          <view v-else class="mt-[8rpx]">
+            <view class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[16rpx] text-center">
+              <text class="text-[20rpx] text-gray-500">暂未选择保险产品</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 增值服务 -->
+        <view
+          class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]"
+          @tap="showServicesSelector = true"
+        >
+          <view class="flex items-center justify-between">
+            <view class="flex items-center">
+              <text
+                class="i-material-symbols-build mr-[12rpx] text-[24rpx] text-green-600"
+              />
+              <text class="text-[28rpx] text-black font-semibold">
+                增值服务
+              </text>
+            </view>
+            <view class="flex items-center">
+              <text v-if="selectedServices.length > 0" class="mr-[8rpx] text-[24rpx] text-green-600">
+                {{ selectedServices.length }}项已选
+              </text>
+              <text v-else class="mr-[8rpx] text-[24rpx] text-gray-500">
+                {{ Object.keys(valueAddedServices).length }}种可选
+              </text>
+              <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
+            </view>
+          </view>
+          <view v-if="selectedServices.length > 0" class="mt-[8rpx] grid grid-cols-2 gap-[10rpx]">
+            <view
+              v-for="(serviceId, index) in selectedServices"
+              :key="index"
+              class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[8rpx] flex items-center justify-between"
+            >
+              <text class="text-[20rpx] text-gray-700 truncate flex-1">
+                {{ valueAddedServices[serviceId]?.serviceName || '未知服务' }}
+              </text>
+              <text class="text-[18rpx] text-orange-600 font-medium ml-[8rpx] flex-shrink-0">
+                ¥{{ valueAddedServices[serviceId]?.price || 0 }}
+              </text>
+            </view>
+          </view>
+          <view v-else class="mt-[8rpx]">
+            <view class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[16rpx] text-center">
+              <text class="text-[20rpx] text-gray-500">暂未选择增值服务</text>
+            </view>
+          </view>
+        </view>
+
         <!-- 优惠券 -->
         <view
           class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]"
@@ -1208,6 +1385,30 @@ function showBookingTerms() {
               </text>
               <text class="text-[26rpx] text-black">
                 ¥{{ getDeliveryServiceFee() }}
+              </text>
+            </view>
+
+            <view
+              v-if="insuranceFee > 0"
+              class="flex items-center justify-between"
+            >
+              <text class="text-[24rpx] text-gray-600">
+                保险费用
+              </text>
+              <text class="text-[26rpx] text-black">
+                ¥{{ insuranceFee }}
+              </text>
+            </view>
+
+            <view
+              v-if="servicesFee > 0"
+              class="flex items-center justify-between"
+            >
+              <text class="text-[24rpx] text-gray-600">
+                增值服务费
+              </text>
+              <text class="text-[26rpx] text-black">
+                ¥{{ servicesFee }}
               </text>
             </view>
 
@@ -1293,16 +1494,32 @@ function showBookingTerms() {
       </view>
     </view>
 
+    <!-- 保险选择组件 -->
+    <InsuranceSelector
+      v-model:visible="showInsuranceSelector"
+      :insurance-products="insuranceProducts"
+      :selected-insurance="selectedInsurance"
+      @select="selectInsurance"
+    />
+
+    <!-- 增值服务选择组件 -->
+    <ServicesSelector
+      v-model:visible="showServicesSelector"
+      :value-added-services="valueAddedServices"
+      :selected-services="selectedServices"
+      @select-service="selectService"
+    />
+
     <!-- 优惠券选择弹窗 -->
     <BottomDrawer v-model:visible="showCouponList" title="选择优惠券">
       <view class="mt-[32rpx] max-h-[800rpx]">
         <view class="space-y-[16rpx]">
           <view
             v-for="coupon in availableCoupons"
-            :key="coupon.id"
+            :key="coupon.couponId"
             class="border-2 rounded-[16rpx] p-[24rpx] transition-all"
             :class="
-              selectedCoupon?.id === coupon.id
+              selectedCoupon?.couponId === coupon.couponId
                 ? 'border-purple-600 bg-purple-50'
                 : 'border-gray-200 bg-white'
             "
@@ -1311,7 +1528,7 @@ function showBookingTerms() {
             <view class="flex items-center justify-between">
               <view>
                 <text class="text-[26rpx] text-black font-medium">
-                  {{ coupon.name }}
+                  {{ coupon.title }}
                 </text>
                 <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
                   {{ coupon.description }}
@@ -1585,8 +1802,8 @@ function showBookingTerms() {
     <MapAddressPicker
       v-model:visible="showMapPicker"
       title="选择送车地址"
-      :latitude="bookingInfo.userLocation.latitude || vehicleInfo.location.latitude"
-      :longitude="bookingInfo.userLocation.longitude || vehicleInfo.location.longitude"
+      :latitude="bookingInfo.userLocation.latitude || vehicleInfo.location?.latitude || 0"
+      :longitude="bookingInfo.userLocation.longitude || vehicleInfo.location?.longitude || 0"
       @confirm="handleMapAddressConfirm"
     />
   </view>

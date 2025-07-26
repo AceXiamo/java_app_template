@@ -1,5 +1,31 @@
 import { host, request } from '@/utils/request'
 
+// 保险产品接口
+export interface InsuranceProduct {
+  productId: string
+  productName: string
+  price: number
+  coverageAmount: number
+  coverageDescription: string
+  isDefault: boolean
+  status: string
+  sortOrder: number
+  createTime: string
+  updateTime: string
+}
+
+// 增值服务接口
+export interface ValueAddedService {
+  serviceId: string
+  serviceName: string
+  price: number
+  description: string
+  status: string
+  sortOrder: number
+  createTime: string
+  updateTime: string
+}
+
 // 预订接口
 export interface BookingRequest {
   vehicleId: number
@@ -20,6 +46,9 @@ export interface BookingRequest {
   finalAmount: number
   discountAmount?: number
   remarks?: string
+  // 新增保险和服务字段
+  insuranceProductId?: string
+  selectedServices?: string[]
 }
 
 export interface BookingResponse {
@@ -59,10 +88,13 @@ export function calculateBookingPrice(params: {
     detailing: boolean
   }
   couponId?: number
+  insuranceProductId?: string
+  selectedServices?: string[]
 }): Promise<BaseRes<{
     basePrice: number
     deliveryFee: number
     servicesFee: number
+    insuranceFee: number
     totalAmount: number
     discountAmount: number
     finalAmount: number
@@ -118,5 +150,19 @@ export function requestWxPayment(payData: WxPayParams): Promise<void> {
         reject(error)
       },
     })
+  })
+}
+
+// 获取保险产品列表
+export function getInsuranceProducts(): Promise<BaseRes<Record<string, InsuranceProduct>>> {
+  return request.get({
+    url: `${host}/api/bookings/insurance-products`,
+  })
+}
+
+// 获取增值服务列表
+export function getValueAddedServices(): Promise<BaseRes<Record<string, ValueAddedService>>> {
+  return request.get({
+    url: `${host}/api/bookings/value-added-services`,
   })
 }

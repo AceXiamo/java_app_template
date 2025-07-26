@@ -230,6 +230,43 @@ function formatTime(timeStr: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
+// 检查还车是否超时 (基于实际取车时间 + 租用天数)
+function isReturnExpired(order: any) {
+  if (!order.actualStartTime || !order.rentPeriod?.days) {
+    return false
+  }
+  
+  try {
+    const actualStartTime = new Date(order.actualStartTime).getTime()
+    const rentalDays = parseInt(order.rentPeriod.days)
+    const returnDeadline = actualStartTime + (rentalDays * 24 * 60 * 60 * 1000) // 租用天数转毫秒
+    const now = new Date().getTime()
+    
+    return now > returnDeadline
+  } catch (error) {
+    console.error('计算还车超时失败:', error)
+    return false
+  }
+}
+
+// 计算还车截止时间
+function getReturnDeadline(order: any) {
+  if (!order.actualStartTime || !order.rentPeriod?.days) {
+    return null
+  }
+  
+  try {
+    const actualStartTime = new Date(order.actualStartTime)
+    const rentalDays = parseInt(order.rentPeriod.days)
+    const returnDeadline = new Date(actualStartTime.getTime() + (rentalDays * 24 * 60 * 60 * 1000))
+    
+    return returnDeadline.toISOString()
+  } catch (error) {
+    console.error('计算还车截止时间失败:', error)
+    return null
+  }
+}
+
 // 计算倒计时
 function calculateCountdown() {
   if (!orderDetail.value.pickupDeadline) {
@@ -416,15 +453,15 @@ onUnmounted(() => {
             <view class="flex-1">
               <view class="mb-[4rpx] flex items-center">
                 <text class="text-[24rpx] text-purple-800 font-medium">取车码</text>
-                <text v-if="orderDetail.status === 'picked'" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">已使用</text>
+                <text v-if="['picked', 'returned', 'completed'].includes(orderDetail.status)" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">已使用</text>
               </view>
               <text class="text-[56rpx] text-purple-600 font-bold tracking-wider font-mono">{{ orderDetail.pickupCode }}</text>
             </view>
-            <view v-if="orderDetail.pickupDeadline && ['paid', 'picked'].includes(orderDetail.status)" class="ml-[16rpx] flex flex-col items-end text-right">
+            <view v-if="orderDetail.pickupDeadline && orderDetail.status === 'paid'" class="ml-[16rpx] flex flex-col items-end text-right">
               <view class="mb-[2rpx] flex items-center">
                 <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="getCountdownColor()" />
                 <text class="text-[18rpx]" :class="getCountdownColor()">
-                  {{ orderDetail.status === 'paid' ? '取车截止' : '剩余时间' }}
+                  取车截止
                 </text>
               </view>
               <text class="text-[28rpx] font-bold font-mono" :class="getCountdownColor()">
@@ -439,6 +476,36 @@ onUnmounted(() => {
             </view>
           </view>
 
+          <!-- 还车码显示 (picked状态) -->
+          <view v-if="orderDetail.status === 'picked' && orderDetail.returnCode" class="mt-[24rpx] flex items-center rounded-[16rpx] bg-green-50 p-[24rpx]">
+            <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-green-600" />
+            <view class="flex-1">
+              <view class="mb-[4rpx] flex items-center">
+                <text class="text-[24rpx] text-green-800 font-medium">还车码</text>
+                <text class="ml-[8rpx] rounded-full bg-orange-100 px-[8rpx] py-[2rpx] text-[18rpx] text-orange-600">
+                  使用中
+                </text>
+              </view>
+              <text class="text-[56rpx] text-green-600 font-bold tracking-wider font-mono">{{ orderDetail.returnCode }}</text>
+            </view>
+            
+            <!-- picked状态：显示还车截止时间 -->
+            <view v-if="getReturnDeadline(orderDetail)" class="ml-[16rpx] flex flex-col items-end text-right">
+              <view class="mb-[2rpx] flex items-center">
+                <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx]" :class="isReturnExpired(orderDetail) ? 'text-orange-500' : 'text-green-500'" />
+                <text class="text-[18rpx]" :class="isReturnExpired(orderDetail) ? 'text-orange-500' : 'text-green-500'">
+                  还车截止
+                </text>
+              </view>
+              <text class="text-[28rpx] font-bold font-mono" :class="isReturnExpired(orderDetail) ? 'text-orange-500' : 'text-green-700'">
+                {{ formatTime(getReturnDeadline(orderDetail)) }}
+              </text>
+              <text v-if="isReturnExpired(orderDetail)" class="mt-[4rpx] block text-[18rpx] text-orange-500">
+                已超时
+              </text>
+            </view>
+          </view>
+
           <!-- 待支付提示 -->
           <view v-if="orderDetail.status === 'pending'" class="mt-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
             <view class="flex items-center">
@@ -449,12 +516,22 @@ onUnmounted(() => {
             </view>
           </view>
 
-          <!-- 取车超时警告 -->
-          <view v-if="['paid', 'picked'].includes(orderDetail.status) && countdown.isExpired" class="mt-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
+          <!-- 取车超时警告 (仅paid状态) -->
+          <view v-if="orderDetail.status === 'paid' && countdown.isExpired" class="mt-[24rpx] rounded-[16rpx] bg-red-50 p-[24rpx]">
             <view class="flex items-center">
               <text class="i-material-symbols-warning mr-[8rpx] text-[24rpx] text-red-600" />
               <text class="text-[26rpx] text-red-800 font-medium">
-                {{ orderDetail.status === 'paid' ? '取车时间已超时，请尽快联系客服' : '订单已超时，请尽快还车' }}
+                取车时间已超时，请尽快联系客服
+              </text>
+            </view>
+          </view>
+          
+          <!-- 还车超时警告 (仅picked状态) -->
+          <view v-if="orderDetail.status === 'picked' && isReturnExpired(orderDetail)" class="mt-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
+            <view class="flex items-center">
+              <text class="i-material-symbols-warning mr-[8rpx] text-[24rpx] text-orange-600" />
+              <text class="text-[26rpx] text-orange-800 font-medium">
+                还车时间已超时，请尽快归还车辆
               </text>
             </view>
           </view>
@@ -649,11 +726,11 @@ onUnmounted(() => {
             </view>
 
             <!-- 还车码 -->
-            <view v-if="orderDetail.returnCode" class="flex items-center justify-between">
+            <view v-if="orderDetail.returnCode && ['picked', 'returned', 'completed'].includes(orderDetail.status)" class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
                 还车码
               </text>
-              <text class="text-[24rpx] text-purple-600 font-mono">
+              <text class="text-[24rpx] text-green-600 font-mono">
                 {{ orderDetail.returnCode }}
               </text>
             </view>
@@ -758,6 +835,26 @@ onUnmounted(() => {
               </text>
             </view>
 
+            <!-- 保险费用 -->
+            <view v-if="orderDetail.insurance_fee && orderDetail.insurance_fee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                保险费用
+              </text>
+              <text class="text-[24rpx] text-black">
+                ¥{{ orderDetail.insurance_fee }}
+              </text>
+            </view>
+
+            <!-- 增值服务费 -->
+            <view v-if="orderDetail.service_fee && orderDetail.service_fee > 0" class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                增值服务费
+              </text>
+              <text class="text-[24rpx] text-black">
+                ¥{{ orderDetail.service_fee }}
+              </text>
+            </view>
+
             <!-- 实付金额 -->
             <view class="border-t border-gray-100 pt-[16rpx]">
               <view class="flex items-center justify-between">
@@ -805,6 +902,94 @@ onUnmounted(() => {
               <text class="text-[20rpx] text-gray-500">
                 {{ orderDetail.paymentInfo.transactionId }}
               </text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 保险信息 -->
+        <view v-if="orderDetail.insurance?.length" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text class="i-material-symbols-security mr-[12rpx] text-[24rpx] text-blue-600" />
+            <text class="text-[28rpx] text-black font-semibold">
+              保险信息
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="(insurance, index) in orderDetail.insurance"
+              :key="index"
+              class="rounded-[16rpx] bg-blue-50 p-[20rpx]"
+            >
+              <view class="mb-[12rpx] flex items-center justify-between">
+                <text class="text-[24rpx] text-blue-800 font-medium">
+                  {{ insurance.product_name }}
+                </text>
+                <text class="text-[24rpx] text-blue-600 font-bold">
+                  ¥{{ insurance.price }}
+                </text>
+              </view>
+              <view class="space-y-[8rpx]">
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    保额
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    ¥{{ insurance.coverage_amount }}
+                  </text>
+                </view>
+                <text class="text-[18rpx] text-gray-600 leading-relaxed">
+                  {{ insurance.coverage_description }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 增值服务信息 -->
+        <view v-if="orderDetail.services?.length" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text class="i-material-symbols-build mr-[12rpx] text-[24rpx] text-green-600" />
+            <text class="text-[28rpx] text-black font-semibold">
+              增值服务
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="(service, index) in orderDetail.services"
+              :key="index"
+              class="rounded-[16rpx] bg-green-50 p-[20rpx]"
+            >
+              <view class="mb-[12rpx] flex items-center justify-between">
+                <text class="text-[24rpx] text-green-800 font-medium">
+                  {{ service.service_name }}
+                </text>
+                <text class="text-[24rpx] text-green-600 font-bold">
+                  ¥{{ service.total_amount }}
+                </text>
+              </view>
+              <view class="space-y-[8rpx]">
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    单价
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    ¥{{ service.price }}
+                  </text>
+                </view>
+                <view class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    数量
+                  </text>
+                  <text class="text-[20rpx] text-gray-800">
+                    {{ service.quantity }}
+                  </text>
+                </view>
+                <text v-if="service.description" class="text-[18rpx] text-gray-600 leading-relaxed">
+                  {{ service.description }}
+                </text>
+              </view>
             </view>
           </view>
         </view>

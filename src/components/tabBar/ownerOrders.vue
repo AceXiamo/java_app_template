@@ -5,14 +5,15 @@ import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
-import { getOwnerOrders, type OwnerOrderQueryParams, type OwnerOrder } from '@/api/owner-orders'
+import { type OwnerOrder, type OwnerOrderQueryParams, getOwnerOrders, pickupVerify, returnVerify } from '@/api/owner-orders'
+import { uploadFileToOss } from '@/utils/alioss'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
 
 // 使用 user store
-const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
+// const userStore = useUserStore()
+// const { user } = storeToRefs(userStore)
 
 // 设置当前页面
 ownerStore.setActive('orders')
@@ -53,7 +54,7 @@ async function loadOrders() {
     loading.value = true
 
     const params: OwnerOrderQueryParams = {
-      status: currentFilter.value,  // 直接传递状态，后端处理映射
+      status: currentFilter.value, // 直接传递状态，后端处理映射
       pageNum: 1,
       pageSize: 50,
     }
@@ -61,7 +62,7 @@ async function loadOrders() {
     const response = await getOwnerOrders(params)
     if (response.code === 200 && response.data) {
       // 根据新的数据结构更新
-      orderList.value = response.data.list || []
+      orderList.value = response.data.records || []
     }
   }
   catch (error) {
@@ -160,18 +161,68 @@ function confirmReturn(order: any) {
 }
 
 // 选择照片
-function chooseImage() {
-  uni.chooseImage({
-    count: 4,
-    sizeType: ['compressed'],
-    sourceType: ['camera', 'album'],
-    success: (res) => {
-      uploadedPhotos.value.push(...res.tempFilePaths)
-    },
-    fail: () => {
-      uni.showToast({ title: '选择照片失败', icon: 'none' })
-    },
-  })
+async function chooseImage() {
+  try {
+    const remainingSlots = 4 - uploadedPhotos.value.length
+    if (remainingSlots <= 0) {
+      uni.showToast({ title: '最多只能上传4张照片', icon: 'none' })
+      return
+    }
+
+    const res = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {
+      uni.chooseImage({
+        count: remainingSlots,
+        sizeType: ['compressed'],
+        sourceType: ['camera', 'album'],
+        success: resolve,
+        fail: reject,
+      })
+    })
+
+    // 显示上传进度
+    uni.showLoading({ title: '上传照片中...' })
+
+    // 批量上传照片到OSS
+    const uploadPromises = res.tempFilePaths.map(async (tempFilePath, index) => {
+      try {
+        // 生成唯一的文件名
+        const timestamp = Date.now()
+        const randomNum = Math.floor(Math.random() * 1000)
+        const actionType = currentAction.value === 'pickup' ? 'pickup' : 'return'
+        const fileName = `${actionType}_verification_${timestamp}_${randomNum}.jpg`
+        const ossPath = `order/verification/${fileName}`
+
+        // 上传到OSS
+        const ossUrl = await uploadFileToOss(tempFilePath, ossPath)
+        return ossUrl
+      } catch (error) {
+        console.error(`上传第${index + 1}张照片失败:`, error)
+        throw error
+      }
+    })
+
+    // 等待所有照片上传完成
+    const ossUrls = await Promise.all(uploadPromises)
+    
+    // 添加到照片列表
+    uploadedPhotos.value.push(...ossUrls)
+    
+    uni.hideLoading()
+    uni.showToast({ 
+      title: `成功上传${ossUrls.length}张照片`, 
+      icon: 'success',
+      duration: 1500
+    })
+
+  } catch (error) {
+    uni.hideLoading()
+    console.error('上传照片失败:', error)
+    uni.showToast({ 
+      title: '上传照片失败，请重试', 
+      icon: 'none',
+      duration: 2000
+    })
+  }
 }
 
 // 删除照片
@@ -180,34 +231,50 @@ function removePhoto(index: number) {
 }
 
 // 提交验证
-function submitVerification() {
+async function submitVerification() {
   if (uploadedPhotos.value.length === 0) {
     uni.showToast({ title: '请至少上传一张照片', icon: 'none' })
     return
   }
 
-  // TODO: 实现照片上传和订单状态更新的API调用
-  uni.showLoading({ title: '提交中...' })
+  try {
+    uni.showLoading({ title: '提交验证中...' })
 
-  // 模拟API调用
-  setTimeout(() => {
+    // 调用对应的API，uploadedPhotos.value 现在存储的是OSS URL
+    if (currentAction.value === 'pickup') {
+      await pickupVerify(currentOrder.value.orderId, uploadedPhotos.value)
+    } else {
+      await returnVerify(currentOrder.value.orderId, uploadedPhotos.value)
+    }
+
     uni.hideLoading()
     uni.showToast({ title: '验证成功', icon: 'success' })
     photoDrawerVisible.value = false
 
-    // 更新订单状态
+    // 更新本地状态
     const order = orderList.value.find(o => o.orderId === currentOrder.value.orderId)
     if (order) {
       if (currentAction.value === 'pickup') {
         order.status = 'picked'
         order.statusText = '使用中'
-      }
-      else {
+      } else {
         order.status = 'returned'
         order.statusText = '已还车'
       }
     }
-  }, 2000)
+
+    // 重新加载订单列表以获取最新状态
+    await loadOrders()
+    
+  } catch (error) {
+    uni.hideLoading()
+    console.error('验证失败:', error)
+    uni.showToast({ 
+      title: error?.message || '验证失败，请重试', 
+      icon: 'none',
+      duration: 3000
+    })
+  }
 }
 </script>
 
@@ -246,8 +313,16 @@ function submitVerification() {
     <view class="h-0 flex flex-1 flex-col">
       <scroll-view scroll-y class="h-full w-full">
         <view class="content px-[32rpx] pt-[32rpx]">
+          <!-- 加载状态 -->
+          <view v-if="loading" class="flex flex-col items-center justify-center py-[120rpx]">
+            <view class="mb-[24rpx] h-[60rpx] w-[60rpx] animate-spin border-4 border-purple-200 border-t-purple-600 rounded-full" />
+            <text class="text-[28rpx] text-gray-500">
+              加载订单中...
+            </text>
+          </view>
+
           <!-- 订单列表 -->
-          <view v-if="filteredOrders.length" class="pb-[32rpx] space-y-[24rpx]">
+          <view v-else-if="filteredOrders.length" class="pb-[32rpx] space-y-[24rpx]">
             <view
               v-for="order in filteredOrders"
               :key="order.orderId"
@@ -272,30 +347,30 @@ function submitVerification() {
               <view class="mb-[20rpx] flex">
                 <view class="h-[120rpx] w-[160rpx] flex-shrink-0">
                   <image
-                    :src="order.vehicleImage"
+                    :src="order.vehicleImage || '/static/images/default-car.png'"
                     mode="aspectFill"
                     class="h-full w-full rounded-[12rpx]"
                   />
                 </view>
                 <view class="ml-[24rpx] min-w-0 flex flex-1 flex-col justify-center">
                   <text class="truncate text-[28rpx] text-black font-bold">
-                    {{ order.vehicleName }}
+                    {{ order.vehicleName || '未知车辆' }}
                   </text>
                   <view class="mt-[8rpx] flex items-center gap-x-[16rpx] text-[22rpx] text-gray-600">
                     <text class="rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx] text-[20rpx] text-blue-700 font-medium">
-                      {{ order.licensePlate }}
+                      {{ order.licensePlate || '未知车牌' }}
                     </text>
                     <text class="truncate">
-                      {{ order.seats }}座 {{ order.carType }}
+                      {{ order.seats || 5 }}座 {{ order.carType || '轿车' }}
                     </text>
                     <text class="truncate">
-                      {{ order.energyType }}
+                      {{ order.energyType || '电动' }}
                     </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
                     <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
                     <text class="truncate text-[20rpx] text-gray-600">
-                      {{ order.rating }}({{ order.ratingCount }})
+                      {{ order.rating || 0 }}({{ order.ratingCount || 0 }})
                     </text>
                   </view>
                 </view>
@@ -358,26 +433,56 @@ function submitVerification() {
               </view>
 
               <!-- 取车码/还车码区域 -->
-              <view v-if="order.pickupCode || order.returnCode" class="mb-[20rpx] flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
-                <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
-                <view class="flex-1">
-                  <text class="text-[24rpx] text-purple-800 font-medium">
-                    {{ order.pickupCode ? '取车码' : '还车码' }}
-                  </text>
-                  <text class="block text-[36rpx] text-purple-600 font-bold tracking-wider">
-                    {{ order.pickupCode || order.returnCode }}
-                  </text>
+              <view v-if="order.pickupCode || order.returnCode" class="mb-[20rpx] space-y-[12rpx]">
+                <!-- 取车码显示 (paid状态) -->
+                <view v-if="order.status === 'paid' && order.pickupCode" class="flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
+                  <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
+                  <view class="flex-1">
+                    <text class="text-[24rpx] text-purple-800 font-medium">取车码</text>
+                    <text class="block text-[36rpx] text-purple-600 font-bold tracking-wider">
+                      {{ order.pickupCode }}
+                    </text>
+                  </view>
+                  <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
+                    <text class="text-[18rpx]" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
+                      截止时间
+                    </text>
+                    <text class="text-[20rpx] font-medium" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
+                      {{ formatDateTime(order.pickupDeadline) }}
+                    </text>
+                    <text v-if="isExpired(order.pickupDeadline)" class="mt-[2rpx] text-[16rpx] text-red-500">
+                      已超时
+                    </text>
+                  </view>
                 </view>
-                <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
-                  <text class="text-[18rpx]" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-500'">
-                    截止时间
-                  </text>
-                  <text class="text-[20rpx] font-medium" :class="isExpired(order.pickupDeadline) ? 'text-red-500' : 'text-gray-700'">
-                    {{ formatDateTime(order.pickupDeadline) }}
-                  </text>
-                  <text v-if="isExpired(order.pickupDeadline)" class="mt-[2rpx] text-[16rpx] text-red-500">
-                    已超时
-                  </text>
+
+                <!-- 还车码显示 (picked状态) -->
+                <view v-if="order.status === 'picked' && order.returnCode" class="flex items-center rounded-[14rpx] bg-green-50 p-[20rpx]">
+                  <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-green-600" />
+                  <view class="flex-1">
+                    <text class="text-[24rpx] text-green-800 font-medium">还车码</text>
+                    <text class="block text-[36rpx] text-green-600 font-bold tracking-wider">
+                      {{ order.returnCode }}
+                    </text>
+                  </view>
+                  <view class="ml-[16rpx] flex flex-col items-end text-right">
+                    <text class="text-[18rpx] text-gray-500">使用中</text>
+                    <text class="text-[20rpx] text-green-700 font-medium">等待还车</text>
+                  </view>
+                </view>
+
+                <!-- 其他状态的码显示 -->
+                <view v-if="order.status !== 'paid' && order.status !== 'picked' && (order.pickupCode || order.returnCode)" 
+                      class="flex items-center rounded-[14rpx] bg-gray-50 p-[20rpx]">
+                  <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-gray-600" />
+                  <view class="flex-1">
+                    <text class="text-[24rpx] text-gray-800 font-medium">
+                      {{ order.returnCode ? '还车码' : '取车码' }}
+                    </text>
+                    <text class="block text-[36rpx] text-gray-600 font-bold tracking-wider">
+                      {{ order.returnCode || order.pickupCode }}
+                    </text>
+                  </view>
                 </view>
               </view>
 
@@ -389,7 +494,7 @@ function submitVerification() {
                     class="flex-1 rounded-full bg-purple-600 py-[20rpx] text-center text-[26rpx] text-white font-medium transition-colors duration-200 active:bg-purple-700"
                     @tap="startPickupVerification(order)"
                   >
-                    扫码取车
+                    取车验证
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
@@ -409,9 +514,15 @@ function submitVerification() {
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.userPhone)"
+                    @tap="contactUser(order.userPhone || '')"
                   >
                     联系用户
+                  </view>
+                  <view
+                    class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[20rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors duration-200 active:bg-purple-100"
+                    @tap="goToOrderDetail(order.orderNo)"
+                  >
+                    查看详情
                   </view>
                 </template>
 
@@ -419,7 +530,7 @@ function submitVerification() {
                 <template v-else>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.userPhone)"
+                    @tap="contactUser(order.userPhone || '')"
                   >
                     联系用户
                   </view>
@@ -443,7 +554,7 @@ function submitVerification() {
             <view class="h-[1rpx]" />
           </view>
           <!-- 空状态 -->
-          <view v-else class="flex flex-col items-center justify-center py-[120rpx] text-gray-400">
+          <view v-else-if="!loading" class="flex flex-col items-center justify-center py-[120rpx] text-gray-400">
             <text class="i-material-symbols-inbox mb-[16rpx] text-[64rpx]" />
             <text class="mb-[8rpx] text-[28rpx] font-medium">
               暂无订单
@@ -498,7 +609,7 @@ function submitVerification() {
               车牌号码
             </text>
             <text class="rounded-[8rpx] bg-blue-600 px-[12rpx] py-[4rpx] text-[24rpx] text-white font-bold tracking-wider">
-              {{ currentOrder?.licensePlate }}
+              {{ currentOrder?.licensePlate || currentOrder?.vehicle?.licensePlate || '未知车牌' }}
             </text>
           </view>
 
@@ -508,7 +619,7 @@ function submitVerification() {
               车辆名称
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              {{ currentOrder?.vehicleName }}
+              {{ currentOrder?.vehicleName || currentOrder?.vehicle?.name || '未知车辆' }}
             </text>
           </view>
           <view class="mb-[8rpx] flex items-center justify-between">
@@ -516,7 +627,7 @@ function submitVerification() {
               品牌车型
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              车辆信息
+              {{ currentOrder?.vehicle?.brand || '未知品牌' }} {{ currentOrder?.vehicle?.model || '未知车型' }}
             </text>
           </view>
           <view class="flex items-center justify-between">
@@ -524,7 +635,7 @@ function submitVerification() {
               车辆配置
             </text>
             <text class="text-[24rpx] text-gray-800 font-medium">
-              {{ currentOrder?.seats }}座 {{ currentOrder?.carType }} {{ currentOrder?.energyType }}
+              {{ currentOrder?.seats || currentOrder?.vehicle?.seats || 5 }}座 {{ currentOrder?.carType || currentOrder?.vehicle?.carType || '轿车' }} {{ currentOrder?.energyType || currentOrder?.vehicle?.energyType || '电动' }}
             </text>
           </view>
         </view>

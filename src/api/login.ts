@@ -62,6 +62,9 @@ export interface WxUser {
 
   // 兼容旧版本字段
   appId?: string
+
+  // 用户角色
+  userRole?: string
 }
 
 export function login(params: { code: string, appId?: string }): Promise<BaseRes<LoginResult>> {

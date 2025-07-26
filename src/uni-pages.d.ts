@@ -31,7 +31,6 @@ interface NavigateToOptions {
        "/pages/owner/order-detail" |
        "/pages/owner/orders" |
        "/pages/owner/revenue" |
-       "/pages/owner/settings" |
        "/pages/owner/withdrawal-methods" |
        "/pages/owner-certification/index" |
        "/pages/ranking/index" |

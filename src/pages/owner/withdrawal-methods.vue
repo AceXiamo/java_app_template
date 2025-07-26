@@ -1,43 +1,16 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
+import { 
+  getOwnerWithdrawalMethods, 
+  setDefaultWithdrawalMethod, 
+  deleteWithdrawalMethod,
+  type OwnerWithdrawalMethod 
+} from '@/api/owner-withdrawal'
 
-// 提现方式数据
-const withdrawalMethods = reactive([
-  {
-    id: 1,
-    type: 'bank',
-    name: '招商银行',
-    account: '****1234',
-    fullAccount: '6225 8856 1234 5678',
-    holderName: '张三',
-    icon: 'i-material-symbols-account-balance',
-    isDefault: true,
-    createTime: '2025-07-10 15:30',
-  },
-  {
-    id: 2,
-    type: 'wechat',
-    name: '微信收款码',
-    account: '微信号: wx****8888',
-    fullAccount: 'wx_test_8888',
-    holderName: '张三',
-    iconUrl: 'https://img.icons8.com/color/48/wechat.png',
-    isDefault: false,
-    createTime: '2025-07-12 10:20',
-  },
-  {
-    id: 3,
-    type: 'alipay',
-    name: '支付宝收款码',
-    account: '支付宝: ali****6666',
-    fullAccount: 'alipay_test_6666',
-    holderName: '张三',
-    iconUrl: 'https://img.icons8.com/color/48/alipay.png',
-    isDefault: false,
-    createTime: '2025-07-15 14:45',
-  },
-])
+// 提现方式数据 - 从 API 获取
+const withdrawalMethods = ref<OwnerWithdrawalMethod[]>([])
+const loading = ref(false)
 
 const showDeleteConfirm = ref(false)
 const methodToDelete = ref<any>(null)
@@ -47,12 +20,59 @@ function goBack() {
   uni.navigateBack()
 }
 
+// 加载提现方式列表
+async function loadWithdrawalMethods() {
+  try {
+    loading.value = true
+    const response = await getOwnerWithdrawalMethods()
+    if (response.code === 200 && response.data) {
+      withdrawalMethods.value = response.data.map(method => ({
+        ...method,
+        // 为了兼容模板中的字段
+        id: method.methodId,
+        type: method.methodType,
+        name: method.methodName,
+        account: method.accountInfo,
+        icon: method.methodType === 'bank' ? 'i-material-symbols-account-balance' : '',
+        iconUrl: method.methodType === 'wechat' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/wechat.png'
+          : method.methodType === 'alipay' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/alipay.png' : '',
+      }))
+    }
+  } catch (error) {
+    console.error('加载提现方式失败', error)
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
+    })
+  } finally {
+    loading.value = false
+  }
+}
+
 // 设置默认提现方式
-function setAsDefault(methodId: number) {
-  withdrawalMethods.forEach((method) => {
-    method.isDefault = method.id === methodId
-  })
-  uni.showToast({ title: '设置成功', icon: 'success' })
+async function setAsDefault(methodId: number) {
+  try {
+    uni.showLoading({ title: '设置中...' })
+    const response = await setDefaultWithdrawalMethod(methodId)
+    
+    if (response.code === 200) {
+      // 更新本地数据
+      withdrawalMethods.value.forEach((method) => {
+        method.isDefault = method.id === methodId
+      })
+      uni.hideLoading()
+      uni.showToast({ title: '设置成功', icon: 'success' })
+    } else {
+      throw new Error(response.msg || '设置失败')
+    }
+  } catch (error) {
+    console.error('设置默认方式失败:', error)
+    uni.hideLoading()
+    uni.showToast({
+      title: '设置失败',
+      icon: 'none'
+    })
+  }
 }
 
 // 删除提现方式
@@ -61,12 +81,30 @@ function confirmDelete(method: any) {
   showDeleteConfirm.value = true
 }
 
-function deleteMethod() {
+async function deleteMethod() {
   if (methodToDelete.value) {
-    const index = withdrawalMethods.findIndex(m => m.id === methodToDelete.value.id)
-    if (index > -1) {
-      withdrawalMethods.splice(index, 1)
-      uni.showToast({ title: '删除成功', icon: 'success' })
+    try {
+      uni.showLoading({ title: '删除中...' })
+      const response = await deleteWithdrawalMethod(methodToDelete.value.id)
+      
+      if (response.code === 200) {
+        // 从本地列表中移除
+        const index = withdrawalMethods.value.findIndex(m => m.id === methodToDelete.value.id)
+        if (index > -1) {
+          withdrawalMethods.value.splice(index, 1)
+        }
+        uni.hideLoading()
+        uni.showToast({ title: '删除成功', icon: 'success' })
+      } else {
+        throw new Error(response.msg || '删除失败')
+      }
+    } catch (error) {
+      console.error('删除提现方式失败:', error)
+      uni.hideLoading()
+      uni.showToast({
+        title: '删除失败',
+        icon: 'none'
+      })
     }
   }
   showDeleteConfirm.value = false
@@ -104,6 +142,11 @@ function getTypeName(type: string) {
     default: return '其他'
   }
 }
+
+// 页面初始化加载数据
+onMounted(() => {
+  loadWithdrawalMethods()
+})
 </script>
 
 <template>
@@ -147,8 +190,16 @@ function getTypeName(type: string) {
           </view>
         </view>
 
+        <!-- 加载状态 -->
+        <view v-if="loading" class="flex flex-col items-center justify-center py-[120rpx]">
+          <view class="h-[60rpx] w-[60rpx] animate-spin rounded-full border-4 border-purple-200 border-t-purple-600 mb-[24rpx]"></view>
+          <text class="text-[28rpx] text-gray-500">
+            加载中...
+          </text>
+        </view>
+        
         <!-- 提现方式列表 -->
-        <view v-if="withdrawalMethods.length" class="space-y-[16rpx]">
+        <view v-else-if="withdrawalMethods.length" class="space-y-[16rpx]">
           <view
             v-for="method in withdrawalMethods"
             :key="method.id"
@@ -241,7 +292,7 @@ function getTypeName(type: string) {
         </view>
 
         <!-- 空状态 -->
-        <view v-else class="flex flex-col items-center justify-center py-[120rpx] text-gray-400">
+        <view v-else-if="!loading" class="flex flex-col items-center justify-center py-[120rpx] text-gray-400">
           <text class="i-material-symbols-payment mb-[16rpx] text-[64rpx]" />
           <text class="mb-[8rpx] text-[28rpx] font-medium">
             暂无提现方式
