@@ -19,7 +19,7 @@ const emit = defineEmits<Emits>()
 
 const localVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value),
+  set: value => emit('update:visible', value),
 })
 
 // 检查服务是否被选中
@@ -47,12 +47,14 @@ const selectedServicesList = computed(() => {
 
 <template>
   <BottomDrawer v-model:visible="localVisible" title="选择增值服务" height="80vh">
-    <view class="flex h-full max-h-[calc(80vh-120rpx)] flex-col pt-[20rpx]">
+    <view class="h-full max-h-[calc(80vh-120rpx)] flex flex-col pt-[20rpx]">
       <!-- 服务说明 -->
-      <view class="mb-[24rpx] rounded-[16rpx] bg-gray-50 p-[20rpx] flex-shrink-0">
+      <view class="mb-[24rpx] flex-shrink-0 rounded-[16rpx] bg-gray-50 p-[20rpx]">
         <view class="mb-[8rpx] flex items-center">
           <text class="i-material-symbols-build mr-[8rpx] text-[20rpx] text-gray-600" />
-          <text class="text-[24rpx] text-gray-800 font-medium">增值服务</text>
+          <text class="text-[24rpx] text-gray-800 font-medium">
+            增值服务
+          </text>
         </view>
         <text class="text-[22rpx] text-gray-700 leading-[32rpx]">
           可选购专业服务，提升用车体验，支持多选
@@ -60,9 +62,9 @@ const selectedServicesList = computed(() => {
       </view>
 
       <!-- 服务列表 - 可滚动区域 -->
-      <view class="flex-1 min-h-0">
+      <view class="min-h-0 flex-1">
         <scroll-view scroll-y class="h-full">
-          <view class="space-y-[16rpx] px-[4rpx]">
+          <view class="px-[4rpx] space-y-[16rpx]">
             <view
               v-for="service in Object.values(valueAddedServices)"
               :key="service.serviceId"
@@ -98,7 +100,9 @@ const selectedServicesList = computed(() => {
                 <!-- 价格信息 -->
                 <view class="mb-[12rpx] rounded-[12rpx] bg-gray-50 p-[16rpx]">
                   <view class="flex items-center justify-between">
-                    <text class="text-[20rpx] text-gray-600">服务价格</text>
+                    <text class="text-[20rpx] text-gray-600">
+                      服务价格
+                    </text>
                     <text class="text-[24rpx] text-green-600 font-bold">
                       ¥{{ service.price || 0 }}
                     </text>
@@ -124,7 +128,9 @@ const selectedServicesList = computed(() => {
         <view v-if="selectedServices.length > 0" class="mb-[16rpx] rounded-[12rpx] bg-gray-50 p-[16rpx]">
           <view class="mb-[8rpx] flex items-center">
             <text class="i-material-symbols-receipt mr-[8rpx] text-[20rpx] text-gray-600" />
-            <text class="text-[22rpx] text-gray-800 font-medium">已选服务</text>
+            <text class="text-[22rpx] text-gray-800 font-medium">
+              已选服务
+            </text>
           </view>
           <view class="max-h-[120rpx] overflow-hidden">
             <view class="space-y-[4rpx]">
@@ -133,17 +139,19 @@ const selectedServicesList = computed(() => {
                 :key="index"
                 class="flex items-center justify-between text-[20rpx]"
               >
-                <text class="text-gray-600 truncate">
+                <text class="truncate text-gray-600">
                   {{ service.serviceName || '未知服务' }}
                 </text>
-                <text class="text-gray-700 font-medium flex-shrink-0 ml-[8rpx]">
+                <text class="ml-[8rpx] flex-shrink-0 text-gray-700 font-medium">
                   ¥{{ service.price || 0 }}
                 </text>
               </view>
             </view>
           </view>
           <view class="mt-[8rpx] flex items-center justify-between border-t border-gray-200 pt-[8rpx]">
-            <text class="text-[22rpx] text-gray-800 font-medium">服务费小计</text>
+            <text class="text-[22rpx] text-gray-800 font-medium">
+              服务费小计
+            </text>
             <text class="text-[24rpx] text-gray-900 font-bold">
               ¥{{ totalPrice }}
             </text>

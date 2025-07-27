@@ -8,7 +8,7 @@ import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import InsuranceSelector from '@/components/booking/InsuranceSelector.vue'
 import ServicesSelector from '@/components/booking/ServicesSelector.vue'
 import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
-import { type Coupon, getAvailableCoupons } from '@/api/coupon'
+import { type UserCoupon, getUserCoupons } from '@/api/coupon'
 import { type InsuranceProduct, type ValueAddedService, calculateBookingPrice, createBooking, getInsuranceProducts, getValueAddedServices, requestWxPayment } from '@/api/booking'
 import { useUserStore } from '@/store/user'
 
@@ -86,8 +86,10 @@ const priceCalculation = ref({
 })
 
 // 优惠券
-const selectedCoupon = ref<Coupon | null>(null)
-const availableCoupons = ref<Coupon[]>([])
+const selectedCoupon = ref<UserCoupon | null>(null)
+const allUserCoupons = ref<UserCoupon[]>([])
+const usableCoupons = ref<UserCoupon[]>([])
+const unusableCoupons = ref<UserCoupon[]>([])
 
 // 保险和增值服务
 const insuranceProducts = ref<Record<string, InsuranceProduct>>({})
@@ -105,7 +107,6 @@ const showLocationPicker = ref(false)
 const showCouponList = ref(false)
 const showTermsDialog = ref(false)
 const showTimeSelector = ref(false)
-const showDeliveryServices = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
 const showInsuranceSelector = ref(false)
@@ -145,16 +146,6 @@ const vehicleOperationType = computed(() => {
   return vehicleInfo.value.operationType || 'platform' // platform: 平台自营, owner: 车主优选
 })
 
-// 获取能源类型文本
-const energyTypeText = computed(() => {
-  const energyMap: Record<string, string> = {
-    gasoline: '汽油',
-    electric: '电动',
-    hybrid: '混动',
-  }
-  return energyMap[vehicleInfo.value.energyType] || '燃油'
-})
-
 // 获取默认交付标准说明
 const defaultStandardText = computed(() => {
   const energyType = vehicleInfo.value.energyType
@@ -191,6 +182,16 @@ const addressSelector = ref({
   searchKeyword: '',
   searchResults: [] as any[],
   recentAddresses: [] as any[],
+})
+
+// 计算属性：送车距离是否有效
+const isDeliveryDistanceValid = computed(() => {
+  if (bookingInfo.value.pickupMethod !== 'delivery') {
+    return true
+  }
+
+  const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+  return bookingInfo.value.deliveryDistance <= maxDistance && bookingInfo.value.deliveryDistance > 0
 })
 
 // 页面加载
@@ -317,26 +318,88 @@ async function loadBookingInfo() {
   bookingInfo.value.pickupLocation = vehicleInfo.value.location?.address || ''
 }
 
-// 加载可用优惠券
+// 加载用户可用优惠券
 async function loadAvailableCoupons() {
   try {
-    if (!vehicleInfo.value.vehicleId || !bookingInfo.value.startTime || !bookingInfo.value.endTime) {
-      return
-    }
-
-    const response = await getAvailableCoupons({
-      vehicleId: vehicleInfo.value.vehicleId,
-      startTime: bookingInfo.value.startTime,
-      endTime: bookingInfo.value.endTime,
-      totalAmount: priceCalculation.value.totalAmount,
+    const response = await getUserCoupons({
+      status: 'available',
+      pageNum: 1,
+      pageSize: 50,
     })
-
-    if (response.code === 200 && response.data) {
-      availableCoupons.value = response.data
+    if (response.code === 200 && response.rows) {
+      allUserCoupons.value = response.rows
+      filterAvailableCoupons()
     }
   }
   catch (error) {
     console.error('加载优惠券失败:', error)
+  }
+}
+
+// 筛选可用优惠券
+function filterAvailableCoupons() {
+  const totalAmount = priceCalculation.value.totalAmount
+  // 根据实际租赁天数判断订单类型：>=30天为月租，<30天为日租
+  const vehicleType = bookingInfo.value.rentalDays >= 30 ? 'monthly' : 'daily'
+
+  const usable: UserCoupon[] = []
+  const unusable: UserCoupon[] = []
+
+  allUserCoupons.value.forEach((coupon) => {
+    let isUsable = true
+    let reason = ''
+
+    // 检查优惠券状态
+    if (coupon.status !== 'available') {
+      isUsable = false
+      reason = coupon.status === 'used' ? '已使用' : '已过期'
+    }
+
+    // 检查是否过期
+    if (isUsable && new Date(coupon.expireTime) <= new Date()) {
+      isUsable = false
+      reason = '已过期'
+    }
+
+    // 检查最低消费金额
+    if (isUsable && totalAmount < coupon.minAmount) {
+      isUsable = false
+      reason = `需满${coupon.minAmount}元`
+    }
+
+    // 检查适用范围
+    if (isUsable) {
+      const { applicableType } = coupon
+      if (applicableType !== 'all' && applicableType !== vehicleType) {
+        isUsable = false
+        reason = applicableType === 'daily' ? '仅限日租' : '仅限月租'
+      }
+    }
+
+    // 添加不可用原因
+    if (!isUsable) {
+      ;(coupon as any).unusableReason = reason
+    }
+
+    if (isUsable) {
+      usable.push(coupon)
+    }
+    else {
+      unusable.push(coupon)
+    }
+  })
+
+  usableCoupons.value = usable
+  unusableCoupons.value = unusable
+
+  // 如果当前选中的优惠券不在可用列表中，取消选择
+  if (selectedCoupon.value) {
+    const isStillUsable = usable.some(
+      coupon => coupon.userCouponId === selectedCoupon.value?.userCouponId,
+    )
+    if (!isStillUsable) {
+      selectedCoupon.value = null
+    }
   }
 }
 
@@ -395,7 +458,7 @@ async function calculatePrice() {
         carWash: deliveryServices.value.carWash,
         detailing: deliveryServices.value.detailing,
       },
-      couponId: selectedCoupon.value?.couponId,
+      userCouponId: selectedCoupon.value?.userCouponId,
       insuranceProductId: selectedInsurance.value?.productId,
       selectedServices: selectedServices.value,
     })
@@ -411,12 +474,17 @@ async function calculatePrice() {
       servicesFee.value = data.servicesFee || 0
       bookingInfo.value.rentalDays = data.rentalDays
       priceCalculation.value.isMonthlyRental = data.rentalDays >= 30 && (vehicleInfo.value.monthlyPrice || 0) > 0
+
+      // 价格计算完成后重新筛选优惠券
+      filterAvailableCoupons()
     }
   }
   catch (error) {
     console.error('计算价格失败:', error)
     // 降级到本地计算
     calculatePriceLocally()
+    // 本地计算后也需要筛选优惠券
+    filterAvailableCoupons()
   }
 }
 
@@ -485,10 +553,10 @@ function calculateCouponDiscount() {
   const coupon = selectedCoupon.value
   const totalAmount = priceCalculation.value.totalAmount
 
-  if (totalAmount < coupon.minOrderAmount)
+  if (totalAmount < coupon.minAmount)
     return 0
 
-  if (coupon.discountType === 'amount') {
+  if (coupon.couponType === 'discount') {
     return Math.min(coupon.discountAmount, totalAmount)
   }
 
@@ -503,7 +571,20 @@ async function selectPickupMethod(method: 'self' | 'delivery') {
 }
 
 // 选择优惠券
-async function selectCoupon(coupon: Coupon) {
+async function selectCoupon(coupon: UserCoupon) {
+  // 只允许选择可用的优惠券
+  const isUsable = usableCoupons.value.some(
+    usableCoupon => usableCoupon.userCouponId === coupon.userCouponId,
+  )
+
+  if (!isUsable) {
+    uni.showToast({
+      title: '此优惠券暂不可用',
+      icon: 'error',
+    })
+    return
+  }
+
   selectedCoupon.value = coupon
   showCouponList.value = false
   await calculatePrice()
@@ -590,6 +671,29 @@ async function submitBooking() {
     return
   }
 
+  // 验证送车距离是否超限
+  if (bookingInfo.value.pickupMethod === 'delivery') {
+    const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+    if (bookingInfo.value.deliveryDistance > maxDistance) {
+      uni.showModal({
+        title: '送车距离超限',
+        content: `当前送车距离 ${bookingInfo.value.deliveryDistance.toFixed(2)} km 超出最大送车距离 ${maxDistance} km，请重新选择地址或改为自提。`,
+        showCancel: false,
+        confirmText: '重新选择',
+      })
+      return
+    }
+
+    // 检查是否已选择送车地址
+    if (!bookingInfo.value.deliveryAddress || bookingInfo.value.deliveryDistance === 0) {
+      uni.showToast({
+        title: '请选择送车地址',
+        icon: 'error',
+      })
+      return
+    }
+  }
+
   try {
     submitLoading.value = true
 
@@ -613,7 +717,7 @@ async function submitBooking() {
         carWash: deliveryServices.value.carWash,
         detailing: deliveryServices.value.detailing,
       },
-      couponId: selectedCoupon.value?.couponId,
+      userCouponId: selectedCoupon.value?.userCouponId,
       totalAmount: priceCalculation.value.totalAmount,
       finalAmount: priceCalculation.value.finalAmount,
       discountAmount: priceCalculation.value.discountAmount,
@@ -687,43 +791,8 @@ async function submitBooking() {
 async function handleCalculationChange() {
   calculateRentalDays()
   await calculatePrice()
-  // 价格变化后重新加载优惠券
-  await loadAvailableCoupons()
-}
-
-// 时间选择器相关函数
-function openTimeSelector(type: 'start' | 'end') {
-  timeSelector.value.type = type
-  const now = new Date()
-  const maxDate = new Date()
-  maxDate.setFullYear(now.getFullYear() + 1) // 最多可选择一年后
-
-  timeSelector.value.minDate = now.toISOString().split('T')[0]
-  timeSelector.value.maxDate = maxDate.toISOString().split('T')[0]
-
-  if (type === 'start') {
-    timeSelector.value.currentDate = bookingInfo.value.startTime
-      ? new Date(bookingInfo.value.startTime).toISOString().split('T')[0]
-      : timeSelector.value.minDate
-    timeSelector.value.currentTime = bookingInfo.value.startTime
-      ? new Date(bookingInfo.value.startTime).toTimeString().slice(0, 5)
-      : '09:00'
-  }
-  else {
-    const minEndDate = bookingInfo.value.startTime
-      ? new Date(new Date(bookingInfo.value.startTime).getTime() + 24 * 60 * 60 * 1000)
-      : new Date(now.getTime() + 24 * 60 * 60 * 1000)
-
-    timeSelector.value.minDate = minEndDate.toISOString().split('T')[0]
-    timeSelector.value.currentDate = bookingInfo.value.endTime
-      ? new Date(bookingInfo.value.endTime).toISOString().split('T')[0]
-      : timeSelector.value.minDate
-    timeSelector.value.currentTime = bookingInfo.value.endTime
-      ? new Date(bookingInfo.value.endTime).toTimeString().slice(0, 5)
-      : '09:00'
-  }
-
-  showTimeSelector.value = true
+  // 价格变化后重新筛选优惠券
+  filterAvailableCoupons()
 }
 
 function confirmTimeSelection() {
@@ -813,9 +882,35 @@ async function calculateDeliveryDistance() {
       bookingInfo.value.userLocation.longitude,
     )
 
-    // 限制距离在合理范围内
-    bookingInfo.value.deliveryDistance = Math.max(0.5, Math.min(distance, vehicleInfo.value.maxDeliveryDistance || 50))
-    console.log('计算送车距离:', bookingInfo.value.deliveryDistance, 'km')
+    console.log('计算送车距离:', distance, 'km', '最大距离:', vehicleInfo.value.maxDeliveryDistance)
+
+    // 检查是否超出最大送车距离
+    const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+    if (distance > maxDistance) {
+      // 超出最大距离，显示错误提示
+      uni.showModal({
+        title: '送车距离超限',
+        content: `选择的地址距离为 ${distance.toFixed(2)} km，超出了最大送车距离 ${maxDistance} km。请选择更近的地址或选择自提。`,
+        showCancel: false,
+        confirmText: '重新选择',
+        success: () => {
+          // 清除当前地址选择
+          bookingInfo.value.deliveryAddress = ''
+          bookingInfo.value.userLocation = {
+            latitude: 0,
+            longitude: 0,
+            address: '',
+          }
+          bookingInfo.value.deliveryDistance = 0
+          // 重新打开地址选择器
+          showLocationPicker.value = true
+        },
+      })
+      return
+    }
+
+    // 在允许范围内，设置距离
+    bookingInfo.value.deliveryDistance = Math.max(0.5, distance)
 
     // 重新计算价格
     await calculatePrice()
@@ -1251,10 +1346,10 @@ function selectService(serviceId: string) {
           </view>
           <view v-if="selectedInsurance" class="mt-[8rpx] rounded-[12rpx] bg-gray-50 p-[16rpx]">
             <view class="flex items-center justify-between">
-              <text class="text-[20rpx] text-gray-700 truncate flex-1">
+              <text class="flex-1 truncate text-[20rpx] text-gray-700">
                 {{ selectedInsurance.productName || '保险产品' }}
               </text>
-              <text class="text-[18rpx] text-orange-600 font-medium ml-[8rpx] flex-shrink-0">
+              <text class="ml-[8rpx] flex-shrink-0 text-[18rpx] text-orange-600 font-medium">
                 ¥{{ selectedInsurance.price || 0 }}
               </text>
             </view>
@@ -1264,7 +1359,9 @@ function selectService(serviceId: string) {
           </view>
           <view v-else class="mt-[8rpx]">
             <view class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[16rpx] text-center">
-              <text class="text-[20rpx] text-gray-500">暂未选择保险产品</text>
+              <text class="text-[20rpx] text-gray-500">
+                暂未选择保险产品
+              </text>
             </view>
           </view>
         </view>
@@ -1293,54 +1390,92 @@ function selectService(serviceId: string) {
               <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
             </view>
           </view>
-          <view v-if="selectedServices.length > 0" class="mt-[8rpx] grid grid-cols-2 gap-[10rpx]">
+          <view v-if="selectedServices.length > 0" class="grid grid-cols-2 mt-[8rpx] gap-[10rpx]">
             <view
               v-for="(serviceId, index) in selectedServices"
               :key="index"
-              class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[8rpx] flex items-center justify-between"
+              class="flex items-center justify-between rounded-[12rpx] bg-gray-50 px-[12rpx] py-[8rpx]"
             >
-              <text class="text-[20rpx] text-gray-700 truncate flex-1">
+              <text class="flex-1 truncate text-[20rpx] text-gray-700">
                 {{ valueAddedServices[serviceId]?.serviceName || '未知服务' }}
               </text>
-              <text class="text-[18rpx] text-orange-600 font-medium ml-[8rpx] flex-shrink-0">
+              <text class="ml-[8rpx] flex-shrink-0 text-[18rpx] text-orange-600 font-medium">
                 ¥{{ valueAddedServices[serviceId]?.price || 0 }}
               </text>
             </view>
           </view>
           <view v-else class="mt-[8rpx]">
             <view class="rounded-[12rpx] bg-gray-50 px-[12rpx] py-[16rpx] text-center">
-              <text class="text-[20rpx] text-gray-500">暂未选择增值服务</text>
+              <text class="text-[20rpx] text-gray-500">
+                暂未选择增值服务
+              </text>
             </view>
           </view>
         </view>
 
         <!-- 优惠券 -->
-        <view
-          class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]"
-          @tap="showCouponList = true"
-        >
-          <view class="flex items-center justify-between">
+        <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[16rpx] flex items-center justify-between">
             <view class="flex items-center">
-              <text
-                class="i-material-symbols-local-offer mr-[12rpx] text-[24rpx] text-purple-600"
-              />
+              <text class="i-material-symbols-local-offer mr-[12rpx] text-[24rpx] text-purple-600" />
               <text class="text-[28rpx] text-black font-semibold">
                 优惠券
               </text>
             </view>
-            <view class="flex items-center">
-              <text v-if="selectedCoupon" class="mr-[8rpx] text-[24rpx] text-purple-600">
-                -¥{{ selectedCoupon.discountAmount }}
-              </text>
-              <text v-else class="mr-[8rpx] text-[24rpx] text-gray-500">
-                {{ availableCoupons.length }}张可用
+            <view class="flex items-center" @tap="showCouponList = true">
+              <text v-if="!selectedCoupon" class="mr-[8rpx] text-[24rpx] text-gray-500">
+                {{ usableCoupons.length }}张可用
               </text>
               <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
             </view>
           </view>
-          <text v-if="selectedCoupon" class="mt-[8rpx] block text-[22rpx] text-gray-600">
-            {{ selectedCoupon.description }}
-          </text>
+
+          <!-- 已选优惠券展示 -->
+          <view v-if="selectedCoupon" class="mb-[16rpx]">
+            <view class="relative overflow-hidden border border-purple-200 rounded-[16rpx] bg-purple-50">
+              <!-- 优惠券主体 -->
+              <view class="flex">
+                <!-- 左侧金额区域 -->
+                <view class="relative w-[120rpx] flex flex-col items-center justify-center from-orange-400 to-orange-500 bg-gradient-to-r text-white">
+                  <text class="text-[28rpx] font-bold">
+                    ¥{{ selectedCoupon.discountAmount }}
+                  </text>
+                  <text class="text-[16rpx] opacity-90">
+                    {{ selectedCoupon.couponType === 'discount' ? '优惠券' : '代金券' }}
+                  </text>
+                  <!-- 右侧锯齿边 -->
+                  <view class="absolute h-[12rpx] w-[12rpx] rounded-full bg-purple-50 -right-[6rpx]" />
+                </view>
+
+                <!-- 右侧信息区域 -->
+                <view class="flex-1 bg-purple-50 p-[16rpx]">
+                  <view class="flex items-start justify-between">
+                    <view class="flex-1">
+                      <text class="mb-[4rpx] block text-[24rpx] text-black font-semibold">
+                        {{ selectedCoupon.couponName }}
+                      </text>
+                      <text class="text-[20rpx] text-gray-600">
+                        满{{ selectedCoupon.minAmount }}元可用
+                      </text>
+                    </view>
+                    <text
+                      class="text-[20rpx] text-purple-600 underline"
+                      @tap.stop="showCouponList = true"
+                    >
+                      更换
+                    </text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 未选择时的操作区域 -->
+          <view v-else class="flex items-center justify-center border border-gray-300 rounded-[16rpx] border-dashed py-[24rpx]" @tap="showCouponList = true">
+            <text class="text-[24rpx] text-gray-500">
+              点击选择优惠券
+            </text>
+          </view>
         </view>
 
         <!-- 费用明细 -->
@@ -1480,8 +1615,8 @@ function selectService(serviceId: string) {
         </view>
         <view
           class="rounded-[20rpx] bg-purple-600 px-[48rpx] py-[24rpx] text-[28rpx] text-white font-medium"
-          :class="{ 'opacity-50': submitLoading || !agreedToTerms }"
-          :disabled="submitLoading || !agreedToTerms"
+          :class="{ 'opacity-50': submitLoading || !agreedToTerms || !isDeliveryDistanceValid }"
+          :disabled="submitLoading || !agreedToTerms || !isDeliveryDistanceValid"
           @tap="submitBooking"
         >
           <text v-if="submitLoading">
@@ -1512,34 +1647,138 @@ function selectService(serviceId: string) {
 
     <!-- 优惠券选择弹窗 -->
     <BottomDrawer v-model:visible="showCouponList" title="选择优惠券">
-      <view class="mt-[32rpx] max-h-[800rpx]">
-        <view class="space-y-[16rpx]">
-          <view
-            v-for="coupon in availableCoupons"
-            :key="coupon.couponId"
-            class="border-2 rounded-[16rpx] p-[24rpx] transition-all"
-            :class="
-              selectedCoupon?.couponId === coupon.couponId
-                ? 'border-purple-600 bg-purple-50'
-                : 'border-gray-200 bg-white'
-            "
-            @tap="selectCoupon(coupon)"
-          >
-            <view class="flex items-center justify-between">
-              <view>
-                <text class="text-[26rpx] text-black font-medium">
-                  {{ coupon.title }}
-                </text>
-                <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
-                  {{ coupon.description }}
-                </text>
+      <view class="mt-[32rpx] max-h-[800rpx] overflow-y-auto">
+        <!-- 可使用优惠券 -->
+        <view v-if="usableCoupons.length > 0" class="mb-[32rpx]">
+          <view class="mb-[16rpx] px-[8rpx]">
+            <text class="text-[28rpx] text-green-600 font-semibold">
+              可使用（{{ usableCoupons.length }}张）
+            </text>
+          </view>
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="coupon in usableCoupons"
+              :key="coupon.userCouponId"
+              class="relative overflow-hidden border rounded-[24rpx] shadow-sm transition-all"
+              :class="
+                selectedCoupon?.userCouponId === coupon.userCouponId
+                  ? 'border-purple-600 bg-purple-50'
+                  : 'border-green-200 bg-white'
+              "
+              @tap="selectCoupon(coupon)"
+            >
+              <!-- 优惠券主体 -->
+              <view class="flex">
+                <!-- 左侧金额区域 -->
+                <view class="relative w-[160rpx] flex flex-col items-center justify-center from-orange-400 to-orange-500 bg-gradient-to-r text-white">
+                  <text class="text-[36rpx] font-bold">
+                    ¥{{ coupon.discountAmount }}
+                  </text>
+                  <text class="text-[20rpx] opacity-90">
+                    {{ coupon.couponType === 'discount' ? '优惠券' : '代金券' }}
+                  </text>
+                  <!-- 右侧锯齿边 -->
+                  <view class="absolute h-[16rpx] w-[16rpx] rounded-full bg-gray-50 -right-[8rpx]" />
+                </view>
+
+                <!-- 右侧信息区域 -->
+                <view class="flex-1 bg-white p-[24rpx]">
+                  <view class="mb-[16rpx] flex items-start justify-between">
+                    <view class="flex-1">
+                      <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
+                        {{ coupon.couponName }}
+                      </text>
+                      <text class="text-[24rpx] text-gray-600">
+                        来源：{{ coupon.source }}
+                      </text>
+                    </view>
+                    <text
+                      v-if="selectedCoupon?.userCouponId === coupon.userCouponId"
+                      class="rounded-full bg-purple-100 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-600"
+                    >
+                      已选择
+                    </text>
+                  </view>
+
+                  <view class="text-[22rpx] text-gray-500 space-y-[8rpx]">
+                    <text class="block">
+                      使用条件：满{{ coupon.minAmount }}元可用
+                    </text>
+                    <text class="block">
+                      适用范围：{{ coupon.applicableType === 'all' ? '全场通用' : coupon.applicableType === 'daily' ? '仅限日租' : '仅限月租' }}
+                    </text>
+                    <text class="block">
+                      有效期至：{{ new Date(coupon.expireTime).toLocaleDateString() }}
+                    </text>
+                  </view>
+                </view>
               </view>
-              <text class="text-[28rpx] text-purple-600 font-bold">
-                ¥{{ coupon.discountAmount }}
-              </text>
             </view>
           </view>
+        </view>
 
+        <!-- 不可使用优惠券 -->
+        <view v-if="unusableCoupons.length > 0" class="mb-[32rpx]">
+          <view class="mb-[16rpx] px-[8rpx]">
+            <text class="text-[28rpx] text-gray-500 font-semibold">
+              不可使用（{{ unusableCoupons.length }}张）
+            </text>
+          </view>
+          <view class="space-y-[16rpx]">
+            <view
+              v-for="coupon in unusableCoupons"
+              :key="coupon.userCouponId"
+              class="relative overflow-hidden border border-gray-200 rounded-[24rpx] opacity-60 shadow-sm"
+            >
+              <!-- 优惠券主体 -->
+              <view class="flex">
+                <!-- 左侧金额区域 -->
+                <view class="relative w-[160rpx] flex flex-col items-center justify-center bg-gray-300 text-white">
+                  <text class="text-[36rpx] font-bold">
+                    ¥{{ coupon.discountAmount }}
+                  </text>
+                  <text class="text-[20rpx] opacity-90">
+                    {{ coupon.couponType === 'discount' ? '优惠券' : '代金券' }}
+                  </text>
+                  <!-- 右侧锯齿边 -->
+                  <view class="absolute h-[16rpx] w-[16rpx] rounded-full bg-gray-50 -right-[8rpx]" />
+                </view>
+
+                <!-- 右侧信息区域 -->
+                <view class="flex-1 bg-gray-50 p-[24rpx]">
+                  <view class="mb-[16rpx] flex items-start justify-between">
+                    <view class="flex-1">
+                      <text class="mb-[8rpx] block text-[28rpx] text-gray-600 font-semibold">
+                        {{ coupon.couponName }}
+                      </text>
+                      <text class="text-[24rpx] text-gray-500">
+                        来源：{{ coupon.source }}
+                      </text>
+                    </view>
+                    <text class="rounded-full bg-red-100 px-[12rpx] py-[4rpx] text-[20rpx] text-red-600">
+                      {{ (coupon as any).unusableReason }}
+                    </text>
+                  </view>
+
+                  <view class="text-[22rpx] text-gray-500 space-y-[8rpx]">
+                    <text class="block">
+                      使用条件：满{{ coupon.minAmount }}元可用
+                    </text>
+                    <text class="block">
+                      适用范围：{{ coupon.applicableType === 'all' ? '全场通用' : coupon.applicableType === 'daily' ? '仅限日租' : '仅限月租' }}
+                    </text>
+                    <text class="block">
+                      有效期至：{{ new Date(coupon.expireTime).toLocaleDateString() }}
+                    </text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 不使用优惠券选项 -->
+        <view class="mb-[32rpx]">
           <view
             class="border-2 rounded-[16rpx] p-[24rpx] transition-all"
             :class="
@@ -1553,6 +1792,14 @@ function selectService(serviceId: string) {
               不使用优惠券
             </text>
           </view>
+        </view>
+
+        <!-- 空状态 -->
+        <view v-if="usableCoupons.length === 0 && unusableCoupons.length === 0" class="py-[80rpx] text-center">
+          <text class="i-material-symbols-inbox mb-[16rpx] block text-[80rpx] text-gray-400" />
+          <text class="text-[28rpx] text-gray-500">
+            暂无优惠券
+          </text>
         </view>
       </view>
     </BottomDrawer>

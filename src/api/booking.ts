@@ -41,7 +41,7 @@ export interface BookingRequest {
     carWash: boolean
     detailing: boolean
   }
-  couponId?: number
+  userCouponId?: number
   totalAmount: number
   finalAmount: number
   discountAmount?: number
@@ -87,7 +87,7 @@ export function calculateBookingPrice(params: {
     carWash: boolean
     detailing: boolean
   }
-  couponId?: number
+  userCouponId?: number
   insuranceProductId?: string
   selectedServices?: string[]
 }): Promise<BaseRes<{

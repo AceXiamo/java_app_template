@@ -1,80 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import WalletHead from '@/components/page/my/wallet/Head.vue'
+import { type CouponStats, type UserCoupon, getCouponStats, getUserCoupons, redeemCoupon } from '@/api/coupon'
 
-// 钱包数据
-const walletData = ref({
-  balance: 128.50,
-  points: 2680,
-  coupons: {
-    available: 5,
-    used: 12,
-    expired: 3,
-  },
+// 优惠券统计数据
+const couponStats = ref<CouponStats>({
+  available: 0,
+  used: 0,
+  expired: 0,
 })
 
 // 优惠券列表
-const coupons = ref([
-  {
-    id: 1,
-    title: '新用户专享',
-    description: '首次租车立减',
-    amount: 50,
-    type: 'discount',
-    status: 'available',
-    expireDate: '2024-12-31',
-    conditions: '满200元可用',
-    scope: '全场通用',
-  },
-  {
-    id: 2,
-    title: '周末特惠',
-    description: '周末租车优惠',
-    amount: 30,
-    type: 'discount',
-    status: 'available',
-    expireDate: '2024-03-15',
-    conditions: '满100元可用',
-    scope: '仅限周末',
-  },
-  {
-    id: 3,
-    title: '月租专享',
-    description: '月租订单优惠',
-    amount: 100,
-    type: 'discount',
-    status: 'available',
-    expireDate: '2024-06-30',
-    conditions: '仅限月租订单',
-    scope: '月租车型',
-  },
-  {
-    id: 4,
-    title: '春节大礼包',
-    description: '节日专属优惠',
-    amount: 80,
-    type: 'discount',
-    status: 'used',
-    expireDate: '2024-02-18',
-    conditions: '满300元可用',
-    scope: '全场通用',
-    usedDate: '2024-01-20',
-  },
-  {
-    id: 5,
-    title: '限时特惠',
-    description: '限时优惠券',
-    amount: 20,
-    type: 'discount',
-    status: 'expired',
-    expireDate: '2024-01-31',
-    conditions: '满50元可用',
-    scope: '全场通用',
-  },
-])
+const coupons = ref<UserCoupon[]>([])
 
 const activeTab = ref<'available' | 'used' | 'expired'>('available')
-const loading = ref(false)
 
 // 获取优惠券状态样式
 function getCouponStatusStyle(status: string) {
@@ -98,29 +37,29 @@ function getCouponStatusStyle(status: string) {
   return statusMap[status] || statusMap.available
 }
 
-// 筛选优惠券
+// 筛选优惠券（由于我们根据activeTab加载数据，这里直接返回）
 const filteredCoupons = computed(() => {
-  return coupons.value.filter(coupon => coupon.status === activeTab.value)
+  return coupons.value
 })
 
 // 切换标签
-function switchTab(tab: 'available' | 'used' | 'expired') {
+async function switchTab(tab: 'available' | 'used' | 'expired') {
   activeTab.value = tab
+  await loadCoupons()
 }
 
 // 使用优惠券
-function useCoupon(couponId: number) {
-  const coupon = coupons.value.find(c => c.id === couponId)
+function useCoupon(userCouponId: number) {
+  const coupon = coupons.value.find(c => c.userCouponId === userCouponId)
   if (coupon?.status === 'available') {
     uni.showModal({
       title: '使用优惠券',
-      content: `确定要使用 ${coupon.title} 优惠券吗？`,
+      content: `确定要使用 ${coupon.couponName} 优惠券吗？`,
       success: (res) => {
         if (res.confirm) {
-          // 这里应该跳转到选择车辆或订单页面
-          uni.showToast({
-            title: '请先选择车辆',
-            icon: 'none',
+          // 跳转到车辆列表页面
+          uni.navigateTo({
+            url: '/pages/cars/index',
           })
         }
       },
@@ -128,99 +67,129 @@ function useCoupon(couponId: number) {
   }
 }
 
-// 充值余额
-function recharge() {
-  uni.showActionSheet({
-    itemList: ['充值50元', '充值100元', '充值200元', '充值500元', '自定义金额'],
-    success: (res) => {
-      const amounts = [50, 100, 200, 500]
-      if (res.tapIndex < 4) {
-        const amount = amounts[res.tapIndex]
-        uni.showModal({
-          title: '确认充值',
-          content: `确定要充值 ${amount} 元吗？`,
-          success: (modalRes) => {
-            if (modalRes.confirm) {
-              // 模拟充值
-              walletData.value.balance += amount
-              uni.showToast({
-                title: '充值成功',
-                icon: 'success',
-              })
-            }
-          },
-        })
-      }
-      else {
-        // 自定义金额
-        uni.showToast({
-          title: '跳转充值页面',
-          icon: 'none',
-        })
-      }
-    },
-  })
-}
-
-// 积分兑换
-function exchangePoints() {
-  uni.showActionSheet({
-    itemList: ['兑换5元优惠券 (500积分)', '兑换10元优惠券 (1000积分)', '兑换20元优惠券 (2000积分)'],
-    success: (res) => {
-      const exchanges = [
-        { amount: 5, points: 500 },
-        { amount: 10, points: 1000 },
-        { amount: 20, points: 2000 },
-      ]
-
-      const exchange = exchanges[res.tapIndex]
-      if (walletData.value.points >= exchange.points) {
-        uni.showModal({
-          title: '确认兑换',
-          content: `确定要用 ${exchange.points} 积分兑换 ${exchange.amount} 元优惠券吗？`,
-          success: (modalRes) => {
-            if (modalRes.confirm) {
-              walletData.value.points -= exchange.points
-              walletData.value.coupons.available += 1
-
+// 兑换码兑换优惠券
+async function redeemCouponByCode() {
+  uni.showModal({
+    title: '兑换优惠券',
+    content: '',
+    editable: true,
+    placeholderText: '请输入兑换码',
+    success: async (res) => {
+      if (res.confirm && res.content) {
+        const redeemCode = res.content.trim()
+        if (redeemCode) {
+          try {
+            uni.showLoading({
+              title: '兑换中...',
+            })
+            const response = await redeemCoupon({ redeemCode })
+            if (response.code === 200) {
               uni.showToast({
                 title: '兑换成功',
                 icon: 'success',
               })
+              // 重新加载数据
+              await loadCouponData()
             }
-          },
-        })
-      }
-      else {
-        uni.showToast({
-          title: '积分不足',
-          icon: 'error',
-        })
+            else {
+              uni.showToast({
+                title: response.msg || '兑换失败',
+                icon: 'error',
+              })
+            }
+          }
+          catch (error) {
+            console.error('兑换优惠券失败:', error)
+            uni.showToast({
+              title: '兑换失败，请重试',
+              icon: 'error',
+            })
+          }
+          finally {
+            uni.hideLoading()
+          }
+        }
+        else {
+          uni.showToast({
+            title: '请输入有效的兑换码',
+            icon: 'error',
+          })
+        }
       }
     },
   })
 }
 
 // 查看优惠券详情
-function viewCouponDetail(coupon: any) {
+function viewCouponDetail(coupon: UserCoupon) {
   const statusText = getCouponStatusStyle(coupon.status).text
-  let content = `优惠金额：${coupon.amount}元\n使用条件：${coupon.conditions}\n适用范围：${coupon.scope}\n有效期至：${coupon.expireDate}\n状态：${statusText}`
+  const expireDate = new Date(coupon.expireTime).toLocaleDateString()
+  let content = `优惠金额：${coupon.discountAmount}元\n最低消费：满${coupon.minAmount}元可用\n适用范围：${coupon.applicableType === 'all' ? '全场通用' : coupon.applicableType === 'daily' ? '仅限日租' : '仅限月租'}\n有效期至：${expireDate}\n状态：${statusText}`
 
-  if (coupon.usedDate) {
-    content += `\n使用时间：${coupon.usedDate}`
+  if (coupon.usedTime) {
+    const usedDate = new Date(coupon.usedTime).toLocaleDateString()
+    content += `\n使用时间：${usedDate}`
   }
 
   uni.showModal({
-    title: coupon.title,
+    title: coupon.couponName,
     content,
     showCancel: false,
     confirmText: '知道了',
   })
 }
 
+// 加载优惠券统计数据
+async function loadCouponStats() {
+  try {
+    const response = await getCouponStats()
+    if (response.code === 200 && response.data) {
+      couponStats.value = response.data
+    }
+  }
+  catch (error) {
+    console.error('加载优惠券统计失败:', error)
+  }
+}
+
+// 加载优惠券列表
+async function loadCoupons() {
+  try {
+    uni.showLoading({
+      title: '加载中...',
+    })
+    const response = await getUserCoupons({
+      status: activeTab.value,
+      pageNum: 1,
+      pageSize: 50,
+    })
+    if (response.code === 200 && response.rows) {
+      coupons.value = response.rows
+    }
+  }
+  catch (error) {
+    console.error('加载优惠券列表失败:', error)
+    uni.showToast({
+      title: '加载失败，请重试',
+      icon: 'error',
+    })
+  }
+  finally {
+    uni.hideLoading()
+  }
+}
+
+// 加载所有数据
+async function loadCouponData() {
+  await Promise.all([
+    loadCouponStats(),
+    loadCoupons(),
+  ])
+}
+
 // 页面加载时获取数据
 onMounted(() => {
-  // 这里可以加载真实数据
+  loadCouponData()
 })
 </script>
 
@@ -232,44 +201,33 @@ onMounted(() => {
     <!-- 主要内容区域 -->
     <view class="flex-1 overflow-y-auto">
       <view class="p-[32rpx] space-y-[32rpx]">
-        <!-- 余额和积分卡片 -->
-        <view class="rounded-[32rpx] from-purple-600 to-purple-800 bg-gradient-to-r p-[40rpx] text-white">
-          <view class="mb-[32rpx]">
-            <text class="mb-[8rpx] block text-[24rpx] text-white/80">
-              账户余额
-            </text>
-            <text class="text-[48rpx] font-bold">
-              ¥{{ walletData.balance.toFixed(2) }}
-            </text>
-          </view>
-
-          <view class="flex items-center justify-between">
+        <!-- 优惠券头部卡片 -->
+        <view class="rounded-[32rpx] from-orange-500 to-orange-600 bg-gradient-to-r p-[40rpx] text-white">
+          <view class="mb-[24rpx] flex items-center justify-between">
             <view>
-              <text class="mb-[8rpx] block text-[24rpx] text-white/80">
-                积分
+              <text class="mb-[8rpx] block text-[28rpx] text-white/90">
+                我的优惠券
               </text>
-              <text class="text-[32rpx] font-semibold">
-                {{ walletData.points.toLocaleString() }}
+              <text class="text-[48rpx] font-bold">
+                {{ couponStats.available }}
+              </text>
+              <text class="ml-[8rpx] text-[24rpx] text-white/80">
+                张可用
               </text>
             </view>
 
-            <view class="flex space-x-[16rpx]">
+            <view class="flex flex-col items-end space-y-[8rpx]">
               <view
                 class="border border-white/30 rounded-[16rpx] bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm"
-                @tap="recharge"
+                @tap="redeemCouponByCode"
               >
                 <text class="text-[24rpx] text-white font-medium">
-                  充值
+                  兑换码
                 </text>
               </view>
-              <view
-                class="border border-white/30 rounded-[16rpx] bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm"
-                @tap="exchangePoints"
-              >
-                <text class="text-[24rpx] text-white font-medium">
-                  兑换
-                </text>
-              </view>
+              <text class="text-[20rpx] text-white/70">
+                输入兑换码获取优惠券
+              </text>
             </view>
           </view>
         </view>
@@ -286,7 +244,7 @@ onMounted(() => {
           <view class="grid grid-cols-3 gap-[24rpx]">
             <view class="rounded-[16rpx] bg-orange-50 p-[24rpx] text-center">
               <text class="mb-[8rpx] block text-[36rpx] text-orange-600 font-bold">
-                {{ walletData.coupons.available }}
+                {{ couponStats.available }}
               </text>
               <text class="text-[24rpx] text-gray-600">
                 可使用
@@ -294,7 +252,7 @@ onMounted(() => {
             </view>
             <view class="rounded-[16rpx] bg-gray-50 p-[24rpx] text-center">
               <text class="mb-[8rpx] block text-[36rpx] text-gray-600 font-bold">
-                {{ walletData.coupons.used }}
+                {{ couponStats.used }}
               </text>
               <text class="text-[24rpx] text-gray-600">
                 已使用
@@ -302,7 +260,7 @@ onMounted(() => {
             </view>
             <view class="rounded-[16rpx] bg-red-50 p-[24rpx] text-center">
               <text class="mb-[8rpx] block text-[36rpx] text-red-600 font-bold">
-                {{ walletData.coupons.expired }}
+                {{ couponStats.expired }}
               </text>
               <text class="text-[24rpx] text-gray-600">
                 已过期
@@ -341,7 +299,7 @@ onMounted(() => {
 
           <!-- 优惠券列表 -->
           <view class="p-[32rpx]">
-            <view v-if="filteredCoupons.length === 0" class="py-[80rpx] text-center">
+            <view v-if="filteredCoupons.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
               <text class="i-material-symbols-inbox mb-[16rpx] block text-[80rpx] text-gray-400" />
               <text class="text-[28rpx] text-gray-500">
                 暂无{{ activeTab === 'available' ? '可用' : activeTab === 'used' ? '已使用' : '过期' }}优惠券
@@ -351,7 +309,7 @@ onMounted(() => {
             <view v-else class="space-y-[24rpx]">
               <view
                 v-for="coupon in filteredCoupons"
-                :key="coupon.id"
+                :key="coupon.userCouponId"
                 class="relative overflow-hidden border border-gray-100 rounded-[24rpx] shadow-sm"
                 @tap="viewCouponDetail(coupon)"
               >
@@ -363,10 +321,10 @@ onMounted(() => {
                     :class="getCouponStatusStyle(coupon.status).bgClass"
                   >
                     <text class="text-[36rpx] font-bold">
-                      ¥{{ coupon.amount }}
+                      ¥{{ coupon.discountAmount }}
                     </text>
                     <text class="text-[20rpx] opacity-90">
-                      {{ coupon.type === 'discount' ? '优惠券' : '代金券' }}
+                      {{ coupon.couponType === 'discount' ? '优惠券' : '代金券' }}
                     </text>
 
                     <!-- 右侧锯齿边 -->
@@ -378,10 +336,10 @@ onMounted(() => {
                     <view class="mb-[16rpx] flex items-start justify-between">
                       <view class="flex-1">
                         <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
-                          {{ coupon.title }}
+                          {{ coupon.couponName }}
                         </text>
                         <text class="text-[24rpx] text-gray-600">
-                          {{ coupon.description }}
+                          来源：{{ coupon.source }}
                         </text>
                       </view>
                       <text
@@ -394,17 +352,17 @@ onMounted(() => {
 
                     <view class="text-[22rpx] text-gray-500 space-y-[8rpx]">
                       <text class="block">
-                        使用条件：{{ coupon.conditions }}
+                        使用条件：满{{ coupon.minAmount }}元可用
                       </text>
                       <text class="block">
-                        适用范围：{{ coupon.scope }}
+                        适用范围：{{ coupon.applicableType === 'all' ? '全场通用' : coupon.applicableType === 'daily' ? '仅限日租' : '仅限月租' }}
                       </text>
                       <view class="flex items-center justify-between">
-                        <text>有效期至：{{ coupon.expireDate }}</text>
+                        <text>有效期至：{{ new Date(coupon.expireTime).toLocaleDateString() }}</text>
                         <view
                           v-if="coupon.status === 'available'"
                           class="rounded-[12rpx] bg-orange-600 px-[16rpx] py-[8rpx] text-[20rpx] text-white"
-                          @tap.stop="useCoupon(coupon.id)"
+                          @tap.stop="useCoupon(coupon.userCouponId)"
                         >
                           立即使用
                         </view>
@@ -412,8 +370,8 @@ onMounted(() => {
                     </view>
 
                     <!-- 已使用时间 -->
-                    <text v-if="coupon.usedDate" class="mt-[8rpx] block text-[22rpx] text-gray-400">
-                      使用时间：{{ coupon.usedDate }}
+                    <text v-if="coupon.usedTime" class="mt-[8rpx] block text-[22rpx] text-gray-400">
+                      使用时间：{{ new Date(coupon.usedTime).toLocaleDateString() }}
                     </text>
                   </view>
                 </view>
@@ -445,7 +403,7 @@ onMounted(() => {
               • 过期优惠券将自动失效，不可退换
             </text>
             <text class="block">
-              • 积分可兑换优惠券，兑换后立即生效
+              • 可通过兑换码获取优惠券，兑换后立即生效
             </text>
           </view>
         </view>
@@ -455,12 +413,6 @@ onMounted(() => {
       </view>
     </view>
 
-    <!-- 加载状态 -->
-    <view v-if="loading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/80">
-      <text class="text-[28rpx] text-gray-500">
-        加载中...
-      </text>
-    </view>
   </view>
 </template>
 
