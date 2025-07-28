@@ -248,3 +248,16 @@ export function returnVerify(orderId: number, photos: string[]): Promise<BaseRes
     }
   })
 }
+
+/**
+ * 确认订单完成 - 车主/平台方使用
+ */
+export function confirmOrderCompletion(orderId: number, completedBy: string, remark?: string): Promise<BaseRes<any>> {
+  return request.post({
+    url: `${host}/api/orders/${orderId}/complete`,
+    data: {
+      completedBy,
+      remark
+    }
+  })
+}

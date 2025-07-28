@@ -5,7 +5,7 @@ import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
-import { type OwnerOrder, type OwnerOrderQueryParams, getOwnerOrders, pickupVerify, returnVerify } from '@/api/owner-orders'
+import { type OwnerOrder, type OwnerOrderQueryParams, getOwnerOrders, pickupVerify, returnVerify, confirmOrderCompletion } from '@/api/owner-orders'
 import { uploadFileToOss } from '@/utils/alioss'
 
 // 使用 owner store
@@ -276,6 +276,60 @@ async function submitVerification() {
     })
   }
 }
+
+// 确认订单完成
+async function confirmCompletion(order: any) {
+  try {
+    // 显示确认对话框
+    const result = await new Promise<boolean>((resolve) => {
+      uni.showModal({
+        title: '确认订单完成',
+        content: `确认订单 ${order.orderNo} 已完成？完成后车辆将进入维护状态。`,
+        confirmText: '确认完成',
+        cancelText: '取消',
+        success: (res) => {
+          resolve(res.confirm)
+        },
+        fail: () => {
+          resolve(false)
+        }
+      })
+    })
+
+    if (!result) return
+
+    uni.showLoading({ title: '确认完成中...' })
+
+    // 调用确认完成API
+    await confirmOrderCompletion(order.orderId, '车主', '车主确认订单已完成')
+
+    uni.hideLoading()
+    uni.showToast({ 
+      title: '订单已确认完成', 
+      icon: 'success',
+      duration: 2000
+    })
+
+    // 更新本地状态
+    const localOrder = orderList.value.find(o => o.orderId === order.orderId)
+    if (localOrder) {
+      localOrder.status = 'completed'
+      localOrder.statusText = '已完成'
+    }
+
+    // 重新加载订单列表以获取最新状态
+    await loadOrders()
+    
+  } catch (error) {
+    uni.hideLoading()
+    console.error('确认订单完成失败:', error)
+    uni.showToast({ 
+      title: error?.message || '确认完成失败，请重试', 
+      icon: 'none',
+      duration: 3000
+    })
+  }
+}
 </script>
 
 <template>
@@ -511,6 +565,28 @@ async function submitVerification() {
                     @tap="confirmReturn(order)"
                   >
                     确认还车
+                  </view>
+                  <view
+                    class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
+                    @tap="contactUser(order.userPhone || '')"
+                  >
+                    联系用户
+                  </view>
+                  <view
+                    class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[20rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors duration-200 active:bg-purple-100"
+                    @tap="goToOrderDetail(order.orderNo)"
+                  >
+                    查看详情
+                  </view>
+                </template>
+
+                <!-- 已还车状态：等待确认完成 -->
+                <template v-else-if="order.status === 'returned'">
+                  <view
+                    class="flex-1 rounded-full bg-green-600 py-[20rpx] text-center text-[26rpx] text-white font-medium transition-colors duration-200 active:bg-green-700"
+                    @tap="confirmCompletion(order)"
+                  >
+                    确认完成
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"

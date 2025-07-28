@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
-import { type OwnerOrderDetail, getOwnerOrderDetail } from '@/api/owner-orders'
+import { type OwnerOrderDetail, getOwnerOrderDetail, confirmOrderCompletion } from '@/api/owner-orders'
 
 // 页面参数
 const props = defineProps<{
@@ -185,6 +185,54 @@ async function loadOrderDetail() {
   }
   finally {
     loading.value = false
+  }
+}
+
+// 确认订单完成
+async function confirmCompletion() {
+  try {
+    // 显示确认对话框
+    const result = await new Promise<boolean>((resolve) => {
+      uni.showModal({
+        title: '确认订单完成',
+        content: `确认订单 ${orderDetail.value.order_no} 已完成？完成后车辆将进入维护状态。`,
+        confirmText: '确认完成',
+        cancelText: '取消',
+        success: (res) => {
+          resolve(res.confirm)
+        },
+        fail: () => {
+          resolve(false)
+        }
+      })
+    })
+
+    if (!result) return
+
+    uni.showLoading({ title: '确认完成中...' })
+
+    // 调用确认完成API
+    await confirmOrderCompletion(orderDetail.value.order_id, '车主', '车主确认订单已完成')
+
+    uni.hideLoading()
+    uni.showToast({ 
+      title: '订单已确认完成', 
+      icon: 'success',
+      duration: 2000
+    })
+
+    // 更新本地状态
+    orderDetail.value.status = 'completed'
+    orderDetail.value.statusText = '已完成'
+    
+  } catch (error) {
+    uni.hideLoading()
+    console.error('确认订单完成失败:', error)
+    uni.showToast({ 
+      title: error?.message || '确认完成失败，请重试', 
+      icon: 'none',
+      duration: 3000
+    })
   }
 }
 
@@ -769,18 +817,43 @@ uni.setNavigationBarTitle({
 
         <!-- 操作按钮 -->
         <view class="flex pb-[32rpx] space-x-[16rpx]">
-          <view
-            class="flex-1 rounded-full bg-gray-100 py-[24rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors active:bg-gray-200"
-            @tap="contactUser"
-          >
-            联系用户
-          </view>
-          <view
-            class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[24rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors active:bg-purple-100"
-            @tap="goToTimeline"
-          >
-            查看时间线
-          </view>
+          <!-- 已还车状态：显示确认完成按钮 -->
+          <template v-if="orderDetail.status === 'returned'">
+            <view
+              class="flex-1 rounded-full bg-green-600 py-[24rpx] text-center text-[26rpx] text-white font-medium transition-colors active:bg-green-700"
+              @tap="confirmCompletion"
+            >
+              确认完成
+            </view>
+            <view
+              class="flex-1 rounded-full bg-gray-100 py-[24rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors active:bg-gray-200"
+              @tap="contactUser"
+            >
+              联系用户
+            </view>
+            <view
+              class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[24rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors active:bg-purple-100"
+              @tap="goToTimeline"
+            >
+              查看时间线
+            </view>
+          </template>
+          
+          <!-- 其他状态：默认按钮 -->
+          <template v-else>
+            <view
+              class="flex-1 rounded-full bg-gray-100 py-[24rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors active:bg-gray-200"
+              @tap="contactUser"
+            >
+              联系用户
+            </view>
+            <view
+              class="flex-1 border border-purple-200 rounded-full bg-purple-50 py-[24rpx] text-center text-[26rpx] text-purple-600 font-medium transition-colors active:bg-purple-100"
+              @tap="goToTimeline"
+            >
+              查看时间线
+            </view>
+          </template>
         </view>
       </view>
 

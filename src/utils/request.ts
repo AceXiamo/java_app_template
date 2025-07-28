@@ -7,10 +7,10 @@ const mode = import.meta.env.MODE
 let domain: string, host: string
 
 if (mode === 'development') {
-  domain = '127.0.0.1:8080'
-  host = `http://${domain}`
-  // domain = 'car-dev.zeabur.app'
-  // host = `https://${domain}`
+  // domain = '127.0.0.1:8080'
+  // host = `http://${domain}`
+  domain = 'car-dev.zeabur.app'
+  host = `https://${domain}`
 }
 else {
   domain = 'car-dev.zeabur.app'

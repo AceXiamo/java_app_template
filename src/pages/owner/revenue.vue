@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import { useOwnerStore } from '@/store/owner'
+import { getOwnerRevenueRecords, type OwnerRevenueRecord, type OwnerRevenueQueryParams } from '@/api/owner-revenue'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
@@ -11,46 +12,9 @@ const { revenueData } = storeToRefs(ownerStore)
 // 设置当前页面
 ownerStore.setActive('revenue')
 
-// 注意：此页面使用占位数据，实际应该从API获取收益明细
-// 建议使用 ownerRevenue.vue 组件或创建专门的API调用
-
 // 收益详情数据
 const detailsData = reactive({
-  revenueDetails: [
-    {
-      id: 1,
-      date: '2025-07-20',
-      vehicle: '特斯拉Model3',
-      orderNo: 'RO20250720001',
-      totalAmount: 299,
-      commission: 254,
-      commissionRate: 85,
-      packageType: '基础托管套餐',
-      status: 'settled'
-    },
-    {
-      id: 2,
-      date: '2025-07-19',
-      vehicle: '比亚迪汉EV',
-      orderNo: 'RO20250719001',
-      totalAmount: 199,
-      commission: 149,
-      commissionRate: 75,
-      packageType: '标准托管套餐',
-      status: 'settled'
-    },
-    {
-      id: 3,
-      date: '2025-07-18',
-      vehicle: '理想L7',
-      orderNo: 'RO20250718001',
-      totalAmount: 359,
-      commission: 305,
-      commissionRate: 85,
-      packageType: '基础托管套餐',
-      status: 'pending'
-    }
-  ],
+  revenueDetails: [] as OwnerRevenueRecord[],
   withdrawalRecords: [
     {
       id: 1,
@@ -79,6 +43,9 @@ const detailsData = reactive({
   ]
 })
 
+// 加载状态
+const loading = ref(false)
+
 // 当前显示模式
 const currentTab = ref('revenue') // revenue | withdrawal
 
@@ -94,6 +61,36 @@ function goToWithdrawalRecords() {
 function goToRevenueDetails() {
   currentTab.value = 'revenue'
 }
+
+// 加载收益记录
+async function loadRevenueRecords() {
+  try {
+    loading.value = true
+    const params: OwnerRevenueQueryParams = {
+      pageNum: 1,
+      pageSize: 100, // 获取最近100条记录
+      status: 'settled' // 只获取已结算的记录
+    }
+    
+    const response = await getOwnerRevenueRecords(params)
+    if (response.code === 200) {
+      detailsData.revenueDetails = response.data.records || []
+    }
+  } catch (error) {
+    console.error('加载收益记录失败:', error)
+    uni.showToast({
+      title: '加载失败',
+      icon: 'error'
+    })
+  } finally {
+    loading.value = false
+  }
+}
+
+// 页面初始化
+onMounted(() => {
+  loadRevenueRecords()
+})
 
 // 状态样式映射
 function getStatusStyle(status: string) {
@@ -240,15 +237,29 @@ function handleStatistics() {
 
       <!-- 收益明细 -->
       <view v-if="currentTab === 'revenue'" class="px-[40rpx] space-y-[24rpx] pb-[48rpx]">
+        <!-- 加载状态 -->
+        <view v-if="loading" class="flex items-center justify-center py-[80rpx]">
+          <text class="text-[28rpx] text-gray-500">加载中...</text>
+        </view>
+
+        <!-- 空状态 -->
+        <view v-else-if="detailsData.revenueDetails.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
+          <text class="i-material-symbols-account-balance-wallet text-[80rpx] text-gray-300 mb-[24rpx]" />
+          <text class="text-[28rpx] text-gray-500 mb-[16rpx]">暂无收益记录</text>
+          <text class="text-[24rpx] text-gray-400">完成订单后会自动生成收益记录</text>
+        </view>
+
+        <!-- 收益记录列表 -->
         <view 
+          v-else
           v-for="item in detailsData.revenueDetails" 
-          :key="item.id"
+          :key="item.revenueId"
           class="bg-white/70 backdrop-blur-sm rounded-xl shadow-md border border-white/20 overflow-hidden"
         >
           <!-- 日期和状态 -->
           <view class="bg-gradient-to-r from-gray-50/50 to-gray-50/50 px-[24rpx] py-[16rpx] border-b border-white/10">
             <view class="flex items-center justify-between">
-              <text class="text-[28rpx] font-medium text-gray-800">{{ item.date }}</text>
+              <text class="text-[28rpx] font-medium text-gray-800">{{ item.settlementDate }}</text>
               <text 
                 class="rounded-full px-[16rpx] py-[6rpx] text-[20rpx] font-medium"
                 :class="getStatusStyle(item.status)"
@@ -263,7 +274,10 @@ function handleStatistics() {
             <!-- 车辆信息 -->
             <view class="flex items-center space-x-[16rpx]">
               <text class="i-material-symbols-directions-car text-[24rpx] text-purple-600" />
-              <text class="text-[26rpx] text-gray-800 font-medium">{{ item.vehicle }}</text>
+              <text class="text-[26rpx] text-gray-800 font-medium">
+                {{ item.vehicleName || '未知车辆' }}
+                {{ item.licensePlate ? `(${item.licensePlate})` : '' }}
+              </text>
             </view>
 
             <!-- 订单号 -->
@@ -276,24 +290,35 @@ function handleStatistics() {
             <view class="bg-green-50/50 rounded-lg p-[16rpx]">
               <view class="flex items-center justify-between mb-[8rpx]">
                 <text class="text-[24rpx] text-gray-600">订单总额</text>
-                <text class="text-[26rpx] font-medium text-gray-800">¥{{ item.totalAmount }}</text>
+                <text class="text-[26rpx] font-medium text-gray-800">¥{{ item.orderTotalAmount?.toFixed(2) }}</text>
               </view>
               <view class="flex items-center justify-between mb-[8rpx]">
-                <text class="text-[24rpx] text-gray-600">分成比例</text>
-                <text class="text-[26rpx] font-medium text-blue-600">{{ item.commissionRate }}%</text>
+                <text class="text-[24rpx] text-gray-600">平台抽成</text>
+                <text class="text-[26rpx] font-medium text-blue-600">
+                  {{ (item.platformCommissionRate * 100)?.toFixed(1) }}%
+                </text>
+              </view>
+              <view class="flex items-center justify-between mb-[8rpx]">
+                <text class="text-[24rpx] text-gray-600">抽成金额</text>
+                <text class="text-[26rpx] font-medium text-red-600">-¥{{ item.platformCommissionAmount?.toFixed(2) }}</text>
               </view>
               <view class="flex items-center justify-between">
                 <text class="text-[24rpx] text-gray-600">我的收益</text>
-                <text class="text-[32rpx] font-bold text-green-600">¥{{ item.commission }}</text>
+                <text class="text-[32rpx] font-bold text-green-600">¥{{ item.finalRevenueAmount?.toFixed(2) }}</text>
               </view>
             </view>
 
             <!-- 套餐类型 -->
-            <view class="flex items-center justify-between">
+            <view v-if="item.packageType" class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">套餐类型</text>
               <text class="rounded-full bg-purple-100 px-[16rpx] py-[6rpx] text-[20rpx] text-purple-600">
                 {{ item.packageType }}
               </text>
+            </view>
+
+            <!-- 备注信息 -->
+            <view v-if="item.remark" class="text-[22rpx] text-gray-500 bg-gray-50/50 rounded-lg p-[12rpx]">
+              {{ item.remark }}
             </view>
           </view>
         </view>
