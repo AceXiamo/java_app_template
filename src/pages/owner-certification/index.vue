@@ -490,7 +490,7 @@ onMounted(async () => {
               </text>
               <textarea
                 v-model="formData.vehicleDescription"
-                class="h-[200rpx] w-full border border-gray-300 rounded p-[16rpx] text-[26rpx]"
+                class="h-[200rpx] w-full border border-gray-300 rounded text-[26rpx]"
                 placeholder="请简单描述您的车辆，如：品牌型号、年份、颜色、里程等"
                 maxlength="200"
               />
@@ -503,7 +503,7 @@ onMounted(async () => {
               </text>
               <textarea
                 v-model="formData.rentalIntention"
-                class="h-[200rpx] w-full border border-gray-300 rounded p-[16rpx] text-[26rpx]"
+                class="h-[200rpx] w-full border border-gray-300 rounded text-[26rpx]"
                 placeholder="请描述您的出租意向，如：期望价格、可出租时间等"
                 maxlength="200"
               />

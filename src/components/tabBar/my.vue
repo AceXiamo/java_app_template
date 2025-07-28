@@ -82,6 +82,15 @@ async function handleContactService() {
   }
 }
 
+// 检查用户是否有车主权限（车主或平台管理员）
+function isOwnerOrManager() {
+  if (!profileData.value?.userInfo)
+    return false
+
+  const userRole = profileData.value.userInfo.userRole
+  return userRole === 'owner' || userRole === 'platform_manager'
+}
+
 // 退出登录
 function handleLogout() {
   uni.showModal({
@@ -325,8 +334,8 @@ function handleLogout() {
             </view>
           </view>
 
-          <!-- 车主中心 -->
-          <view class="flex items-center justify-between" @tap="goToOwnerCenter">
+          <!-- 车主中心 - 仅车主和平台管理员可见 -->
+          <view v-if="isOwnerOrManager()" class="flex items-center justify-between" @tap="goToOwnerCenter">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-directions-car text-[36rpx] text-purple-600" />
