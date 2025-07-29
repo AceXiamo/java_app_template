@@ -5,8 +5,8 @@ import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
-import { getOwnerRevenueRecords, type OwnerRevenueQueryParams } from '@/api/owner-revenue'
-import { getOwnerWithdrawalMethods, type OwnerWithdrawalMethod } from '@/api/owner-withdrawal'
+import { type OwnerRevenueQueryParams, getOwnerRevenueRecords } from '@/api/owner-revenue'
+import { applyWithdrawal, getOwnerWithdrawalMethods, getWithdrawalRecords, type OwnerWithdrawalMethod } from '@/api/owner-withdrawal'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
@@ -33,15 +33,29 @@ const loading = ref(false)
 const revenueLoading = ref(false)
 const withdrawalLoading = ref(false)
 
+// 下拉刷新状态
+const refreshing = ref(false)
+
 // 当前显示模式
 const currentTab = ref('revenue') // revenue | withdrawal
+
+// 分页相关
+const pagination = reactive({
+  current: 1,
+  pageSize: 20,
+  total: 0,
+  hasMore: true,
+})
+
+// 加载更多状态
+const loadingMore = ref(false)
 
 // 提现弹窗相关
 const withdrawalDrawerVisible = ref(false)
 const withdrawalAmount = ref('')
 const selectedWithdrawalMethod = ref<any>(null)
 
-// 提现方式数据 - 从API获取  
+// 提现方式数据 - 从API获取
 const withdrawalMethods = ref<any[]>([])
 
 // 页面初始化时加载数据
@@ -49,23 +63,41 @@ onMounted(async () => {
   await Promise.all([
     loadRevenueDetails(),
     loadWithdrawalMethods(),
+    loadWithdrawalRecords(),
     ownerStore.loadOwnerData(), // 确保收益数据是最新的
   ])
 })
 
 // 加载收益明细
-async function loadRevenueDetails() {
+async function loadRevenueDetails(reset = true) {
   try {
-    revenueLoading.value = true
+    if (reset) {
+      revenueLoading.value = true
+      pagination.current = 1
+    }
+    else {
+      loadingMore.value = true
+    }
 
     const params: OwnerRevenueQueryParams = {
-      pageNum: 1,
-      pageSize: 20,
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize,
     }
 
     const response = await getOwnerRevenueRecords(params)
     if (response.code === 200 && response.data) {
-      detailsData.revenueDetails = response.data.records || []
+      const newRecords = response.data.records || []
+
+      if (reset) {
+        detailsData.revenueDetails = newRecords
+      }
+      else {
+        detailsData.revenueDetails.push(...newRecords)
+      }
+
+      // 更新分页信息
+      pagination.total = Number(response.data.total) || 0
+      pagination.hasMore = newRecords.length === pagination.pageSize
     }
   }
   catch (error) {
@@ -76,7 +108,52 @@ async function loadRevenueDetails() {
     })
   }
   finally {
-    revenueLoading.value = false
+    if (reset) {
+      revenueLoading.value = false
+    }
+    else {
+      loadingMore.value = false
+    }
+  }
+}
+
+// 加载更多收益记录
+async function loadMoreRevenue() {
+  if (!pagination.hasMore || loadingMore.value)
+    return
+
+  pagination.current += 1
+  await loadRevenueDetails(false)
+}
+
+// 下拉刷新
+async function handleRefresh() {
+  try {
+    refreshing.value = true
+
+    // 同时刷新所有数据
+    await Promise.all([
+      loadRevenueDetails(),
+      loadWithdrawalMethods(),
+      loadWithdrawalRecords(),
+      ownerStore.refreshRevenueData(),
+    ])
+
+    uni.showToast({
+      title: '刷新成功',
+      icon: 'success',
+      duration: 1500,
+    })
+  }
+  catch (error) {
+    console.error('刷新失败', error)
+    uni.showToast({
+      title: '刷新失败',
+      icon: 'none',
+    })
+  }
+  finally {
+    refreshing.value = false
   }
 }
 
@@ -93,9 +170,16 @@ async function loadWithdrawalMethods() {
         name: method.methodName,
         account: method.accountInfo,
         icon: method.methodType === 'bank' ? 'i-material-symbols-account-balance' : '',
-        iconUrl: method.methodType === 'wechat' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/wechat.png'
+        iconUrl: method.methodType === 'wechat'
+          ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/wechat.png'
           : method.methodType === 'alipay' ? 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/alipay.png' : '',
       }))
+
+      // 自动选中默认提现方式
+      const defaultMethod = withdrawalMethods.value.find(method => method.isDefault)
+      if (defaultMethod && !selectedWithdrawalMethod.value) {
+        selectedWithdrawalMethod.value = defaultMethod
+      }
     }
   }
   catch (error) {
@@ -105,6 +189,17 @@ async function loadWithdrawalMethods() {
 
 // 导航方法
 function goToWithdraw() {
+  // 重置提现金额
+  withdrawalAmount.value = ''
+
+  // 确保选中默认提现方式
+  if (!selectedWithdrawalMethod.value && withdrawalMethods.value.length > 0) {
+    const defaultMethod = withdrawalMethods.value.find(method => method.isDefault)
+    if (defaultMethod) {
+      selectedWithdrawalMethod.value = defaultMethod
+    }
+  }
+
   withdrawalDrawerVisible.value = true
 }
 
@@ -164,7 +259,7 @@ function selectWithdrawalMethod(method: any) {
   selectedWithdrawalMethod.value = method
 }
 
-function submitWithdrawal() {
+async function submitWithdrawal() {
   if (!withdrawalAmount.value) {
     uni.showToast({ title: '请输入提现金额', icon: 'none' })
     return
@@ -186,16 +281,69 @@ function submitWithdrawal() {
     return
   }
 
-  // TODO: 调用提现API
-  uni.showLoading({ title: '提交中...' })
+  try {
+    uni.showLoading({ title: '提交中...' })
 
-  setTimeout(() => {
+    // 调用真实的提现申请API
+    const response = await applyWithdrawal({
+      amount,
+      methodId: selectedWithdrawalMethod.value.id,
+    })
+
     uni.hideLoading()
-    uni.showToast({ title: '提现申请已提交', icon: 'success' })
-    withdrawalDrawerVisible.value = false
-    withdrawalAmount.value = ''
-    selectedWithdrawalMethod.value = null
-  }, 2000)
+
+    if (response.code === 200) {
+      // 提现申请成功
+      const result = response.data
+      uni.showToast({
+        title: '提现申请已提交',
+        icon: 'success',
+        duration: 2000,
+      })
+
+      // 显示申请结果详情
+      setTimeout(() => {
+        uni.showModal({
+          title: '提现申请成功',
+          content: `申请单号：${result.withdrawalNo}\n实际到账：¥${result.actualAmount}\n手续费：¥${result.fee}\n预计到账时间：${new Date(result.estimatedArrivalTime).toLocaleString()}`,
+          showCancel: false,
+          confirmText: '确定',
+        })
+      }, 500)
+
+      withdrawalDrawerVisible.value = false
+
+      // 重置表单状态
+      withdrawalAmount.value = ''
+
+      // 重新选中默认提现方式
+      const defaultMethod = withdrawalMethods.value.find(method => method.isDefault)
+      selectedWithdrawalMethod.value = defaultMethod || null
+
+      // 刷新余额数据和提现记录
+      await Promise.all([
+        ownerStore.refreshRevenueData(),
+        loadWithdrawalRecords(),
+      ])
+    }
+    else {
+      // 提现申请失败
+      uni.showToast({
+        title: response.msg || '提现申请失败',
+        icon: 'none',
+        duration: 3000,
+      })
+    }
+  }
+  catch (error) {
+    uni.hideLoading()
+    console.error('提现申请失败:', error)
+    uni.showToast({
+      title: '网络异常，请重试',
+      icon: 'none',
+      duration: 3000,
+    })
+  }
 }
 
 // 滚动监听
@@ -203,6 +351,32 @@ function onScroll(e: any) {
   const scrollTop = e.detail.scrollTop
   // 当滚动超过 300rpx 时（大概是卡片区域的高度），Tab 开始置顶显示背景
   isTabSticky.value = scrollTop > 300
+}
+
+// 加载提现记录
+async function loadWithdrawalRecords() {
+  try {
+    withdrawalLoading.value = true
+
+    const response = await getWithdrawalRecords()
+    if (response.code === 200 && response.data) {
+      detailsData.withdrawalRecords = response.data.map(record => ({
+        ...record,
+        // 为了兼容模板中的字段
+        id: record.withdrawalId,
+      }))
+    }
+  }
+  catch (error) {
+    console.error('加载提现记录失败', error)
+    uni.showToast({
+      title: '加载提现记录失败',
+      icon: 'none',
+    })
+  }
+  finally {
+    withdrawalLoading.value = false
+  }
 }
 </script>
 
@@ -220,7 +394,16 @@ function onScroll(e: any) {
     </HeadBar>
 
     <!-- 滚动内容区域 -->
-    <scroll-view scroll-y class="h-full w-full" @scroll="onScroll">
+    <scroll-view
+      scroll-y
+      class="h-0 w-full flex-1"
+      refresher-enabled
+      :refresher-triggered="refreshing"
+      lower-threshold="100"
+      @scroll="onScroll"
+      @refresherrefresh="handleRefresh"
+      @scrolltolower="loadMoreRevenue"
+    >
       <view class="px-[32rpx] pt-[32rpx]">
         <!-- 可提现余额卡片 -->
         <view class="relative mb-[32rpx]">
@@ -234,7 +417,7 @@ function onScroll(e: any) {
 
           <!-- 卡片内容 -->
           <view class="relative z-10 min-h-[160rpx] border border-white/30 rounded-xl bg-white/20 p-[32rpx] shadow-lg">
-            <text class="mb-[8rpx] block text-[24rpx] text-white/90">
+            <text class="mb-[8rpx] block text-[24rpx] text-white opacity-90">
               可提现余额
             </text>
             <text class="mb-[24rpx] block text-[48rpx] text-white font-bold">
@@ -244,7 +427,7 @@ function onScroll(e: any) {
             <view class="space-y-[16rpx]">
               <!-- 提现方式设置 -->
               <view class="flex items-center justify-between">
-                <text class="text-[20rpx] text-white/80">
+                <text class="text-[20rpx] text-white opacity-80">
                   提现方式
                 </text>
                 <view
@@ -370,16 +553,36 @@ function onScroll(e: any) {
 
       <!-- 收益明细 -->
       <view v-if="currentTab === 'revenue'" class="px-[32rpx] pb-[48rpx] pt-[24rpx] space-y-[24rpx]">
+        <!-- 加载状态 -->
+        <view v-if="revenueLoading" class="flex items-center justify-center py-[80rpx]">
+          <text class="text-[24rpx] text-gray-500">
+            加载中...
+          </text>
+        </view>
+
+        <!-- 空状态 -->
+        <view v-else-if="!detailsData.revenueDetails.length" class="flex flex-col items-center justify-center py-[120rpx]">
+          <text class="i-material-symbols-receipt-long mb-[16rpx] text-[80rpx] text-gray-300" />
+          <text class="mb-[8rpx] text-[28rpx] text-gray-400 font-medium">
+            暂无收益记录
+          </text>
+          <text class="text-[22rpx] text-gray-400">
+            完成订单后收益将在此显示
+          </text>
+        </view>
+
+        <!-- 收益列表 -->
         <view
           v-for="item in detailsData.revenueDetails"
-          :key="item.revenueId || item.id"
+          v-else
+          :key="item.revenueId"
           class="overflow-hidden rounded-[20rpx] bg-white shadow-sm"
         >
           <!-- 头部：日期和状态 -->
           <view class="border-b border-white/10 from-green-50/50 to-emerald-50/50 bg-gradient-to-r px-[24rpx] py-[16rpx]">
             <view class="flex items-center justify-between">
               <text class="text-[28rpx] text-gray-800 font-medium">
-                {{ item.date }}
+                {{ item.settlementDate || item.date }}
               </text>
               <text
                 class="rounded-full px-[16rpx] py-[6rpx] text-[20rpx] font-medium"
@@ -395,35 +598,37 @@ function onScroll(e: any) {
             <!-- 车辆信息区域 -->
             <view class="mb-[20rpx] flex">
               <view class="h-[100rpx] w-[140rpx] flex-shrink-0">
-                <image
-                  :src="item.vehicle?.imageUrl || item.vehicle?.image_url"
-                  mode="aspectFill"
-                  class="h-full w-full rounded-[12rpx]"
-                />
+                <!-- 暂时使用默认图片，实际车辆图片需要后端提供 -->
+                <view class="h-full w-full flex items-center justify-center rounded-[12rpx] from-blue-100 to-purple-100 bg-gradient-to-br">
+                  <text class="i-material-symbols-directions-car text-[40rpx] text-blue-600" />
+                </view>
               </view>
               <view class="ml-[20rpx] min-w-0 flex flex-1 flex-col justify-center">
                 <text class="truncate text-[26rpx] text-black font-bold">
-                  {{ item.vehicle.name }}
+                  {{ item.vehicleName }}
                 </text>
                 <view class="mt-[8rpx] flex items-center gap-x-[12rpx]">
                   <text class="rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx] text-[20rpx] text-blue-700 font-medium">
-                    {{ item.vehicle?.licensePlate || item.vehicle?.license_plate }}
+                    {{ item.licensePlate }}
                   </text>
                 </view>
                 <view class="mt-[6rpx] flex items-center">
                   <text class="i-material-symbols-person mr-[4rpx] text-[18rpx] text-gray-500" />
                   <text class="text-[22rpx] text-gray-600">
-                    {{ item.user?.name || item.userNickname }}
+                    {{ item.userNickname }}
+                  </text>
+                  <text v-if="item.userPhone" class="ml-[8rpx] text-[20rpx] text-gray-400">
+                    {{ item.userPhone }}
                   </text>
                 </view>
               </view>
               <!-- 收益金额 -->
               <view class="ml-[16rpx] min-w-[80rpx] flex flex-col items-end justify-between text-right">
                 <text class="text-[32rpx] text-green-600 font-bold">
-                  ¥{{ item.finalRevenueAmount || item.commission }}
+                  ¥{{ item.finalRevenueAmount.toFixed(2) }}
                 </text>
                 <text class="mt-[4rpx] block text-[20rpx] text-gray-400">
-                  {{ item.platformCommissionRate || item.commissionRate }}% 分成
+                  {{ (item.platformCommissionRate * 100).toFixed(1) }}% 平台抽成
                 </text>
               </view>
             </view>
@@ -438,21 +643,97 @@ function onScroll(e: any) {
               </view>
               <view class="flex items-center justify-between">
                 <text class="text-[22rpx] text-gray-600">
-                  订单总额：¥{{ item.orderTotalAmount || item.totalAmount }}
+                  订单总额：¥{{ item.orderTotalAmount.toFixed(2) }}
                 </text>
                 <text class="rounded-full bg-purple-100 px-[12rpx] py-[4rpx] text-[18rpx] text-purple-600">
-                  {{ item.packageType || '日租订单' }}
+                  {{ item.packageType }}
+                </text>
+              </view>
+            </view>
+
+            <!-- 收益详细拆分 -->
+            <view class="rounded-[14rpx] bg-blue-50/50 p-[16rpx] space-y-[8rpx]">
+              <view class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  车主收益：
+                </text>
+                <text class="text-[22rpx] text-green-600 font-medium">
+                  ¥{{ item.ownerRevenueAmount.toFixed(2) }}
+                </text>
+              </view>
+              <view class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  平台抽成：
+                </text>
+                <text class="text-[22rpx] text-orange-600 font-medium">
+                  ¥{{ item.platformCommissionAmount.toFixed(2) }}
+                </text>
+              </view>
+              <view v-if="item.serviceFee > 0" class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  服务费：
+                </text>
+                <text class="text-[22rpx] text-red-600 font-medium">
+                  -¥{{ item.serviceFee.toFixed(2) }}
+                </text>
+              </view>
+              <view v-if="item.bonusAmount > 0" class="flex items-center justify-between">
+                <text class="text-[22rpx] text-gray-600">
+                  奖励金额：
+                </text>
+                <text class="text-[22rpx] text-blue-600 font-medium">
+                  +¥{{ item.bonusAmount.toFixed(2) }}
+                </text>
+              </view>
+              <view class="flex items-center justify-between border-t border-gray-200 pt-[8rpx]">
+                <text class="text-[24rpx] text-gray-800 font-semibold">
+                  最终收益：
+                </text>
+                <text class="text-[24rpx] text-green-600 font-bold">
+                  ¥{{ item.finalRevenueAmount.toFixed(2) }}
                 </text>
               </view>
             </view>
           </view>
         </view>
+
+        <!-- 加载更多状态 -->
+        <view v-if="currentTab === 'revenue' && detailsData.revenueDetails.length > 0" class="flex items-center justify-center py-[32rpx]">
+          <view v-if="loadingMore" class="flex items-center space-x-[8rpx]">
+            <text class="text-[24rpx] text-gray-500">
+              加载中...
+            </text>
+          </view>
+          <text v-else-if="!pagination.hasMore" class="text-[22rpx] text-gray-400">
+            没有更多数据了
+          </text>
+        </view>
       </view>
 
       <!-- 提现记录 -->
       <view v-else class="px-[32rpx] pb-[48rpx] pt-[24rpx] space-y-[24rpx]">
+        <!-- 加载状态 -->
+        <view v-if="withdrawalLoading" class="flex items-center justify-center py-[80rpx]">
+          <text class="text-[24rpx] text-gray-500">
+            加载中...
+          </text>
+        </view>
+
+        <!-- 空状态 -->
+        <view v-else-if="!detailsData.withdrawalRecords.length" class="flex flex-col items-center justify-center py-[120rpx]">
+          <text class="i-material-symbols-account-balance-wallet mb-[16rpx] text-[80rpx] text-gray-300" />
+          <text class="mb-[8rpx] text-[28rpx] text-gray-400 font-medium">
+            暂无提现记录
+          </text>
+          <text class="text-[22rpx] text-gray-400">
+            提现申请后记录将在此显示
+          </text>
+        </view>
+
+        <!-- 提现列表 -->
         <view
           v-for="record in detailsData.withdrawalRecords"
+          v-else
           :key="record.id"
           class="overflow-hidden rounded-[20rpx] bg-white shadow-sm"
         >
@@ -562,16 +843,16 @@ function onScroll(e: any) {
           <text class="mb-[16rpx] block text-[26rpx] font-semibold">
             提现金额
           </text>
-          <view class="relative">
+          <view class="relative flex">
             <input
               v-model="withdrawalAmount"
-              class="w-full border border-gray-300 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[20rpx] text-[28rpx] placeholder:text-gray-400"
+              class="w-full relative z-1 border border-gray-300 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[20rpx] text-[28rpx] placeholder:text-gray-400"
               placeholder="请输入提现金额"
               type="digit"
             >
             <view
-              class="absolute right-[16rpx] top-1/2 transform border border-purple-600 rounded-[8rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600 -translate-y-1/2"
-              @tap="withdrawalAmount = revenueData.balance.toString()"
+              class="absolute z-2 right-[16rpx] top-1/2 transform border border-purple-600 rounded-[8rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600 -translate-y-1/2"
+              @tap="withdrawalAmount = revenueData.balance.toFixed(2)"
             >
               全部
             </view>

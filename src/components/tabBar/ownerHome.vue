@@ -1,9 +1,11 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
+import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
+import { completeVehicleMaintenance, updateVehicleStatus } from '@/api/vehicle'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
@@ -30,10 +32,10 @@ async function handleRefresh() {
   await ownerStore.refreshRevenueData()
 }
 
-// 导航方法
-function goToVehicleDetail(vehicleId: number) {
-  uni.navigateTo({ url: `/pages/owner/vehicle-detail?id=${vehicleId}` })
-}
+// 导航方法（暂时不使用，但保留以备后续可能需要）
+// function goToVehicleDetail(vehicleId: number) {
+//   uni.navigateTo({ url: `/pages/owner/vehicle-detail?id=${vehicleId}` })
+// }
 
 function goToAddVehicle() {
   uni.navigateTo({ url: '/pages/owner-certification/index' })
@@ -158,12 +160,100 @@ function getVehicleOperationTypeText(vehicle: any) {
     // 平台管理员视角：平台运营的车辆显示为"平台自营"
     if (vehicle.operationType === 'platform') {
       return '平台自营'
-    } else {
+    }
+    else {
       return '车主代运营'
     }
-  } else {
+  }
+  else {
     // 车主视角：使用原有的显示逻辑
     return vehicle.operationTypeText || (vehicle.operationType === 'owner' ? '车主自运营' : '平台代运营')
+  }
+}
+
+// 状态管理相关
+const statusDrawerVisible = ref(false)
+const currentVehicle = ref<any>(null)
+
+// 状态选项定义
+const statusOptions = computed(() => [
+  {
+    value: 'available',
+    label: '可租用',
+    colorClass: 'bg-green-500',
+    description: '车辆可正常租用',
+  },
+  {
+    value: 'maintenance',
+    label: '维护中',
+    colorClass: 'bg-red-500',
+    description: '车辆正在维护',
+  },
+  {
+    value: 'offline',
+    label: '下线',
+    colorClass: 'bg-gray-500',
+    description: '车辆暂停服务',
+  },
+])
+
+// 获取可用的状态选项（排除当前状态）
+const availableStatusOptions = computed(() => {
+  if (!currentVehicle.value)
+    return statusOptions.value
+  return statusOptions.value.filter(option => option.value !== currentVehicle.value.status)
+})
+
+// 打开状态变更抽屉
+function openStatusDrawer(vehicle: any) {
+  currentVehicle.value = vehicle
+  statusDrawerVisible.value = true
+}
+
+// 快捷状态变更（不需要打开抽屉）
+async function handleQuickStatusChange(vehicle: any, status: string) {
+  currentVehicle.value = vehicle
+  await changeVehicleStatus(status)
+}
+
+// 变更车辆状态
+async function changeVehicleStatus(status: string) {
+  if (!currentVehicle.value)
+    return
+
+  try {
+    // 显示加载状态
+    uni.showLoading({
+      title: '变更中...',
+    })
+
+    // 调用对应的API
+    if (status === 'available' && currentVehicle.value.status === 'maintenance') {
+      // 如果是从维护中变为可用，调用完成维护接口
+      await completeVehicleMaintenance(currentVehicle.value.vehicleId)
+    }
+    else {
+      // 其他状态变更调用通用状态更新接口
+      await updateVehicleStatus(currentVehicle.value.vehicleId, status)
+    }
+
+    uni.hideLoading()
+    uni.showToast({
+      title: '状态变更成功',
+      icon: 'success',
+    })
+
+    statusDrawerVisible.value = false
+    // 刷新数据
+    await handleRefresh()
+  }
+  catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: '状态变更失败',
+      icon: 'error',
+    })
+    console.error('状态变更失败:', error)
   }
 }
 </script>
@@ -377,8 +467,8 @@ function getVehicleOperationTypeText(vehicle: any) {
                 <view
                   v-for="vehicle in vehicleList"
                   :key="vehicle.vehicleId"
-                  class="border border-gray-100/50 py-[24rpx] backdrop-blur-sm"
-                  @tap="goToVehicleDetail(vehicle.vehicleId)"
+                  class="border border-gray-100/50 py-[24rpx] backdrop-blur-sm active:bg-gray-50/50"
+                  @longpress="openStatusDrawer(vehicle)"
                 >
                   <view class="flex items-start space-x-[20rpx]">
                     <!-- 车辆图片 -->
@@ -478,6 +568,38 @@ function getVehicleOperationTypeText(vehicle: any) {
                           </text>
                         </template>
                       </view>
+
+                      <!-- 快捷操作按钮 -->
+                      <view class="mt-[12rpx] flex items-center justify-end space-x-[8rpx]">
+                        <!-- 左侧：状态相关快捷按钮 -->
+                        <view class="flex items-center space-x-[8rpx]">
+                          <button
+                            v-if="vehicle.status === 'maintenance'"
+                            class="rounded-full bg-green-500/80 backdrop-blur-sm border border-green-300/30 px-[16rpx] py-[6rpx] text-[18rpx] text-white shadow-sm transition-all duration-200 active:bg-green-500/90 active:scale-95"
+                            @tap.stop="handleQuickStatusChange(vehicle, 'available')"
+                          >
+                            <text class="i-material-symbols-build text-[16rpx] mr-[4rpx]" />
+                            完成维护
+                          </button>
+                          <button
+                            v-else-if="vehicle.status === 'available'"
+                            class="rounded-full bg-orange-500/80 backdrop-blur-sm border border-orange-300/30 px-[16rpx] py-[6rpx] text-[18rpx] text-white shadow-sm transition-all duration-200 active:bg-orange-500/90 active:scale-95"
+                            @tap.stop="handleQuickStatusChange(vehicle, 'maintenance')"
+                          >
+                            <text class="i-material-symbols-build text-[16rpx] mr-[4rpx]" />
+                            设为维护
+                          </button>
+                        </view>
+
+                        <!-- 右侧：状态管理按钮 -->
+                        <button
+                          class="rounded-full bg-blue-500/80 backdrop-blur-sm border border-blue-300/30 px-[16rpx] py-[6rpx] text-[18rpx] text-white shadow-sm transition-all duration-200 active:bg-blue-500/90 active:scale-95"
+                          @tap.stop="openStatusDrawer(vehicle)"
+                        >
+                          <text class="i-material-symbols-settings text-[16rpx] mr-[4rpx]" />
+                          状态管理
+                        </button>
+                      </view>
                     </view>
                   </view>
                 </view>
@@ -501,5 +623,58 @@ function getVehicleOperationTypeText(vehicle: any) {
         </view>
       </scroll-view>
     </view>
+
+    <!-- 状态变更底部抽屉 -->
+    <BottomDrawer
+      v-model:visible="statusDrawerVisible"
+      title="变更车辆状态"
+      height="350rpx"
+    >
+      <view class="p-[20rpx]">
+        <!-- 当前车辆信息 -->
+        <view v-if="currentVehicle" class="mb-[20rpx] rounded-lg bg-gray-50 p-[16rpx]">
+          <view class="flex items-center space-x-[12rpx]">
+            <text class="text-[24rpx] text-gray-800 font-semibold">
+              {{ currentVehicle.brand }} {{ currentVehicle.model }}
+            </text>
+            <text class="text-[20rpx] text-gray-500">
+              {{ currentVehicle.licensePlate }}
+            </text>
+          </view>
+          <view class="mt-[8rpx] flex items-center space-x-[8rpx]">
+            <text class="text-[18rpx] text-gray-600">
+              当前状态：
+            </text>
+            <text
+              class="rounded-full px-[12rpx] py-[4rpx] text-[16rpx]"
+              :class="getStatusStyle(currentVehicle.status)"
+            >
+              {{ currentVehicle.statusText }}
+            </text>
+          </view>
+        </view>
+
+        <!-- 状态选项列表 -->
+        <view class="space-y-[12rpx]">
+          <view
+            v-for="option in availableStatusOptions"
+            :key="option.value"
+            class="flex items-center border border-gray-200 rounded-lg bg-white p-[16rpx] active:bg-gray-50"
+            @tap="changeVehicleStatus(option.value)"
+          >
+            <view class="mr-[16rpx] h-[12rpx] w-[12rpx] rounded-full" :class="option.colorClass" />
+            <view class="flex-1">
+              <text class="text-[20rpx] text-gray-800 font-medium">
+                {{ option.label }}
+              </text>
+              <text class="mt-[2rpx] block text-[16rpx] text-gray-500">
+                {{ option.description }}
+              </text>
+            </view>
+            <text class="i-material-symbols-chevron-right text-[20rpx] text-gray-400" />
+          </view>
+        </view>
+      </view>
+    </BottomDrawer>
   </view>
 </template>

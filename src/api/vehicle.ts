@@ -212,3 +212,18 @@ export function getSimilarVehicles(vehicleId: number, limit: number = 2): Promis
     },
   })
 }
+
+// 更新车辆状态
+export function updateVehicleStatus(vehicleId: number, status: string): Promise<BaseRes<any>> {
+  return request.put({
+    url: `${host}/api/vehicles/${vehicleId}/status`,
+    params: { status },
+  })
+}
+
+// 完成车辆维护
+export function completeVehicleMaintenance(vehicleId: number): Promise<BaseRes<any>> {
+  return request.put({
+    url: `${host}/api/vehicles/${vehicleId}/complete-maintenance`,
+  })
+}

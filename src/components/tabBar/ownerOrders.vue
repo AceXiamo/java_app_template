@@ -5,7 +5,7 @@ import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
-import { type OwnerOrder, type OwnerOrderQueryParams, getOwnerOrders, pickupVerify, returnVerify, confirmOrderCompletion } from '@/api/owner-orders'
+import { type OwnerOrder, type OwnerOrderQueryParams, confirmOrderCompletion, getOwnerOrders, pickupVerify, returnVerify } from '@/api/owner-orders'
 import { uploadFileToOss } from '@/utils/alioss'
 
 // 使用 owner store
@@ -42,6 +42,9 @@ const sliderStyle = computed(() => {
 // 订单列表 - 从API获取
 const orderList = ref<OwnerOrder[]>([])
 const loading = ref(false)
+
+// 下拉刷新状态
+const refreshing = ref(false)
 
 // 页面初始化时加载数据
 onMounted(async () => {
@@ -86,6 +89,30 @@ const filteredOrders = computed(() => orderList.value)
 async function switchTab(tabKey: string) {
   currentFilter.value = tabKey
   await loadOrders()
+}
+
+// 下拉刷新处理
+async function handleRefresh() {
+  refreshing.value = true
+  try {
+    await loadOrders()
+    uni.showToast({
+      title: '刷新成功',
+      icon: 'success',
+      duration: 1500,
+    })
+  }
+  catch (error) {
+    console.error('刷新失败:', error)
+    uni.showToast({
+      title: '刷新失败',
+      icon: 'none',
+      duration: 2000,
+    })
+  }
+  finally {
+    refreshing.value = false
+  }
 }
 
 // 导航方法
@@ -195,7 +222,8 @@ async function chooseImage() {
         // 上传到OSS
         const ossUrl = await uploadFileToOss(tempFilePath, ossPath)
         return ossUrl
-      } catch (error) {
+      }
+      catch (error) {
         console.error(`上传第${index + 1}张照片失败:`, error)
         throw error
       }
@@ -203,24 +231,24 @@ async function chooseImage() {
 
     // 等待所有照片上传完成
     const ossUrls = await Promise.all(uploadPromises)
-    
+
     // 添加到照片列表
     uploadedPhotos.value.push(...ossUrls)
-    
-    uni.hideLoading()
-    uni.showToast({ 
-      title: `成功上传${ossUrls.length}张照片`, 
-      icon: 'success',
-      duration: 1500
-    })
 
-  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({
+      title: `成功上传${ossUrls.length}张照片`,
+      icon: 'success',
+      duration: 1500,
+    })
+  }
+  catch (error) {
     uni.hideLoading()
     console.error('上传照片失败:', error)
-    uni.showToast({ 
-      title: '上传照片失败，请重试', 
+    uni.showToast({
+      title: '上传照片失败，请重试',
       icon: 'none',
-      duration: 2000
+      duration: 2000,
     })
   }
 }
@@ -243,7 +271,8 @@ async function submitVerification() {
     // 调用对应的API，uploadedPhotos.value 现在存储的是OSS URL
     if (currentAction.value === 'pickup') {
       await pickupVerify(currentOrder.value.orderId, uploadedPhotos.value)
-    } else {
+    }
+    else {
       await returnVerify(currentOrder.value.orderId, uploadedPhotos.value)
     }
 
@@ -257,7 +286,8 @@ async function submitVerification() {
       if (currentAction.value === 'pickup') {
         order.status = 'picked'
         order.statusText = '使用中'
-      } else {
+      }
+      else {
         order.status = 'returned'
         order.statusText = '已还车'
       }
@@ -265,14 +295,14 @@ async function submitVerification() {
 
     // 重新加载订单列表以获取最新状态
     await loadOrders()
-    
-  } catch (error) {
+  }
+  catch (error) {
     uni.hideLoading()
     console.error('验证失败:', error)
-    uni.showToast({ 
-      title: error?.message || '验证失败，请重试', 
+    uni.showToast({
+      title: error?.message || '验证失败，请重试',
       icon: 'none',
-      duration: 3000
+      duration: 3000,
     })
   }
 }
@@ -292,11 +322,12 @@ async function confirmCompletion(order: any) {
         },
         fail: () => {
           resolve(false)
-        }
+        },
       })
     })
 
-    if (!result) return
+    if (!result)
+      return
 
     uni.showLoading({ title: '确认完成中...' })
 
@@ -304,10 +335,10 @@ async function confirmCompletion(order: any) {
     await confirmOrderCompletion(order.orderId, '车主', '车主确认订单已完成')
 
     uni.hideLoading()
-    uni.showToast({ 
-      title: '订单已确认完成', 
+    uni.showToast({
+      title: '订单已确认完成',
       icon: 'success',
-      duration: 2000
+      duration: 2000,
     })
 
     // 更新本地状态
@@ -319,14 +350,14 @@ async function confirmCompletion(order: any) {
 
     // 重新加载订单列表以获取最新状态
     await loadOrders()
-    
-  } catch (error) {
+  }
+  catch (error) {
     uni.hideLoading()
     console.error('确认订单完成失败:', error)
-    uni.showToast({ 
-      title: error?.message || '确认完成失败，请重试', 
+    uni.showToast({
+      title: error?.message || '确认完成失败，请重试',
       icon: 'none',
-      duration: 3000
+      duration: 3000,
     })
   }
 }
@@ -335,7 +366,7 @@ async function confirmCompletion(order: any) {
 <template>
   <view class="relative h-full flex flex-col bg-gray-50">
     <!-- 头部导航栏 -->
-    <HeadBar bg-color="transparent">
+    <HeadBar bg-color="white">
       <view class="relative h-full flex items-center">
         <!-- 页面标题 -->
         <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
@@ -365,7 +396,13 @@ async function confirmCompletion(order: any) {
 
     <!-- 滚动内容区域 -->
     <view class="h-0 flex flex-1 flex-col">
-      <scroll-view scroll-y class="h-full w-full">
+      <scroll-view
+        scroll-y
+        class="h-full w-full"
+        refresher-enabled
+        :refresher-triggered="refreshing"
+        @refresherrefresh="handleRefresh"
+      >
         <view class="content px-[32rpx] pt-[32rpx]">
           <!-- 加载状态 -->
           <view v-if="loading" class="flex flex-col items-center justify-center py-[120rpx]">
@@ -492,7 +529,9 @@ async function confirmCompletion(order: any) {
                 <view v-if="order.status === 'paid' && order.pickupCode" class="flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
                   <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
                   <view class="flex-1">
-                    <text class="text-[24rpx] text-purple-800 font-medium">取车码</text>
+                    <text class="text-[24rpx] text-purple-800 font-medium">
+                      取车码
+                    </text>
                     <text class="block text-[36rpx] text-purple-600 font-bold tracking-wider">
                       {{ order.pickupCode }}
                     </text>
@@ -514,20 +553,28 @@ async function confirmCompletion(order: any) {
                 <view v-if="order.status === 'picked' && order.returnCode" class="flex items-center rounded-[14rpx] bg-green-50 p-[20rpx]">
                   <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-green-600" />
                   <view class="flex-1">
-                    <text class="text-[24rpx] text-green-800 font-medium">还车码</text>
+                    <text class="text-[24rpx] text-green-800 font-medium">
+                      还车码
+                    </text>
                     <text class="block text-[36rpx] text-green-600 font-bold tracking-wider">
                       {{ order.returnCode }}
                     </text>
                   </view>
                   <view class="ml-[16rpx] flex flex-col items-end text-right">
-                    <text class="text-[18rpx] text-gray-500">使用中</text>
-                    <text class="text-[20rpx] text-green-700 font-medium">等待还车</text>
+                    <text class="text-[18rpx] text-gray-500">
+                      使用中
+                    </text>
+                    <text class="text-[20rpx] text-green-700 font-medium">
+                      等待还车
+                    </text>
                   </view>
                 </view>
 
                 <!-- 其他状态的码显示 -->
-                <view v-if="order.status !== 'paid' && order.status !== 'picked' && (order.pickupCode || order.returnCode)" 
-                      class="flex items-center rounded-[14rpx] bg-gray-50 p-[20rpx]">
+                <view
+                  v-if="order.status !== 'paid' && order.status !== 'picked' && (order.pickupCode || order.returnCode)"
+                  class="flex items-center rounded-[14rpx] bg-gray-50 p-[20rpx]"
+                >
                   <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-gray-600" />
                   <view class="flex-1">
                     <text class="text-[24rpx] text-gray-800 font-medium">
