@@ -254,6 +254,36 @@ function getWithdrawalStatusText(status: string) {
   return statusMap[status] || status
 }
 
+// 获取提现方式标签
+function getWithdrawalMethodLabel(record: any) {
+  const methodType = record.methodType || record.withdrawalType
+  switch (methodType) {
+    case 'bank':
+      return '到账银行'
+    case 'wechat':
+      return '微信账号'
+    case 'alipay':
+      return '支付宝账号'
+    default:
+      return '提现账户'
+  }
+}
+
+// 获取账户信息
+function getWithdrawalAccountInfo(record: any) {
+  const methodType = record.methodType || record.withdrawalType
+  switch (methodType) {
+    case 'bank':
+      return `${record.methodName || record.bankName || ''} ${record.accountInfo || record.bankAccount || ''}`
+    case 'wechat':
+      return record.accountInfo || record.wechatAccount || '微信账号'
+    case 'alipay':
+      return record.accountInfo || record.alipayAccount || '支付宝账号'
+    default:
+      return record.accountInfo || '未知账户'
+  }
+}
+
 // 提现相关功能
 function selectWithdrawalMethod(method: any) {
   selectedWithdrawalMethod.value = method
@@ -364,6 +394,10 @@ async function loadWithdrawalRecords() {
         ...record,
         // 为了兼容模板中的字段
         id: record.withdrawalId,
+        // 确保提现方式信息字段映射正确
+        methodType: record.methodType || record.withdrawalType,
+        methodName: record.methodName,
+        accountInfo: record.accountInfo,
       }))
     }
   }
@@ -782,13 +816,13 @@ async function loadWithdrawalRecords() {
               </view>
             </view>
 
-            <!-- 银行信息 -->
+            <!-- 提现方式信息 -->
             <view class="flex items-center justify-between">
               <text class="text-[24rpx] text-gray-600">
-                到账银行
+                {{ getWithdrawalMethodLabel(record) }}
               </text>
               <text class="text-[26rpx] text-gray-800">
-                {{ record.bankName || record.methodName }} {{ record.bankAccount || record.accountInfo }}
+                {{ getWithdrawalAccountInfo(record) }}
               </text>
             </view>
 
