@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/store/order'
 import OrderHead from '@/components/page/order/Head.vue'
 import RenewOrderDrawer from '@/components/RenewOrderDrawer.vue'
+import VehicleReviewDrawer from '@/components/VehicleReviewDrawer.vue'
 
 // 使用 order store
 const orderStore = useOrderStore()
@@ -64,6 +65,10 @@ async function contactOwner(orderId: string) {
 // 续租相关状态
 const renewDrawerVisible = ref(false)
 const currentRenewOrder = ref<any>(null)
+
+// 评价相关状态
+const reviewDrawerVisible = ref(false)
+const currentReviewOrder = ref<any>(null)
 
 async function renewOrder(orderId: string) {
   // 找到对应的订单数据
@@ -143,13 +148,47 @@ function closeRenewDrawer() {
 }
 
 async function rateOrder(orderId: string) {
+  // 找到对应的订单数据
+  const order = orderList.value.find(o => o.id === orderId)
+  if (!order) {
+    uni.showToast({ title: '订单信息不存在', icon: 'none' })
+    return
+  }
+
+  currentReviewOrder.value = order
+  reviewDrawerVisible.value = true
+}
+
+// 处理评价提交
+async function handleReviewSubmit(reviewData: any) {
   try {
-    await orderStore.handleReviewOrder(Number(orderId), 5, '服务很好', ['准时', '车况良好'])
+    await orderStore.handleReviewOrder(
+      reviewData.orderId,
+      reviewData.rating,
+      reviewData.content,
+      reviewData.tags,
+      reviewData.images,
+      reviewData.isAnonymous
+    )
+    
+    // 关闭弹框
+    reviewDrawerVisible.value = false
+    currentReviewOrder.value = null
+    
     uni.showToast({ title: '评价成功', icon: 'success' })
+    
+    // 重新加载订单列表以更新状态
+    orderStore.reloadOrderList()
+  } catch (error) {
+    console.error('评价失败:', error)
+    uni.showToast({ title: '评价失败，请重试', icon: 'none' })
   }
-  catch {
-    uni.showToast({ title: '评价失败', icon: 'none' })
-  }
+}
+
+// 关闭评价弹框
+function closeReviewDrawer() {
+  reviewDrawerVisible.value = false
+  currentReviewOrder.value = null
 }
 
 async function reOrder(orderId: string) {
@@ -712,6 +751,14 @@ async function openNavigation(location: string) {
       :order="currentRenewOrder"
       @confirm="handleRenewConfirm"
       @close="closeRenewDrawer"
+    />
+
+    <!-- 评价弹框 -->
+    <VehicleReviewDrawer
+      v-model:visible="reviewDrawerVisible"
+      :order="currentReviewOrder"
+      @submit="handleReviewSubmit"
+      @update:visible="closeReviewDrawer"
     />
   </view>
 </template>

@@ -79,6 +79,8 @@ export interface VehicleFilterOptions {
 
 export interface VehicleCategory {
   categoryId: number
+  parentCategoryId?: number
+  level: number
   categoryName: string
   categoryCode: string
   description?: string
@@ -86,6 +88,7 @@ export interface VehicleCategory {
   iconUrl?: string
   sortOrder: number
   isActive: boolean
+  children?: VehicleCategory[]
 }
 
 export interface VehicleTagType {
@@ -182,6 +185,34 @@ export function getVehicleFilters(): Promise<BaseRes<VehicleFilterOptions>> {
 export function getVehicleCategories(): Promise<BaseRes<VehicleCategory[]>> {
   return request.get({
     url: `${host}/api/vehicles/categories`,
+  })
+}
+
+// 获取主分类列表（层级为1的分类）- 小程序端
+export function getParentCategories(): Promise<BaseRes<VehicleCategory[]>> {
+  return request.get({
+    url: `${host}/app/vehicle/category/brands`,
+  })
+}
+
+// 获取指定父分类下的子分类列表 - 小程序端
+export function getChildCategories(parentCategoryId: number): Promise<BaseRes<VehicleCategory[]>> {
+  return request.get({
+    url: `${host}/app/vehicle/category/models/${parentCategoryId}`,
+  })
+}
+
+// 获取所有子分类列表（层级为2的分类）- 小程序端
+export function getAllChildCategories(): Promise<BaseRes<VehicleCategory[]>> {
+  return request.get({
+    url: `${host}/app/vehicle/category/models`,
+  })
+}
+
+// 获取分类树形结构
+export function getCategoryTree(): Promise<BaseRes<any[]>> {
+  return request.get({
+    url: `${host}/vehicle/category/tree`,
   })
 }
 

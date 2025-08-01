@@ -141,9 +141,9 @@ export const useOrderStore = defineStore('order', () => {
   }
 
   // 评价订单
-  const handleReviewOrder = async (orderId: number, rating: number, comment: string, tags: string[]) => {
+  const handleReviewOrder = async (orderId: number, rating: number, comment: string, tags: string[], images?: string[], isAnonymous?: boolean) => {
     try {
-      const response = await reviewOrder(orderId, rating, comment, tags)
+      const response = await reviewOrder(orderId, rating, comment, tags, images, isAnonymous)
       return response.data
     }
     catch (error) {

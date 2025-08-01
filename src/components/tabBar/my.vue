@@ -121,15 +121,21 @@ function handleLogout() {
 
 <template>
   <view class="relative h-full flex flex-col overflow-y-auto bg-gray-50">
-    <!-- 头部占位组件 -->
-    <Head />
-
     <!-- 顶部个人信息卡片 -->
-    <view class="relative bg-[#8D30E0] px-[40rpx] pb-[72rpx] pt-[32rpx]">
+    <view class="relative bg-gradient-to-b from-[#8D30E0] to-[#F6F7F8] px-[40rpx] pb-[72rpx]">
+      <!-- 头部占位组件 -->
+      <HeadBar bg-color="transparent">
+        <!-- 空内容，仅作占位用途 -->
+      </HeadBar>
       <!-- 背景装饰 -->
-      <view class="absolute bg-[#8D30E0]" />
+      <!-- <image
+        class="absolute left-0 top-0 z-0 h-full w-full object-cover"
+        src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home-bg-1.png"
+        mode="aspectFill"
+        alt="顶部插画背景"
+      /> -->
 
-      <view class="relative z-10">
+      <view class="relative z-10 mt-[32rpx]">
         <view v-if="profileData?.userInfo" class="flex items-center space-x-[32rpx]">
           <!-- 用户头像 -->
           <view class="relative" @tap="goToProfile">
@@ -367,7 +373,7 @@ function handleLogout() {
                 </text>
               </view>
             </view>
-            <view class="flex items-center space-x-[16rpx]">
+            <view class="w-max flex flex-none items-center space-x-[16rpx]">
               <text
                 class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600"
               >

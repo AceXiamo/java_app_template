@@ -188,7 +188,7 @@ function searchVehicles() {
   setJumpData('searchParams', searchData)
 
   uni.navigateTo({
-    url: '/pages/search/index',
+    url: '/pages/vehicle/index',
   })
 }
 

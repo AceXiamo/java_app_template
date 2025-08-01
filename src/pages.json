@@ -172,6 +172,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/vehicle/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/vehicle/reviews",
       "type": "page",
       "layout": "home"

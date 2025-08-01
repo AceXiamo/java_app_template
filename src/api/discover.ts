@@ -24,7 +24,7 @@ export interface VehicleReview {
   rating: number
   content: string
   createTime: string
-  images?: string[]
+  images?: string
   tags?: string[]
   vehicleName: string
   brand: string

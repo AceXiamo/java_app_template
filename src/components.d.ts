@@ -64,6 +64,11 @@ declare module '@vue/runtime-core' {
     PageShopHomeHead: typeof import('./components/page/shop/home/Head.vue')['default']
     PageShopOrderHead: typeof import('./components/page/shop/order/Head.vue')['default']
     PageVehicleHead: typeof import('./components/page/vehicle/Head.vue')['default']
+    PremiumImageUploader: typeof import('./components/PremiumImageUploader.vue')['default']
+    PremiumRating: typeof import('./components/PremiumRating.vue')['default']
+    PremiumSwitch: typeof import('./components/PremiumSwitch.vue')['default']
+    PremiumTagSelector: typeof import('./components/PremiumTagSelector.vue')['default']
+    PremiumTextarea: typeof import('./components/PremiumTextarea.vue')['default']
     QrCode: typeof import('./components/QrCode.vue')['default']
     RenewOrderDrawer: typeof import('./components/RenewOrderDrawer.vue')['default']
     SelectBar: typeof import('./components/SelectBar.vue')['default']
@@ -75,6 +80,7 @@ declare module '@vue/runtime-core' {
     TabBarOwnerOrders: typeof import('./components/tabBar/ownerOrders.vue')['default']
     TabBarOwnerRevenue: typeof import('./components/tabBar/ownerRevenue.vue')['default']
     Toast: typeof import('./components/Toast.vue')['default']
+    VehicleReviewDrawer: typeof import('./components/VehicleReviewDrawer.vue')['default']
     VerticalPage: typeof import('./components/VerticalPage.vue')['default']
   }
 }

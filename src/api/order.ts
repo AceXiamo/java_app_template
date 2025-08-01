@@ -138,6 +138,8 @@ export interface ReviewOrderParams {
   rating: number
   comment: string
   tags: string[]
+  images?: string[]
+  isAnonymous?: boolean
 }
 
 // 评价响应
@@ -397,13 +399,15 @@ export function contactOwner(orderId: number, message: string): Promise<BaseRes<
 /**
  * 评价订单
  */
-export function reviewOrder(orderId: number, rating: number, comment: string, tags: string[]): Promise<BaseRes<ReviewOrderResponse>> {
+export function reviewOrder(orderId: number, rating: number, comment: string, tags: string[], images?: string[], isAnonymous?: boolean): Promise<BaseRes<ReviewOrderResponse>> {
   return request.post({
     url: `${host}/api/orders/${orderId}/review`,
     data: {
       rating,
       comment,
       tags,
+      images: images || [],
+      isAnonymous: isAnonymous || false,
     },
   })
 }

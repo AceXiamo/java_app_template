@@ -118,8 +118,8 @@ onMounted(() => {
             @tap="discoverStore.openNewsDetail(article.articleId)"
           >
             <!-- 热门标签 - 悬浮在右上角 -->
-            <view v-if="article.isHot" class="absolute right-[20rpx] top-[20rpx] z-10 flex items-center rounded-[20rpx] bg-gradient-to-r from-red-500 to-orange-500 px-[16rpx] py-[8rpx] shadow-[0_4rpx_12rpx_rgba(239,68,68,0.3)]">
-              <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/fire.png" class="h-[22rpx] w-[22rpx] mr-[8rpx]" mode="aspectFit" alt="热门icon" />
+            <view v-if="article.isHot" class="absolute right-[20rpx] top-[20rpx] z-10 flex items-center rounded-[20rpx] from-red-500 to-orange-500 bg-gradient-to-r px-[16rpx] py-[8rpx] shadow-[0_4rpx_12rpx_rgba(239,68,68,0.3)]">
+              <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/fire.png" class="mr-[8rpx] h-[22rpx] w-[22rpx]" mode="aspectFit" alt="热门icon" />
               <text class="text-[20rpx] text-white font-bold">
                 热门
               </text>
@@ -135,7 +135,7 @@ onMounted(() => {
                   mode="aspectFill"
                 />
                 <!-- 底部渐变遮罩 -->
-                <view class="absolute bottom-0 left-0 right-0 h-[120rpx] bg-gradient-to-t from-black/50 to-transparent" />
+                <view class="absolute bottom-0 left-0 right-0 h-[120rpx] from-black/50 to-transparent bg-gradient-to-t" />
 
                 <!-- 标签 - 悬浮在左下角 -->
                 <view v-if="article.tags?.length" class="absolute bottom-[20rpx] left-[20rpx] flex gap-[12rpx]">
@@ -167,18 +167,26 @@ onMounted(() => {
                 <view class="flex items-center space-x-[28rpx]">
                   <view class="flex items-center">
                     <text class="i-material-symbols:visibility mr-[6rpx] text-[24rpx] text-gray-400" />
-                    <text class="text-[22rpx] text-gray-500 font-medium">{{ article.viewCount }}</text>
+                    <text class="text-[22rpx] text-gray-500 font-medium">
+                      {{ article.viewCount }}
+                    </text>
                   </view>
                   <view class="flex items-center">
                     <text class="i-material-symbols:thumb-up mr-[6rpx] text-[24rpx] text-gray-400" />
-                    <text class="text-[22rpx] text-gray-500 font-medium">{{ article.likeCount }}</text>
+                    <text class="text-[22rpx] text-gray-500 font-medium">
+                      {{ article.likeCount }}
+                    </text>
                   </view>
                   <view class="flex items-center">
                     <text class="i-material-symbols:chat-bubble mr-[6rpx] text-[24rpx] text-gray-400" />
-                    <text class="text-[22rpx] text-gray-500 font-medium">{{ article.commentCount }}</text>
+                    <text class="text-[22rpx] text-gray-500 font-medium">
+                      {{ article.commentCount }}
+                    </text>
                   </view>
                 </view>
-                <text class="text-[22rpx] text-gray-400 font-medium">{{ article.publishTime }}</text>
+                <text class="text-[22rpx] text-gray-400 font-medium">
+                  {{ article.publishTime }}
+                </text>
               </view>
             </view>
           </view>
@@ -193,9 +201,13 @@ onMounted(() => {
 
           <!-- 空状态 -->
           <view v-if="discoverStore.newsStatus === 'nomore' && discoverStore.newsList.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
-            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/msg_empty.png" class="h-[180rpx] w-[180rpx] mb-[32rpx]" mode="aspectFit" alt="暂无资讯" />
-            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">暂无资讯</text>
-            <text class="text-[24rpx] text-gray-400">敬请期待更多内容</text>
+            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/msg_empty.png" class="mb-[32rpx] h-[180rpx] w-[180rpx]" mode="aspectFit" alt="暂无资讯" />
+            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
+              暂无资讯
+            </text>
+            <text class="text-[24rpx] text-gray-400">
+              敬请期待更多内容
+            </text>
           </view>
         </view>
       </scroll-view>
@@ -254,9 +266,9 @@ onMounted(() => {
                   <text class="text-[26rpx] text-black font-medium">
                     {{ review.vehicleName }}
                   </text>
-                  <text class="ml-[16rpx] text-[24rpx] text-gray-600">
+                  <!-- <text class="ml-[16rpx] text-[24rpx] text-gray-600">
                     {{ review.brand }} {{ review.model }}
-                  </text>
+                  </text> -->
                 </view>
               </view>
             </view>
@@ -280,7 +292,7 @@ onMounted(() => {
             <!-- 评价图片 -->
             <view v-if="review.images?.length" class="grid grid-cols-3 gap-[16rpx]">
               <image
-                v-for="(img, index) in review.images.slice(0, 3)"
+                v-for="(img, index) in JSON.parse(review.images || '[]').slice(0, 3)"
                 :key="index"
                 :src="img"
                 class="h-[160rpx] w-full rounded-[12rpx] object-cover"
@@ -299,9 +311,13 @@ onMounted(() => {
 
           <!-- 空状态 -->
           <view v-if="discoverStore.reviewsStatus === 'nomore' && discoverStore.reviewsList.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
-            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/comment_empty.png" class="h-[180rpx] w-[180rpx] mb-[32rpx]" mode="aspectFit" alt="暂无评价" />
-            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">暂无评价</text>
-            <text class="text-[24rpx] text-gray-400">期待您的分享</text>
+            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/comment_empty.png" class="mb-[32rpx] h-[180rpx] w-[180rpx]" mode="aspectFit" alt="暂无评价" />
+            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
+              暂无评价
+            </text>
+            <text class="text-[24rpx] text-gray-400">
+              期待您的分享
+            </text>
           </view>
         </view>
       </scroll-view>
@@ -319,7 +335,7 @@ onMounted(() => {
         <view class="p-[24rpx] space-y-[24rpx]">
           <!-- 提交建议按钮 -->
           <view
-            class="relative overflow-hidden rounded-[28rpx] shadow-[0_8rpx_24rpx_rgba(139,92,246,0.12)] px-[32rpx] py-[48rpx] mb-[24rpx] active:scale-98"
+            class="relative mb-[24rpx] overflow-hidden rounded-[28rpx] px-[32rpx] py-[48rpx] shadow-[0_8rpx_24rpx_rgba(139,92,246,0.12)] active:scale-98"
             @tap="discoverStore.openFeedbackForm"
           >
             <!-- 背景图 -->
@@ -335,7 +351,7 @@ onMounted(() => {
             <!-- 内容区 -->
             <view class="relative z-10 flex flex-col items-center justify-center">
               <text class="i-material-symbols:lightbulb-outline mb-[16rpx] text-[56rpx] text-white/90" />
-              <text class="mb-[12rpx] text-[32rpx] font-bold text-white" style="text-shadow:0 2rpx 8rpx rgba(139,92,246,0.18);">
+              <text class="mb-[12rpx] text-[32rpx] text-white font-bold" style="text-shadow:0 2rpx 8rpx rgba(139,92,246,0.18);">
                 提交您的建议
               </text>
               <text class="text-center text-[24rpx] text-white/80">
@@ -429,9 +445,13 @@ onMounted(() => {
 
           <!-- 空状态 -->
           <view v-if="discoverStore.feedbackStatus === 'nomore' && discoverStore.feedbackList.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
-            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/feedback_empty.png" class="h-[180rpx] w-[180rpx] mb-[32rpx]" mode="aspectFit" alt="暂无建议" />
-            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">暂无建议</text>
-            <text class="text-[24rpx] text-gray-400">欢迎您的反馈</text>
+            <image src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/feedback_empty.png" class="mb-[32rpx] h-[180rpx] w-[180rpx]" mode="aspectFit" alt="暂无建议" />
+            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
+              暂无建议
+            </text>
+            <text class="text-[24rpx] text-gray-400">
+              欢迎您的反馈
+            </text>
           </view>
         </view>
       </scroll-view>

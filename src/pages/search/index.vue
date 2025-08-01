@@ -19,10 +19,14 @@ const searchParams = ref<VehicleSearchParams>({
   sortBy: 'hot',
   latitude: undefined,
   longitude: undefined,
+  categoryId: undefined,
 })
 
 // 当前地址显示
 const currentAddress = ref('上海')
+
+// 选中的分类名称
+const selectedCategoryName = ref('')
 
 // 数据状态
 const vehicles = ref<Vehicle[]>([])
@@ -126,10 +130,16 @@ onLoad(() => {
     searchParams.value.endTime = jumpData.endTime
     searchParams.value.latitude = jumpData.latitude
     searchParams.value.longitude = jumpData.longitude
+    searchParams.value.categoryId = jumpData.categoryId
 
     // 更新地址显示
     if (jumpData.address) {
       currentAddress.value = jumpData.address
+    }
+    
+    // 更新分类显示
+    if (jumpData.categoryName) {
+      selectedCategoryName.value = jumpData.categoryName
     }
 
     // 解析时间参数到timeForm
@@ -489,6 +499,7 @@ function getVehicleDistance(vehicle: Vehicle): string {
   }
   return `${distance.toFixed(1)}km`
 }
+
 </script>
 
 <template>
@@ -514,6 +525,14 @@ function getVehicleDistance(vehicle: Vehicle): string {
             <text class="text-[24rpx] text-gray-600">
               {{ displayTimeRange }}
             </text>
+          </view>
+        </view>
+
+        <!-- 选中的车型显示 -->
+        <view v-if="selectedCategoryName" class="mb-[24rpx] flex items-center">
+          <view class="flex items-center bg-purple-50 border border-purple-200 rounded-[20rpx] px-[24rpx] py-[12rpx]">
+            <text class="i-material-symbols-directions-car text-[24rpx] text-purple-600 mr-[8rpx]" />
+            <text class="text-[24rpx] text-purple-600 font-medium">{{ selectedCategoryName }}</text>
           </view>
         </view>
 
@@ -543,6 +562,7 @@ function getVehicleDistance(vehicle: Vehicle): string {
                 筛选
               </text>
             </view>
+            
           </view>
 
           <!-- 搜索结果数量 -->
