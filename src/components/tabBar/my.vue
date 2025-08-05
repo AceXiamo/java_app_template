@@ -44,43 +44,7 @@ function goToInvoice() {
   uni.navigateTo({ url: '/pages/my/invoice' })
 }
 
-// 联系客服
-async function handleContactService() {
-  try {
-    const serviceData = await profileStore.handleContactService()
-    const serviceOptions = serviceData.serviceOptions.map(option => option.title)
-
-    uni.showActionSheet({
-      itemList: serviceOptions,
-      success: (res) => {
-        const selectedOption = serviceData.serviceOptions[res.tapIndex]
-        if (selectedOption.type === 'phone') {
-          uni.makePhoneCall({
-            phoneNumber: selectedOption.phoneNumber || '400-123-4567',
-          })
-        }
-        else if (selectedOption.type === 'wechat') {
-          uni.showToast({
-            title: '正在跳转微信客服',
-            icon: 'none',
-          })
-        }
-        else if (selectedOption.type === 'online') {
-          uni.navigateTo({
-            url: '/pages/service/chat',
-          })
-        }
-      },
-    })
-  }
-  catch (error) {
-    console.error('获取客服信息失败:', error)
-    uni.showToast({
-      title: '获取客服信息失败',
-      icon: 'none',
-    })
-  }
-}
+// 联系客服 - 使用button的open-type='contact'实现
 
 // 检查用户是否有车主权限（车主或平台管理员）
 function isOwnerOrManager() {
@@ -122,7 +86,7 @@ function handleLogout() {
 <template>
   <view class="relative h-full flex flex-col overflow-y-auto bg-gray-50">
     <!-- 顶部个人信息卡片 -->
-    <view class="relative bg-gradient-to-b from-[#8D30E0] to-[#F6F7F8] px-[40rpx] pb-[72rpx]">
+    <view class="relative from-[#8D30E0] to-[#F6F7F8] bg-gradient-to-b px-[40rpx] pb-[72rpx]">
       <!-- 头部占位组件 -->
       <HeadBar bg-color="transparent">
         <!-- 空内容，仅作占位用途 -->
@@ -384,7 +348,7 @@ function handleLogout() {
           </view>
 
           <!-- 消息通知 -->
-          <view class="flex items-center justify-between" @tap="goToNotifications">
+          <!-- <view class="flex items-center justify-between" @tap="goToNotifications">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-notifications text-[36rpx] text-purple-600" />
@@ -410,7 +374,7 @@ function handleLogout() {
               </view>
               <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
             </view>
-          </view>
+          </view> -->
         </view>
       </view>
 
@@ -442,8 +406,11 @@ function handleLogout() {
           </view>
 
           <!-- 联系客服 -->
-          <view class="flex items-center justify-between" @tap="handleContactService">
-            <view class="flex items-center space-x-[24rpx]">
+          <view class="relative flex items-center justify-between">
+            <button open-type="contact" class="absolute inset-0 opacity-0 z-1">
+              联系客服
+            </button>
+            <view class="flex items-center space-x-[24rpx] relative z-1">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-support-agent text-[36rpx] text-purple-600" />
               </view>
@@ -460,7 +427,7 @@ function handleLogout() {
           </view>
 
           <!-- 关于我们 -->
-          <view class="flex items-center justify-between" @tap="goToAbout">
+          <!-- <view class="flex items-center justify-between" @tap="goToAbout">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-info text-[36rpx] text-blue-600" />
@@ -475,7 +442,7 @@ function handleLogout() {
               </view>
             </view>
             <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
-          </view>
+          </view> -->
         </view>
       </view>
 

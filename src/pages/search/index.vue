@@ -2,11 +2,10 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import PageSearchHead from '@/components/page/search/Head.vue'
-import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
-import { getVehicleFilters, getVehicleTagTypes, searchVehicles } from '@/api/vehicle'
-import type { Vehicle, VehicleFilterOptions, VehicleSearchParams, VehicleTagType } from '@/api/vehicle'
+import { getVehicleFilters, searchVehicles, getAllChildCategories } from '@/api/vehicle'
+import type { Vehicle, VehicleFilterOptions, VehicleSearchParams, VehicleCategory } from '@/api/vehicle'
 
 // 搜索参数
 const searchParams = ref<VehicleSearchParams>({
@@ -28,12 +27,14 @@ const currentAddress = ref('上海')
 // 选中的分类名称
 const selectedCategoryName = ref('')
 
+// 选中分类的轮播图
+const categoryGalleryImages = ref<string[]>([])
+
 // 数据状态
 const vehicles = ref<Vehicle[]>([])
 const total = ref(0)
 const loading = ref(false)
 const noMore = ref(false)
-const showFilters = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
 const filterOptions = ref<VehicleFilterOptions>({
@@ -44,39 +45,14 @@ const filterOptions = ref<VehicleFilterOptions>({
   priceRange: [0, 999],
 })
 
-// 筛选参数
-const filters = ref({
-  vehicleTypes: [] as string[],
-  energyTypes: [] as string[],
-  minPrice: undefined as number | undefined,
-  maxPrice: undefined as number | undefined,
-  seats: [] as number[],
-})
-
-// 已移除分类选项
-
-// 快捷标签
-const quickTags = ref<VehicleTagType[]>([])
-
-// 价格范围选项
-const priceRanges = ref([
-  { label: '100以下', value: [0, 100] },
-  { label: '100-200', value: [100, 200] },
-  { label: '200-300', value: [200, 300] },
-  { label: '300-500', value: [300, 500] },
-  { label: '500以上', value: [500, 9999] },
-])
 
 // 排序选项
 const sortOptions = [
   { label: '综合排序', value: 'hot' },
-  { label: '距离最近', value: 'distance' },
-  { label: '高配优先', value: 'price' },
+  { label: '低价优先', value: 'price' },
+  { label: '新款优先', value: 'year' },
 ]
 
-// 选中状态
-const selectedTags = ref<string[]>([])
-const selectedPriceRange = ref<number[] | null>(null)
 
 // 时间相关数据
 const timeForm = ref({
@@ -136,7 +112,7 @@ onLoad(() => {
     if (jumpData.address) {
       currentAddress.value = jumpData.address
     }
-    
+
     // 更新分类显示
     if (jumpData.categoryName) {
       selectedCategoryName.value = jumpData.categoryName
@@ -160,8 +136,12 @@ onLoad(() => {
   }
 
   loadFilterOptions()
-  loadTagTypes()
   searchVehicleList()
+  
+  // 如果有选中的分类，加载分类轮播图
+  if (searchParams.value.categoryId) {
+    loadCategoryGallery(searchParams.value.categoryId)
+  }
 })
 
 // 搜索车辆
@@ -179,13 +159,7 @@ async function searchVehicleList(isLoadMore = false) {
       total.value = 0 // 重置总数
     }
 
-    // 合并筛选参数
-    const params = {
-      ...searchParams.value,
-      ...filters.value,
-    }
-
-    const response = await searchVehicles(params)
+    const response = await searchVehicles(searchParams.value)
 
     if (response.code === 200 && response.data) {
       const newVehicles = response.data.vehicles || []
@@ -238,45 +212,40 @@ async function loadFilterOptions() {
   }
 }
 
-// 已移除分类加载功能
-
-// 加载标签类型
-async function loadTagTypes() {
+// 加载分类轮播图
+async function loadCategoryGallery(categoryId: number) {
   try {
-    const response = await getVehicleTagTypes()
+    // 获取单个分类的详细信息
+    // 这里我们需要通过父分类来获取子分类信息
+    // 由于我们只有子分类ID，我们需要调用获取所有子分类的接口
+    const response = await getAllChildCategories() // 获取所有子分类
     if (response.code === 200 && response.data) {
-      quickTags.value = response.data
+      const category = response.data.find((cat: VehicleCategory) => cat.category_id === categoryId)
+      if (category && category.gallery_images) {
+        try {
+          const images = JSON.parse(category.gallery_images) as string[]
+          categoryGalleryImages.value = images.filter(img => img && img.trim() !== '')
+        } catch (e) {
+          console.warn('解析gallery_images失败:', e)
+          categoryGalleryImages.value = []
+        }
+      } else {
+        categoryGalleryImages.value = []
+      }
     }
-  }
-  catch (error) {
-    console.error('获取标签类型失败:', error)
+  } catch (error) {
+    console.error('获取分类轮播图失败:', error)
+    categoryGalleryImages.value = []
   }
 }
+
 
 // 排序切换
 function handleSortChange(sortBy: string) {
-  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'distance'
+  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'year'
   searchVehicleList()
 }
 
-// 应用筛选
-function applyFilters() {
-  showFilters.value = false
-  searchVehicleList()
-}
-
-// 重置筛选
-function resetFilters() {
-  filters.value = {
-    vehicleTypes: [],
-    energyTypes: [],
-    minPrice: undefined,
-    maxPrice: undefined,
-    seats: [],
-  }
-  selectedPriceRange.value = null
-  searchVehicleList()
-}
 
 // 触底加载更多
 function onReachBottom() {
@@ -293,39 +262,6 @@ function goToVehicleDetail(vehicleId: number) {
   })
 }
 
-// 切换数组筛选项
-function toggleArrayFilter(key: keyof typeof filters.value, value: any) {
-  const array = filters.value[key] as any[]
-  const index = array.indexOf(value)
-  if (index > -1) {
-    array.splice(index, 1)
-  }
-  else {
-    array.push(value)
-  }
-}
-
-// 已移除分类选择功能
-
-// 切换标签
-function toggleTag(tag: string) {
-  const index = selectedTags.value.indexOf(tag)
-  if (index > -1) {
-    selectedTags.value.splice(index, 1)
-  }
-  else {
-    selectedTags.value.push(tag)
-  }
-  // 根据标签更新筛选条件
-  searchVehicleList()
-}
-
-// 选择价格范围
-function selectPriceRange(range: number[]) {
-  selectedPriceRange.value = range
-  filters.value.minPrice = range[0]
-  filters.value.maxPrice = range[1] === 9999 ? undefined : range[1]
-}
 
 // 能源类型显示（后端已返回中文，直接使用）
 function getEnergyTypeText(energyType: string) {
@@ -499,13 +435,33 @@ function getVehicleDistance(vehicle: Vehicle): string {
   }
   return `${distance.toFixed(1)}km`
 }
-
 </script>
 
 <template>
   <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
     <!-- 头部导航 -->
-    <PageSearchHead />
+    <PageSearchHead :selected-category-name="selectedCategoryName" />
+
+    <!-- 车型轮播图 -->
+    <view v-if="categoryGalleryImages.length > 0" class="bg-white">
+      <swiper
+        class="h-[300rpx]"
+        :indicator-dots="true"
+        :autoplay="true"
+        :interval="3000"
+        :duration="500"
+        indicator-color="rgba(255, 255, 255, 0.5)"
+        indicator-active-color="#8b5cf6"
+      >
+        <swiper-item v-for="image in categoryGalleryImages" :key="image">
+          <image
+            :src="image"
+            mode="aspectFill"
+            class="h-full w-full object-cover"
+          />
+        </swiper-item>
+      </swiper>
+    </view>
 
     <!-- 主要内容区域 -->
     <view class="flex flex-1 flex-col overflow-hidden">
@@ -514,7 +470,7 @@ function getVehicleDistance(vehicle: Vehicle): string {
         <!-- 地址和时间信息 -->
         <view class="mb-[24rpx] flex items-center justify-between">
           <view class="min-w-0 flex flex-1 cursor-pointer items-center" @tap="showMapSelector">
-            <text class="i-material-symbols-location-on mr-[8rpx] text-[28rpx] text-purple-600" />
+            <text class="i-material-symbols-location-on mr-[8rpx] text-[28rpx] text-purple-600 flex-none" />
             <text class="truncate text-[28rpx] text-black font-medium">
               {{ currentAddress }}
             </text>
@@ -528,41 +484,26 @@ function getVehicleDistance(vehicle: Vehicle): string {
           </view>
         </view>
 
-        <!-- 选中的车型显示 -->
-        <view v-if="selectedCategoryName" class="mb-[24rpx] flex items-center">
-          <view class="flex items-center bg-purple-50 border border-purple-200 rounded-[20rpx] px-[24rpx] py-[12rpx]">
-            <text class="i-material-symbols-directions-car text-[24rpx] text-purple-600 mr-[8rpx]" />
-            <text class="text-[24rpx] text-purple-600 font-medium">{{ selectedCategoryName }}</text>
-          </view>
-        </view>
-
-        <!-- 排序和筛选控制 -->
+        <!-- 排序控制 -->
         <view class="flex items-center justify-between">
-          <view class="flex items-center space-x-[16rpx]">
-            <!-- 排序选择 -->
-            <picker
-              mode="selector"
-              :range="sortOptions"
-              range-key="label"
-              :value="sortOptions.findIndex(item => item.value === searchParams.sortBy)"
-              @change="(e: any) => handleSortChange(sortOptions[e.detail.value].value)"
+          <!-- 排序选项 -->
+          <view class="relative flex items-center space-x-[32rpx]">
+            <view
+              v-for="(option, index) in sortOptions"
+              :key="option.value"
+              class="relative px-[8rpx] py-[12rpx] text-[26rpx] font-medium transition-all"
+              :class="searchParams.sortBy === option.value
+                ? 'text-purple-600'
+                : 'text-gray-600'"
+              @tap="handleSortChange(option.value)"
             >
-              <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]">
-                <text class="mr-[8rpx] text-[26rpx] text-gray-700">
-                  {{ sortOptions.find(item => item.value === searchParams.sortBy)?.label }}
-                </text>
-                <text class="i-material-symbols-keyboard-arrow-down text-[28rpx] text-gray-400" />
-              </view>
-            </picker>
-
-            <!-- 筛选按钮 -->
-            <view class="flex items-center border border-gray-200 rounded-[16rpx] bg-gray-50 px-[20rpx] py-[12rpx]" @tap="showFilters = true">
-              <text class="i-material-symbols-tune text-[26rpx] text-gray-700" />
-              <text class="ml-[8rpx] text-[26rpx] text-gray-700">
-                筛选
-              </text>
+              {{ option.label }}
+              <!-- 选中下划线 -->
+              <view
+                v-if="searchParams.sortBy === option.value"
+                class="absolute bottom-0 left-0 right-0 h-[4rpx] bg-purple-600 rounded-full"
+              />
             </view>
-            
           </view>
 
           <!-- 搜索结果数量 -->
@@ -571,28 +512,6 @@ function getVehicleDistance(vehicle: Vehicle): string {
           </text>
         </view>
 
-        <!-- 标签栏（支持横向滚动） -->
-        <scroll-view
-          v-if="quickTags.length > 0"
-          scroll-x
-          class="mt-[24rpx]"
-          show-scrollbar="false"
-        >
-          <view class="flex px-[2rpx] space-x-[16rpx]">
-            <view
-              v-for="tag in quickTags"
-              :key="tag.value"
-              class="flex-shrink-0 whitespace-nowrap rounded-full px-[24rpx] py-[8rpx] text-[24rpx] transition-all"
-              :class="selectedTags.includes(tag.value)
-                ? 'text-white'
-                : 'bg-gray-100 text-gray-600'"
-              :style="selectedTags.includes(tag.value) ? { backgroundColor: tag.color } : {}"
-              @tap="toggleTag(tag.value)"
-            >
-              {{ tag.label }}
-            </view>
-          </view>
-        </scroll-view>
       </view>
 
       <!-- 车辆列表 -->
@@ -601,15 +520,15 @@ function getVehicleDistance(vehicle: Vehicle): string {
         class="flex-1 overflow-y-auto"
         @scrolltolower="onReachBottom"
       >
+        <!-- @tap="goToVehicleDetail(vehicle.vehicleId)" -->
         <view class="p-[24rpx] space-y-[16rpx]">
           <view
             v-for="vehicle in vehicles"
             :key="vehicle.vehicleId"
             class="mb-[24rpx] flex flex-col overflow-hidden rounded-[28rpx] bg-white shadow-[0_8rpx_24rpx_rgba(139,92,246,0.08)]"
-            @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
             <!-- 上半部分：图片和车辆信息 -->
-            <view class="flex">
+            <view class="relative flex">
               <!-- 车辆图片 -->
               <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
                 <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[28rpx]" />
@@ -623,10 +542,12 @@ function getVehicleDistance(vehicle: Vehicle): string {
               </view>
 
               <!-- 车辆基本信息 -->
-              <view class="flex flex-1 flex-col justify-center p-[20rpx]">
-                <text class="mb-[8rpx] block text-[30rpx] text-black font-bold">
-                  {{ getVehicleDisplayName(vehicle) }}
-                </text>
+              <view class="flex flex-1 flex-col justify-center p-[20rpx] pr-[120rpx]">
+                <view class="mb-[8rpx] flex items-center justify-between">
+                  <text class="block text-[30rpx] text-black font-bold">
+                    {{ getVehicleDisplayName(vehicle) }}
+                  </text>
+                </view>
                 <view class="mb-[8rpx] flex flex-wrap items-center gap-[16rpx] text-[22rpx] text-gray-600">
                   <text>{{ formatLicensePlate(vehicle.licensePlate) }}</text>
                   <text>{{ vehicle.seats }}座</text>
@@ -634,34 +555,60 @@ function getVehicleDistance(vehicle: Vehicle): string {
                 </view>
                 <!-- 车辆特性 -->
                 <view class="mt-auto flex flex-wrap items-center gap-[16rpx]">
-                  <view v-if="vehicle.rangeKm" class="flex items-center">
-                    <text class="i-material-symbols-battery-charging-full mr-[6rpx] text-[20rpx] text-green-500" />
-                    <text class="text-[20rpx] text-gray-600">
-                      {{ vehicle.rangeKm }}km
+                  <view v-if="vehicle.year" class="flex items-center rounded-[8rpx] bg-blue-50 px-[8rpx] py-[2rpx]">
+                    <text class="i-material-symbols-calendar-today mr-[4rpx] text-[18rpx] text-blue-600" />
+                    <text class="text-[20rpx] text-blue-700 font-medium">
+                      {{ vehicle.year }}
                     </text>
                   </view>
-                  <view class="flex items-center">
-                    <text class="i-material-symbols-star mr-[6rpx] text-[20rpx] text-yellow-500" />
-                    <text class="text-[20rpx] text-gray-600">
-                      {{ vehicle.rating }}({{ vehicle.ratingCount }})
+                  <view v-if="vehicle.rangeKm" class="flex items-center rounded-[8rpx] bg-green-50 px-[8rpx] py-[2rpx]">
+                    <text class="i-material-symbols-battery-charging-full mr-[4rpx] text-[18rpx] text-green-600" />
+                    <text class="text-[20rpx] text-green-700 font-medium">
+                      续航{{ vehicle.rangeKm }}km
                     </text>
                   </view>
                 </view>
               </view>
-            </view>
-            <!-- 标签栏（图片和价格栏之间，横向排列） -->
-            <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[12rpx] px-[20rpx] pt-[20rpx]">
-              <view
-                v-for="tag in vehicle.tags.slice(0, 2)"
-                :key="tag.tagName"
-                class="flex items-center rounded-[12rpx] bg-gray-50 px-[16rpx] py-[6rpx] text-[20rpx] font-medium text-gray-700"
-              >
-                <view
-                  class="mr-[8rpx] h-[12rpx] w-[12rpx] rounded-full opacity-50"
-                  :style="{ backgroundColor: tag.tagColor || '#9ca3af' }"
-                />
-                {{ tag.tagName }}
+
+              <!-- 评价信息（与名字平齐） -->
+              <view v-if="vehicle.rating" class="absolute top-[20rpx] right-[20rpx] flex items-center">
+                <text class="i-material-symbols-star mr-[4rpx] text-[18rpx] text-yellow-500" />
+                <text class="text-[20rpx] text-gray-700 font-medium">
+                  {{ vehicle.rating }}
+                </text>
+                <text class="ml-[6rpx] text-[18rpx] text-gray-500">
+                  ({{ vehicle.ratingCount }}条评价)
+                </text>
               </view>
+            </view>
+            <!-- 标签栏（图片和价格栏之间，换行展示） -->
+            <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[8rpx] px-[20rpx] pt-[16rpx]">
+              <template v-for="tag in vehicle.tags" :key="tag.tagName">
+                <!-- 图片标签：直接展示完整的UI设计图片 -->
+                <image
+                  v-if="tag.tagType === 'image' && tag.tagIcon"
+                  :src="tag.tagIcon"
+                  class="h-[32rpx] object-contain"
+                  mode="heightFix"
+                />
+                <!-- 文字标签：带背景和圆点的传统样式 -->
+                <view
+                  v-else
+                  class="flex items-center rounded-[16rpx] px-[12rpx] py-[4rpx] text-[18rpx] font-medium"
+                  :style="{
+                    backgroundColor: tag.tagColor ? `${tag.tagColor}15` : '#f3f4f6',
+                    borderColor: tag.tagColor || '#d1d5db',
+                    color: tag.tagColor || '#6b7280',
+                  }"
+                  style="border-width: 1px;"
+                >
+                  <view
+                    class="mr-[6rpx] h-[8rpx] w-[8rpx] rounded-full"
+                    :style="{ backgroundColor: tag.tagColor || '#9ca3af' }"
+                  />
+                  {{ tag.tagName }}
+                </view>
+              </template>
             </view>
 
             <!-- 下半部分：价格信息和预订按钮 -->
@@ -694,7 +641,7 @@ function getVehicleDistance(vehicle: Vehicle): string {
               </view>
 
               <!-- 快速预订按钮 -->
-              <view class="flex rounded-[20rpx] from-purple-500 to-purple-400 bg-gradient-to-r px-[24rpx] py-[12rpx]" @tap.stop="quickBook(vehicle.vehicleId)">
+              <view class="flex rounded-[20rpx] from-purple-500 to-purple-400 bg-gradient-to-r px-[24rpx] py-[12rpx]" @tap="quickBook(vehicle.vehicleId)">
                 <text class="i-material-symbols-bolt mr-[8rpx] text-[24rpx] text-white" />
                 <text class="text-[24rpx] text-white font-medium">
                   立即预订
@@ -718,103 +665,6 @@ function getVehicleDistance(vehicle: Vehicle): string {
         </view>
       </scroll-view>
     </view>
-
-    <!-- 筛选弹窗 -->
-    <BottomDrawer v-model:visible="showFilters" title="筛选条件">
-      <view class="mt-[32rpx]">
-        <!-- 操作按钮 -->
-        <view class="mb-[32rpx] flex items-center justify-end border-b border-gray-100 pb-[24rpx] space-x-[32rpx]">
-          <text class="text-[28rpx] text-gray-600" @tap="resetFilters">
-            重置
-          </text>
-          <text class="text-[28rpx] text-purple-600 font-medium" @tap="applyFilters">
-            确定
-          </text>
-        </view>
-
-        <scroll-view scroll-y class="h-max">
-          <!-- 价格范围 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
-              价格范围
-            </text>
-            <view class="flex flex-wrap gap-[16rpx]">
-              <view
-                v-for="range in priceRanges"
-                :key="range.label"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="selectedPriceRange && selectedPriceRange[0] === range.value[0] && selectedPriceRange[1] === range.value[1]
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
-                @tap="selectPriceRange(range.value)"
-              >
-                {{ range.label }}
-              </view>
-            </view>
-          </view>
-
-          <!-- 车型筛选 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
-              车型
-            </text>
-            <view class="flex flex-wrap gap-[16rpx]">
-              <view
-                v-for="type in filterOptions.carTypes"
-                :key="type"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.vehicleTypes.includes(type)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
-                @tap="toggleArrayFilter('vehicleTypes', type)"
-              >
-                {{ type }}
-              </view>
-            </view>
-          </view>
-
-          <!-- 能源类型 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
-              能源类型
-            </text>
-            <view class="flex flex-wrap gap-[16rpx]">
-              <view
-                v-for="energy in filterOptions.energyTypes"
-                :key="energy"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.energyTypes.includes(energy)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
-                @tap="toggleArrayFilter('energyTypes', energy)"
-              >
-                {{ energy }}
-              </view>
-            </view>
-          </view>
-
-          <!-- 座位数 -->
-          <view class="mb-[48rpx]">
-            <text class="mb-[24rpx] block text-[28rpx] text-black font-semibold">
-              座位数
-            </text>
-            <view class="flex flex-wrap gap-[16rpx]">
-              <view
-                v-for="seat in filterOptions.seats"
-                :key="seat"
-                class="border-2 rounded-[20rpx] px-[24rpx] py-[12rpx] text-[24rpx] transition-all"
-                :class="filters.seats.includes(seat)
-                  ? 'border-purple-600 bg-purple-50 text-purple-600'
-                  : 'border-gray-200 bg-gray-50 text-gray-600'"
-                @tap="toggleArrayFilter('seats', seat)"
-              >
-                {{ seat }}座
-              </view>
-            </view>
-          </view>
-        </scroll-view>
-      </view>
-    </BottomDrawer>
 
     <!-- 时间范围选择器 -->
     <DateRangePicker

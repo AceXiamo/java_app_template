@@ -168,18 +168,19 @@ async function handleReviewSubmit(reviewData: any) {
       reviewData.content,
       reviewData.tags,
       reviewData.images,
-      reviewData.isAnonymous
+      reviewData.isAnonymous,
     )
-    
+
     // 关闭弹框
     reviewDrawerVisible.value = false
     currentReviewOrder.value = null
-    
+
     uni.showToast({ title: '评价成功', icon: 'success' })
-    
+
     // 重新加载订单列表以更新状态
     orderStore.reloadOrderList()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('评价失败:', error)
     uni.showToast({ title: '评价失败，请重试', icon: 'none' })
   }
@@ -192,17 +193,28 @@ function closeReviewDrawer() {
 }
 
 async function reOrder(orderId: string) {
-  try {
-    await orderStore.handleRebookOrder(Number(orderId), '2024-12-20 14:00', '2024-12-21 14:00')
-    uni.showToast({ title: '预订成功', icon: 'success' })
+  // 找到对应的订单
+  const order = orderList.value.find(o => o.id === orderId)
+
+  if (order && order.orderType === 'mystery_box') {
+    uni.navigateTo({ url: `/pages/mystery-box/index` })
   }
-  catch {
-    uni.showToast({ title: '预订失败', icon: 'none' })
+  else {
+    uni.navigateTo({ url: `/pages/vehicle/index` })
   }
 }
 
 function viewDetail(orderId: string) {
-  uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}` })
+  // 找到对应的订单
+  const order = orderList.value.find(o => o.id === orderId)
+
+  // 如果是盲盒订单，添加 type 参数
+  if (order && order.orderType === 'mystery_box') {
+    uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}&type=mystery_box` })
+  }
+  else {
+    uni.navigateTo({ url: `/pages/order/detail?orderId=${orderId}` })
+  }
 }
 
 // 处理订单操作
@@ -289,15 +301,16 @@ function isReturnExpired(order: any) {
   if (!order.actualStartTime || !order.rentalDays) {
     return false
   }
-  
+
   try {
     const actualStartTime = new Date(order.actualStartTime).getTime()
-    const rentalDays = parseInt(order.rentalDays)
+    const rentalDays = Number.parseInt(order.rentalDays)
     const returnDeadline = actualStartTime + (rentalDays * 24 * 60 * 60 * 1000) // 租用天数转毫秒
     const now = new Date().getTime()
-    
+
     return now > returnDeadline
-  } catch (error) {
+  }
+  catch (error) {
     console.error('计算还车超时失败:', error)
     return false
   }
@@ -308,64 +321,87 @@ function getReturnDeadline(order: any) {
   if (!order.actualStartTime || !order.rentalDays) {
     return null
   }
-  
+
   try {
     const actualStartTime = new Date(order.actualStartTime)
-    const rentalDays = parseInt(order.rentalDays)
+    const rentalDays = Number.parseInt(order.rentalDays)
     const returnDeadline = new Date(actualStartTime.getTime() + (rentalDays * 24 * 60 * 60 * 1000))
-    
+
     return returnDeadline.toISOString()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('计算还车截止时间失败:', error)
     return null
   }
 }
 
+// 判断盲盒是否已揭晓（用户完成取车）
+function isMysteryBoxRevealed(order: any) {
+  if (order.orderType !== 'mystery_box')
+    return false
+
+  // 只有在 picked、returned、completed 状态下才认为盲盒已揭晓
+  return ['picked', 'returned', 'completed'].includes(order.originalStatus || order.status)
+}
+
 // 打开导航
-async function openNavigation(location: string) {
+async function openNavigation(order: any) {
+  const { location, vehicleLatitude, vehicleLongitude } = order
+
   if (!location) {
     uni.showToast({ title: '取车地点信息不完整', icon: 'none' })
     return
   }
 
   try {
-    // 使用地图搜索API或直接调用地图应用
-    const url = `https://uri.amap.com/search?query=${encodeURIComponent(location)}`
-
-    // 先尝试使用系统地图应用
-    uni.openLocation({
-      name: location,
-      address: location,
-      latitude: 0, // 默认值，实际应该从后端获取
-      longitude: 0,
-      success: () => {
-        console.log('导航成功')
-      },
-      fail: () => {
-        // 如果系统地图打开失败，使用web地图
-        uni.showModal({
-          title: '打开地图',
-          content: `是否使用高德地图导航至：${location}`,
-          success: (res) => {
-            if (res.confirm) {
-              // #ifdef H5
-              window.open(url, '_blank')
-              // #endif
-              // #ifdef MP-WEIXIN
-              uni.navigateTo({
-                url: `/pages/map/navigation?location=${encodeURIComponent(location)}`,
-              })
-              // #endif
-            }
-          },
-        })
-      },
-    })
+    // 优先使用精确坐标
+    if (vehicleLatitude && vehicleLongitude) {
+      console.log('使用精确坐标导航:', vehicleLatitude, vehicleLongitude)
+      uni.openLocation({
+        name: location,
+        address: location,
+        latitude: Number(vehicleLatitude),
+        longitude: Number(vehicleLongitude),
+        success: () => {
+          console.log('精确坐标导航成功')
+        },
+        fail: () => {
+          console.error('精确坐标导航失败，降级到地址搜索')
+          fallbackToAddressSearch(location)
+        },
+      })
+    }
+    else {
+      console.log('无精确坐标，使用地址搜索导航:', location)
+      fallbackToAddressSearch(location)
+    }
   }
   catch (error) {
     console.error('导航失败', error)
     uni.showToast({ title: '导航失败', icon: 'none' })
   }
+}
+
+// 降级到地址搜索导航
+function fallbackToAddressSearch(location: string) {
+  const url = `https://uri.amap.com/search?query=${encodeURIComponent(location)}`
+
+  uni.showModal({
+    title: '打开地图',
+    content: `是否使用高德地图导航至：${location}`,
+    success: (res) => {
+      if (res.confirm) {
+        // #ifdef H5
+        window.open(url, '_blank')
+        // #endif
+        // #ifdef MP-WEIXIN
+        uni.navigateTo({
+          url: `/pages/map/navigation?location=${encodeURIComponent(location)}`,
+        })
+        // #endif
+      }
+    },
+  })
 }
 </script>
 
@@ -490,8 +526,8 @@ async function openNavigation(location: string) {
             </view>
             <!-- 车辆信息 -->
             <view class="mb-[20rpx] flex">
-              <!-- 盲盒订单特殊显示 -->
-              <view v-if="order.orderType === 'mystery_box'" class="h-[120rpx] w-[160rpx] flex-shrink-0">
+              <!-- 盲盒订单未揭晓显示 -->
+              <view v-if="order.orderType === 'mystery_box' && !isMysteryBoxRevealed(order)" class="h-[120rpx] w-[160rpx] flex-shrink-0">
                 <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-purple-50 to-purple-100 bg-gradient-to-br">
                   <image
                     src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/mystery-box.png"
@@ -501,7 +537,7 @@ async function openNavigation(location: string) {
                   />
                 </view>
               </view>
-              <!-- 普通车辆图片 -->
+              <!-- 盲盒订单已揭晓或普通车辆图片 -->
               <view v-else class="h-[120rpx] w-[160rpx] flex-shrink-0">
                 <image
                   v-if="order.vehicle && order.vehicle.imageUrl"
@@ -515,8 +551,8 @@ async function openNavigation(location: string) {
               </view>
               <!-- 车辆信息 -->
               <view class="ml-[24rpx] min-w-0 flex flex-1 flex-col justify-center">
-                <!-- 盲盒订单显示 -->
-                <template v-if="order.orderType === 'mystery_box'">
+                <!-- 盲盒订单未揭晓显示 -->
+                <template v-if="order.orderType === 'mystery_box' && !isMysteryBoxRevealed(order)">
                   <text class="truncate text-[28rpx] text-black font-bold">
                     神秘盲盒
                   </text>
@@ -535,6 +571,34 @@ async function openNavigation(location: string) {
                     <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[20rpx] text-purple-500" />
                     <text class="truncate text-[20rpx] text-purple-600 font-medium">
                       惊喜车型等你解锁
+                    </text>
+                  </view>
+                </template>
+                <!-- 盲盒订单已揭晓显示 -->
+                <template v-else-if="order.orderType === 'mystery_box' && isMysteryBoxRevealed(order)">
+                  <view class="flex items-center">
+                    <text class="truncate text-[28rpx] text-black font-bold">
+                      🎉 {{ order.vehicle?.name || '暂无车辆信息' }}
+                    </text>
+                    <text class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600 font-medium">
+                      已揭晓
+                    </text>
+                  </view>
+                  <view class="mt-[8rpx] flex flex-wrap items-center gap-x-[16rpx] gap-y-[4rpx] text-[22rpx] text-gray-600">
+                    <text class="truncate">
+                      {{ order.vehicle?.licensePlate || '沪A·****' }}
+                    </text>
+                    <text class="truncate">
+                      {{ order.vehicle?.seats || 5 }}座
+                    </text>
+                    <text class="truncate">
+                      {{ order.vehicle?.type || '轿车' }}
+                    </text>
+                  </view>
+                  <view class="mt-[8rpx] flex items-center">
+                    <text class="i-material-symbols-star mr-[4rpx] text-[20rpx] text-yellow-500" />
+                    <text class="truncate text-[20rpx] text-gray-600">
+                      {{ order.vehicle?.rating || 4.8 }}({{ order.vehicle?.ratingCount || 128 }})
                     </text>
                   </view>
                 </template>
@@ -596,7 +660,7 @@ async function openNavigation(location: string) {
                     取车地点
                   </text>
                 </view>
-                <view class="flex cursor-pointer items-center rounded-full bg-purple-100 px-[16rpx] py-[8rpx] transition-colors active:bg-purple-200" @tap="openNavigation(order.location)">
+                <view class="flex cursor-pointer items-center rounded-full bg-purple-100 px-[16rpx] py-[8rpx] transition-colors" @click.stop="openNavigation(order)">
                   <text class="i-material-symbols-near-me mr-[8rpx] text-[22rpx] text-purple-600" />
                   <text class="text-[22rpx] text-purple-600 font-medium">
                     导航
@@ -621,7 +685,7 @@ async function openNavigation(location: string) {
                 </text>
               </view>
             </view>
-            
+
             <!-- 还车超时警告 (仅picked状态) -->
             <view v-if="(order.originalStatus || order.status) === 'picked' && isReturnExpired(order)" class="mb-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
               <view class="flex items-center">
@@ -651,7 +715,7 @@ async function openNavigation(location: string) {
                     {{ order.pickupCode }}
                   </text>
                 </view>
-                
+
                 <!-- paid状态：显示取车截止时间 -->
                 <view v-if="order.pickupDeadline" class="ml-[16rpx] flex flex-col items-end text-right">
                   <view class="mb-[2rpx] flex items-center">
@@ -682,10 +746,10 @@ async function openNavigation(location: string) {
                     </text>
                   </view>
                   <text class="text-[36rpx] text-green-600 font-bold tracking-wider">
-                    {{ order.returnCode }}
+                    {{ order.returnCode || '' }}
                   </text>
                 </view>
-                
+
                 <!-- picked状态：显示还车截止时间 -->
                 <view v-if="getReturnDeadline(order)" class="ml-[16rpx] flex flex-col items-end text-right">
                   <view class="mb-[2rpx] flex items-center">
@@ -695,7 +759,7 @@ async function openNavigation(location: string) {
                     </text>
                   </view>
                   <text class="text-[20rpx] font-medium" :class="isReturnExpired(order) ? 'text-orange-500' : 'text-green-700'">
-                    {{ formatTime(getReturnDeadline(order)) }}
+                    {{ formatTime(getReturnDeadline(order) || '') }}
                   </text>
                   <text v-if="isReturnExpired(order)" class="mt-[2rpx] block text-[16rpx] text-orange-500">
                     已超时

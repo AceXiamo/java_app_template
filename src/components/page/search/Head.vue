@@ -1,5 +1,21 @@
 <script lang="ts" setup>
+import { computed } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
+
+// 定义组件属性
+const props = withDefaults(defineProps<{
+  selectedCategoryName?: string
+}>(), {
+  selectedCategoryName: ''
+})
+
+// 计算动态标题
+const dynamicTitle = computed(() => {
+  if (props.selectedCategoryName) {
+    return `${props.selectedCategoryName}`
+  }
+  return '全部车型搜索结果'
+})
 
 // 返回上一页
 function goBack() {
@@ -17,7 +33,7 @@ function goBack() {
 
       <!-- 页面标题 -->
       <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
-        搜索结果
+        {{ dynamicTitle }}
       </text>
     </view>
   </HeadBar>

@@ -141,11 +141,6 @@ export function getMysteryBoxOptions() {
 export function getMysteryBoxPricing(params: {
   energyType: string
   carType: string
-  location: {
-    latitude: number
-    longitude: number
-    address: string
-  }
 }) {
   return request.post({
     url: `${host}/api/mystery-box/pricing`,
@@ -161,11 +156,6 @@ export function createMysteryBoxOrder(params: {
   }
   rentalInfo: {
     startTime: string
-  }
-  location: {
-    latitude: number
-    longitude: number
-    address: string
   }
 }) {
   return request.post({

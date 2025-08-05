@@ -6,6 +6,7 @@ export interface Vehicle {
   name: string
   brand: string
   model: string
+  year?: string // 年款（如：2020款）
   licensePlate: string // 车牌号
   carType: string // 轿车/SUV等
   energyType: string // 汽油/电动/混动
@@ -32,6 +33,7 @@ export interface Vehicle {
     tagName: string
     tagType: string
     tagColor: string
+    tagIcon?: string
   }[]
   // 预订相关字段
   deliveryEnabled: boolean
@@ -53,7 +55,7 @@ export interface VehicleSearchParams {
   minPrice?: number
   maxPrice?: number
   seats?: number[]
-  sortBy?: 'price' | 'distance' | 'hot'
+  sortBy?: 'price' | 'year' | 'hot'
   page?: number
   limit?: number
   latitude?: number
@@ -77,7 +79,8 @@ export interface VehicleFilterOptions {
   priceRange: [number, number]
 }
 
-export interface VehicleCategory {
+// 一级分类（品牌）- 使用驼峰命名
+export interface VehicleBrand {
   categoryId: number
   parentCategoryId?: number
   level: number
@@ -88,7 +91,28 @@ export interface VehicleCategory {
   iconUrl?: string
   sortOrder: number
   isActive: boolean
+}
+
+// 二级分类（车型）- 使用下划线命名
+export interface VehicleCategory {
+  category_id: number
+  parent_category_id?: number
+  level: number
+  category_name: string
+  category_code: string
+  description?: string
+  min_price: number
+  actual_min_price?: number  // 实际最低价格（从vehicle表联表查询得到）
+  icon_url?: string
+  gallery_images?: string   // 组图JSON字符串
+  feature_tags?: string     // 特征标签JSON字符串
+  sort_order: number
+  is_active: boolean
   children?: VehicleCategory[]
+  // 排序相关字段
+  avg_rating?: number       // 平均评分
+  review_count?: number     // 评价数量
+  min_distance?: number     // 最近距离(km)
 }
 
 export interface VehicleTagType {
@@ -131,6 +155,7 @@ export interface VehicleDetail {
   name: string
   brand: string
   model: string
+  year?: string // 年款（如：2020款）
   licensePlate: string
   carType: string
   energyType: string
@@ -157,6 +182,7 @@ export interface VehicleDetail {
     tagName: string
     tagType: string
     tagColor: string
+    tagIcon?: string
   }[]
   deliveryEnabled: boolean
   deliveryBaseFee: number
@@ -189,23 +215,36 @@ export function getVehicleCategories(): Promise<BaseRes<VehicleCategory[]>> {
 }
 
 // 获取主分类列表（层级为1的分类）- 小程序端
-export function getParentCategories(): Promise<BaseRes<VehicleCategory[]>> {
+export function getParentCategories(): Promise<BaseRes<VehicleBrand[]>> {
   return request.get({
     url: `${host}/app/vehicle/category/brands`,
   })
 }
 
 // 获取指定父分类下的子分类列表 - 小程序端
-export function getChildCategories(parentCategoryId: number): Promise<BaseRes<VehicleCategory[]>> {
+export function getChildCategories(
+  parentCategoryId: number,
+  params?: {
+    latitude?: number
+    longitude?: number
+    sortType?: string
+  }
+): Promise<BaseRes<VehicleCategory[]>> {
   return request.get({
     url: `${host}/app/vehicle/category/models/${parentCategoryId}`,
+    params
   })
 }
 
 // 获取所有子分类列表（层级为2的分类）- 小程序端
-export function getAllChildCategories(): Promise<BaseRes<VehicleCategory[]>> {
+export function getAllChildCategories(params?: {
+  latitude?: number
+  longitude?: number
+  sortType?: string
+}): Promise<BaseRes<VehicleCategory[]>> {
   return request.get({
     url: `${host}/app/vehicle/category/models`,
+    params
   })
 }
 

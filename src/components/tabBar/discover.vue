@@ -114,7 +114,7 @@ onMounted(() => {
           <view
             v-for="article in discoverStore.newsList"
             :key="article.articleId"
-            class="relative overflow-hidden rounded-[24rpx] bg-white shadow-[0_8rpx_24rpx_rgba(0,0,0,0.06)] transition-all duration-200 active:scale-98"
+            class="relative overflow-hidden rounded-[24rpx] bg-white shadow-[0_8rpx_24rpx_rgba(0,0,0,0.06)]"
             @tap="discoverStore.openNewsDetail(article.articleId)"
           >
             <!-- 热门标签 - 悬浮在右上角 -->
@@ -177,12 +177,12 @@ onMounted(() => {
                       {{ article.likeCount }}
                     </text>
                   </view>
-                  <view class="flex items-center">
+                  <!-- <view class="flex items-center">
                     <text class="i-material-symbols:chat-bubble mr-[6rpx] text-[24rpx] text-gray-400" />
                     <text class="text-[22rpx] text-gray-500 font-medium">
                       {{ article.commentCount }}
                     </text>
-                  </view>
+                  </view> -->
                 </view>
                 <text class="text-[22rpx] text-gray-400 font-medium">
                   {{ article.publishTime }}

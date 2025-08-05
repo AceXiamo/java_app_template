@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
+import Toast from '@/components/Toast.vue'
 import { type AvailableOrder, type InvoiceApplication, getAvailableOrders, submitInvoiceApplication } from '@/api/invoice'
 import { useUserStore } from '@/store/user'
 
@@ -306,130 +307,196 @@ onMounted(() => {
 
           <view class="p-[32rpx] space-y-[32rpx]">
             <!-- 发票抬头 -->
-            <view>
-              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                发票抬头 *
-              </text>
-              <input
-                v-model="formData.invoiceTitle"
-                class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                placeholder="请输入发票抬头"
-                maxlength="100"
-              >
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  发票抬头
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  必填项
+                </text>
+              </view>
+              <view class="flex items-center space-x-[16rpx]">
+                <input
+                  v-model="formData.invoiceTitle"
+                  class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                  placeholder="请输入发票抬头"
+                  maxlength="100"
+                >
+              </view>
             </view>
 
             <!-- 个人发票信息 -->
             <template v-if="invoiceType === 'personal'">
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  个人姓名 *
-                </text>
-                <input
-                  v-model="formData.personalName"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入真实姓名"
-                  maxlength="50"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    个人姓名
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    必填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.personalName"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入真实姓名"
+                    maxlength="50"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  身份证号 *
-                </text>
-                <input
-                  v-model="formData.personalIdCard"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入身份证号"
-                  maxlength="18"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    身份证号
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    必填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.personalIdCard"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入身份证号"
+                    maxlength="18"
+                  >
+                </view>
               </view>
             </template>
 
             <!-- 企业发票信息 -->
             <template v-else>
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  企业名称 *
-                </text>
-                <input
-                  v-model="formData.companyName"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入企业全称"
-                  maxlength="100"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    企业名称
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    必填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.companyName"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入企业全称"
+                    maxlength="100"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  纳税人识别号 *
-                </text>
-                <input
-                  v-model="formData.taxNumber"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入纳税人识别号"
-                  maxlength="30"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    纳税人识别号
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    必填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.taxNumber"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入纳税人识别号"
+                    maxlength="30"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  企业地址
-                </text>
-                <input
-                  v-model="formData.companyAddress"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入企业注册地址"
-                  maxlength="200"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    企业地址
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    选填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.companyAddress"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入企业注册地址"
+                    maxlength="200"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  企业电话
-                </text>
-                <input
-                  v-model="formData.companyPhone"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入企业联系电话"
-                  maxlength="20"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    企业电话
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    选填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.companyPhone"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入企业联系电话"
+                    maxlength="20"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  开户银行
-                </text>
-                <input
-                  v-model="formData.companyBank"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入开户银行全称"
-                  maxlength="100"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    开户银行
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    选填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.companyBank"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入开户银行全称"
+                    maxlength="100"
+                  >
+                </view>
               </view>
 
-              <view>
-                <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                  银行账号
-                </text>
-                <input
-                  v-model="formData.bankAccount"
-                  class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                  placeholder="请输入银行账号"
-                  maxlength="30"
-                >
+              <view class="flex items-center justify-between">
+                <view>
+                  <text class="block text-[28rpx] text-black font-medium">
+                    银行账号
+                  </text>
+                  <text class="text-[24rpx] text-gray-500">
+                    选填项
+                  </text>
+                </view>
+                <view class="flex items-center space-x-[16rpx]">
+                  <input
+                    v-model="formData.bankAccount"
+                    class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                    placeholder="请输入银行账号"
+                    maxlength="30"
+                  >
+                </view>
               </view>
             </template>
 
             <!-- 发票金额（只读） -->
-            <view>
-              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                发票金额
-              </text>
-              <view class="w-full border border-gray-200 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[16rpx]">
-                <text class="text-[28rpx] text-gray-700">
-                  ¥{{ formData.invoiceAmount }}
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  发票金额
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  订单实际支付金额
                 </text>
               </view>
+              <text class="text-[26rpx] text-gray-700 font-medium">
+                ¥{{ formData.invoiceAmount }}
+              </text>
             </view>
           </view>
         </view>
@@ -446,39 +513,59 @@ onMounted(() => {
           </view>
 
           <view class="p-[32rpx] space-y-[32rpx]">
-            <view>
-              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                收件人姓名 *
-              </text>
-              <input
-                v-model="formData.recipientName"
-                class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                placeholder="请输入收件人姓名"
-                maxlength="50"
-              >
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  收件人姓名
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  必填项
+                </text>
+              </view>
+              <view class="flex items-center space-x-[16rpx]">
+                <input
+                  v-model="formData.recipientName"
+                  class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                  placeholder="请输入收件人姓名"
+                  maxlength="50"
+                >
+              </view>
             </view>
 
-            <view>
-              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                收件人电话 *
-              </text>
-              <input
-                v-model="formData.recipientPhone"
-                class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                placeholder="请输入收件人手机号"
-                maxlength="11"
-                type="number"
-              >
+            <view class="flex items-center justify-between">
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  收件人电话
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  必填项
+                </text>
+              </view>
+              <view class="flex items-center space-x-[16rpx]">
+                <input
+                  v-model="formData.recipientPhone"
+                  class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
+                  placeholder="请输入收件人手机号"
+                  maxlength="11"
+                  type="number"
+                >
+              </view>
             </view>
 
+            <!-- 收件地址保持垂直布局，因为地址内容较长 -->
             <view>
-              <text class="mb-[16rpx] block text-[28rpx] text-black font-medium">
-                收件地址 *
-              </text>
+              <view class="mb-[16rpx]">
+                <text class="block text-[28rpx] text-black font-medium">
+                  收件地址
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  请输入详细地址，包括省市区街道门牌号
+                </text>
+              </view>
               <textarea
                 v-model="formData.recipientAddress"
-                class="w-full border border-gray-300 rounded-[12rpx] bg-transparent px-[24rpx] py-[16rpx] text-[28rpx]"
-                placeholder="请输入详细收件地址，包括省市区街道门牌号"
+                class="w-full border border-gray-300 rounded bg-transparent px-[16rpx] py-[12rpx] text-[26rpx] min-h-[120rpx]"
+                placeholder="请输入详细收件地址"
                 maxlength="200"
                 :auto-height="true"
                 :show-confirm-bar="false"

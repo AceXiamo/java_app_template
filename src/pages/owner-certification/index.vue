@@ -391,9 +391,9 @@ onMounted(async () => {
                     {{ config.packageName }}
                   </text>
                 </view>
-                <text class="text-[24rpx] text-purple-600 font-medium">
+                <!-- <text class="text-[24rpx] text-purple-600 font-medium">
                   {{ config.revenueShareRateText }}
-                </text>
+                </text> -->
               </view>
 
               <text class="mt-[12rpx] block text-[24rpx] text-gray-600 leading-relaxed">

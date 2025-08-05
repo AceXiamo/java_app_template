@@ -2,10 +2,27 @@
 import { useSettingStore } from '@/store/setting'
 import type { OwnerActiveMenu } from '@/store/owner'
 import { useOwnerStore } from '@/store/owner'
+import { useUserStore } from '@/store/user'
 
 const setting = useSettingStore()
 const { active } = toRefs(useOwnerStore())
 const ownerStore = useOwnerStore()
+const userStore = useUserStore()
+
+// 判断是否显示收益tab - 只有车主用户才能看到
+const shouldShowRevenue = computed(() => {
+  const user = userStore.user
+  if (!user)
+    return false
+
+  // 如果有明确的用户角色，使用角色判断（排除平台管理员）
+  if (user.userRole) {
+    return user.userRole !== 'platform_manager'
+  }
+
+  // 备选方案：使用isOwner字段判断
+  return user.isOwner === true
+})
 
 function load() {
   switch (active.value) {
@@ -86,8 +103,9 @@ onShow(() => {
       </text>
     </view>
 
-    <!-- 收益 Tab -->
+    <!-- 收益 Tab - 仅车主可见 -->
     <view
+      v-if="shouldShowRevenue"
       class="flex flex-col cursor-pointer items-center py-[8rpx]"
       @tap="menuClick('revenue')"
     >
@@ -103,6 +121,5 @@ onShow(() => {
         收益
       </text>
     </view>
-
   </view>
 </template>

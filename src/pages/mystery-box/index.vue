@@ -11,9 +11,7 @@ import {
   getMysteryBoxOptions,
   getMysteryBoxPricing,
 } from '@/api/mysteryBox'
-import { getCurrentLocation } from '@/api/home'
 import { queryPaymentStatus, requestWxPayment } from '@/api/booking'
-import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import DateTimePicker from '@/components/DateTimePicker.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 
@@ -45,13 +43,6 @@ const rules = ref<string[]>([])
 const selectedEnergyType = ref<string>('')
 const selectedCarType = ref<string>('')
 
-// 位置和时间信息
-const selectedLocation = ref({
-  latitude: 31.2304,
-  longitude: 121.4737,
-  address: '人民广场',
-  formattedAddress: '上海市黄浦区人民广场',
-})
 
 const timeForm = ref({
   startDate: dayjs().format('YYYY-MM-DD'),
@@ -62,7 +53,6 @@ const timeForm = ref({
 const priceInfo = ref<MysteryBoxPricing | null>(null)
 
 // 弹窗状态
-const showAddressPicker = ref(false)
 const showDatePicker = ref(false)
 const showRulesModal = ref(false)
 
@@ -93,9 +83,9 @@ const displayPickupTime = computed(() => {
   return `${formatDate(pickup)} ${pickup.format('HH:mm')}`
 })
 
-// 显示位置信息
-const displayLocation = computed(() => {
-  return selectedLocation.value.address || '选择位置'
+// 显示取车位置信息
+const displayPickupLocation = computed(() => {
+  return '完全随机分配，开奖后揭晓位置'
 })
 
 // 选择方法
@@ -115,25 +105,6 @@ function selectCarType(type: string) {
   }
 }
 
-// 显示地址选择器
-function showLocationSelector() {
-  showAddressPicker.value = true
-}
-
-// 处理地址选择确认
-function handleAddressConfirm(data: any) {
-  selectedLocation.value = {
-    latitude: data.latitude,
-    longitude: data.longitude,
-    address: data.poiName || data.formattedAddress,
-    formattedAddress: data.formattedAddress,
-  }
-
-  // 重新计算价格
-  if (selectedEnergyType.value && selectedCarType.value) {
-    loadPricing()
-  }
-}
 
 // 显示取车时间选择器
 function showTimePicker() {
@@ -203,11 +174,6 @@ async function loadPricing() {
     const result = await getMysteryBoxPricing({
       energyType: selectedEnergyType.value,
       carType: selectedCarType.value,
-      location: {
-        latitude: selectedLocation.value.latitude,
-        longitude: selectedLocation.value.longitude,
-        address: selectedLocation.value.formattedAddress,
-      },
     })
 
     if (result.code === 200 && result.data) {
@@ -286,11 +252,6 @@ async function purchaseMysteryBox() {
       rentalInfo: {
         startTime: startDateTime,
       },
-      location: {
-        latitude: selectedLocation.value.latitude,
-        longitude: selectedLocation.value.longitude,
-        address: selectedLocation.value.formattedAddress,
-      },
     }
 
     const result = await createMysteryBoxOrder(orderParams)
@@ -316,7 +277,7 @@ async function purchaseMysteryBox() {
 
           setTimeout(() => {
             uni.navigateTo({
-              url: `/pages/order/detail?id=${order.orderId}&type=mystery_box`,
+              url: `/pages/order/detail?orderId=${order.orderNo}&type=mystery_box`,
             })
           }, 2000)
         }
@@ -350,7 +311,7 @@ async function purchaseMysteryBox() {
           success: (res) => {
             if (res.confirm) {
               uni.navigateTo({
-                url: `/pages/order/detail?id=${order.orderId}&type=mystery_box`,
+                url: `/pages/order/detail?orderId=${order.orderNo}&type=mystery_box`,
               })
             }
           },
@@ -411,28 +372,6 @@ async function verifyPaymentStatus(orderNo: string) {
   }
 }
 
-// 获取位置信息
-async function getLocation() {
-  try {
-    const location = await uni.getLocation({ type: 'wgs84' })
-    const response = await getCurrentLocation({
-      latitude: location.latitude,
-      longitude: location.longitude,
-    })
-
-    if (response.code === 200 && response.data) {
-      selectedLocation.value = {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        address: response.data.city,
-        formattedAddress: response.data.city,
-      }
-    }
-  }
-  catch (error) {
-    console.error('获取位置失败:', error)
-  }
-}
 
 // 加载数据
 async function loadData() {
@@ -536,20 +475,16 @@ function useDefaultOptions() {
   ]
 
   rules.value = [
-    '选择偏好后，系统随机分配符合条件的车辆',
-    '支付成功后生成取车码，具体车型和租期取车时揭晓',
+    '选择偏好后，系统完全随机分配符合条件的车辆',
+    '支付成功后生成取车码，具体车型、位置和租期取车时揭晓',
     '盲盒车辆均为平台精选，品质有保障',
-    '体验内容由系统随机分配，取车时揭晓',
+    '抽到哪辆车就到哪里取，体验真正的盲盒惊喜',
   ]
 }
 
 // 生命周期
 onMounted(async () => {
-  // 并行加载数据和位置
-  await Promise.allSettled([
-    loadData(),
-    getLocation(),
-  ])
+  await loadData()
 })
 </script>
 
@@ -631,38 +566,15 @@ onMounted(async () => {
 
       <!-- 主要选择区域 -->
       <view class="px-[24rpx] pb-[24rpx] space-y-[24rpx]">
-        <!-- 位置和时间选择 -->
+        <!-- 取车时间选择 -->
         <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
           <view class="mb-[24rpx] flex items-center">
             <text
-              class="i-material-symbols-location-on mr-[12rpx] text-[28rpx] text-purple-600"
+              class="i-material-symbols-schedule mr-[12rpx] text-[28rpx] text-purple-600"
             />
             <text class="text-[28rpx] text-black font-semibold">
-              选择位置和取车时间
+              选择取车时间
             </text>
-          </view>
-
-          <!-- 位置选择 -->
-          <view class="mb-[24rpx]">
-            <text class="mb-[12rpx] block text-[24rpx] text-gray-600">
-              取车位置
-            </text>
-            <view
-              class="flex items-center justify-between border border-gray-200 rounded-[16rpx] bg-gray-50 px-[24rpx] py-[20rpx] transition-colors active:bg-gray-100"
-              @tap="showLocationSelector"
-            >
-              <view class="flex items-center">
-                <text
-                  class="i-material-symbols-place mr-[12rpx] text-[24rpx] text-purple-600"
-                />
-                <text class="text-[26rpx] text-gray-700">
-                  {{ displayLocation }}
-                </text>
-              </view>
-              <text
-                class="i-material-symbols-keyboard-arrow-right text-[28rpx] text-gray-400"
-              />
-            </view>
           </view>
 
           <!-- 时间选择 -->
@@ -687,7 +599,7 @@ onMounted(async () => {
               />
             </view>
             <text class="mt-[8rpx] text-[22rpx] text-orange-600">
-              神秘体验，取车时揭晓
+              时间可选，但车辆和位置都是惊喜
             </text>
           </view>
         </view>
@@ -1055,18 +967,9 @@ onMounted(async () => {
       </view>
 
       <text class="mt-[12rpx] block text-center text-[22rpx] text-gray-500">
-        {{ canPurchase ? "点击购买，开始神秘之旅！" : "请先完成所有选择" }}
+        {{ canPurchase ? "立即抽奖，解锁神秘车辆！" : "请先完成所有选择" }}
       </text>
     </view>
-
-    <!-- 地址选择器 -->
-    <MapAddressPicker
-      v-model:visible="showAddressPicker"
-      title="选择取车位置"
-      :latitude="selectedLocation.latitude"
-      :longitude="selectedLocation.longitude"
-      @confirm="handleAddressConfirm"
-    />
 
     <!-- 取车时间选择器 -->
     <DateTimePicker
