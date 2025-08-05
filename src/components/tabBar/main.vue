@@ -209,6 +209,14 @@ function goToOwnerCertification() {
   uni.navigateTo({ url: '/pages/owner-certification/index' })
 }
 
+function goToCooperationForm() {
+  uni.navigateTo({ url: '/pages/cooperation-form/index' })
+}
+
+function goToVehicleTestForm() {
+  uni.navigateTo({ url: '/pages/vehicle-test-form/index' })
+}
+
 // 显示时间选择器
 function showTimePicker() {
   showDatePicker.value = true
@@ -374,7 +382,7 @@ onMounted(() => {
       <view class="px-[40rpx] pb-[32rpx]">
         <view
           class="relative h-[280rpx] overflow-hidden rounded-[24rpx]"
-          style="background-image: url(http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_3.jpg); background-size: auto 100%; background-position: right center; background-repeat: no-repeat;"
+          style="background-image: url(https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_3.jpg); background-size: auto 100%; background-position: right center; background-repeat: no-repeat;"
         >
           <!-- 渐变遮罩层 - 只在左侧40%区域 -->
           <view class="absolute left-0 top-0 z-[1] h-full w-[50%] from-white/90 via-white/70 to-transparent bg-gradient-to-r" />
@@ -438,7 +446,7 @@ onMounted(() => {
           >
             <!-- 背景图片 -->
             <image
-              src="http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_1.png"
+              src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_1.png"
               class="absolute inset-0 h-full w-full object-cover"
               mode="aspectFill"
             />
@@ -517,7 +525,7 @@ onMounted(() => {
           >
             <!-- 背景图片 -->
             <image
-              src="http://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_2.png"
+              src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home_2.png"
               class="absolute inset-0 h-full w-full object-cover"
               mode="aspectFill"
             />
@@ -542,6 +550,48 @@ onMounted(() => {
                 成为车主赚收益
               </text>
             </view>
+          </view>
+
+          <!-- 同行合作 -->
+          <view
+            class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+            @tap="goToCooperationForm"
+          >
+            <view class="mb-[16rpx] flex items-center justify-between">
+              <view i-material-symbols:handshake class="text-[48rpx] text-blue-600" />
+              <text
+                class="rounded-full bg-blue-100 px-[16rpx] py-[8rpx] text-[24rpx] text-blue-600"
+              >
+                合作
+              </text>
+            </view>
+            <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
+              同行合作
+            </text>
+            <text class="text-[24rpx] text-gray-600">
+              携手共建汽车生态
+            </text>
+          </view>
+
+          <!-- 竞品车测试 -->
+          <view
+            class="border border-gray-100 rounded-[32rpx] bg-white p-[32rpx] shadow-sm"
+            @tap="goToVehicleTestForm"
+          >
+            <view class="mb-[16rpx] flex items-center justify-between">
+              <view i-material-symbols:car-rental class="text-[48rpx] text-emerald-600" />
+              <text
+                class="rounded-full bg-emerald-100 px-[16rpx] py-[8rpx] text-[24rpx] text-emerald-600"
+              >
+                测试
+              </text>
+            </view>
+            <text class="mb-[8rpx] block text-[28rpx] text-black font-semibold">
+              竞品车测试
+            </text>
+            <text class="text-[24rpx] text-gray-600">
+              专业车辆测试服务
+            </text>
           </view>
         </view>
       </view>

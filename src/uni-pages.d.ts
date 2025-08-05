@@ -6,6 +6,7 @@
 interface NavigateToOptions {
   url: "/pages/main/index" |
        "/pages/booking/index" |
+       "/pages/cooperation-form/index" |
        "/pages/feedback-form/index" |
        "/pages/group/activity" |
        "/pages/group/home" |
@@ -42,7 +43,8 @@ interface NavigateToOptions {
        "/pages/vehicle/index" |
        "/pages/vehicle/reviews" |
        "/pages/vehicle-affiliation-records/index" |
-       "/pages/vehicle-rental-request/index";
+       "/pages/vehicle-rental-request/index" |
+       "/pages/vehicle-test-form/index";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

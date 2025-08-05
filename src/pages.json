@@ -10,6 +10,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/cooperation-form/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/feedback-form/index",
       "type": "page",
       "layout": "home"
@@ -188,6 +193,11 @@
     },
     {
       "path": "pages/vehicle-rental-request/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/vehicle-test-form/index",
       "type": "page",
       "layout": "home"
     }

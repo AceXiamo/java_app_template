@@ -53,6 +53,7 @@ const filterOptions = ref<VehicleFilterOptions>({
 const sortOptions = [
   { label: '综合排序', value: 'hot' },
   { label: '低价优先', value: 'price' },
+  { label: '高配优先', value: 'priceDesc' },
   { label: '新款优先', value: 'year' },
 ]
 
@@ -275,7 +276,7 @@ async function loadCategoryGallery(categoryId: number) {
 
 // 排序切换
 function handleSortChange(sortBy: string) {
-  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'year'
+  searchParams.value.sortBy = sortBy as 'hot' | 'price' | 'priceDesc' | 'year'
   searchVehicleList()
 }
 
@@ -715,37 +716,37 @@ function getVehicleDistance(vehicle: Vehicle): string {
             <view class="relative flex">
               <!-- 骨架屏图片 -->
               <view class="h-[180rpx] w-[240rpx] flex-shrink-0 bg-gray-200 rounded-tl-[28rpx]" />
-              
+
               <!-- 骨架屏车辆信息 -->
               <view class="flex flex-1 flex-col justify-center p-[20rpx] pr-[120rpx]">
                 <!-- 骨架屏车辆名称 -->
                 <view class="mb-[12rpx] h-[36rpx] bg-gray-200 rounded-[8rpx]" />
-                
+
                 <!-- 骨架屏车辆基本信息 -->
                 <view class="mb-[12rpx] flex gap-[16rpx]">
                   <view class="h-[24rpx] w-[80rpx] bg-gray-200 rounded-[6rpx]" />
                   <view class="h-[24rpx] w-[60rpx] bg-gray-200 rounded-[6rpx]" />
                   <view class="h-[24rpx] w-[70rpx] bg-gray-200 rounded-[6rpx]" />
                 </view>
-                
+
                 <!-- 骨架屏车辆特性 -->
                 <view class="flex gap-[16rpx]">
                   <view class="h-[28rpx] w-[90rpx] bg-gray-200 rounded-[8rpx]" />
                   <view class="h-[28rpx] w-[110rpx] bg-gray-200 rounded-[8rpx]" />
                 </view>
               </view>
-              
+
               <!-- 骨架屏评分 -->
               <view class="absolute top-[20rpx] right-[20rpx] h-[24rpx] w-[100rpx] bg-gray-200 rounded-[12rpx]" />
             </view>
-            
+
             <!-- 骨架屏标签 -->
             <view class="flex gap-[8rpx] px-[20rpx] pt-[16rpx]">
               <view class="h-[32rpx] w-[60rpx] bg-gray-200 rounded-[16rpx]" />
               <view class="h-[32rpx] w-[80rpx] bg-gray-200 rounded-[16rpx]" />
               <view class="h-[32rpx] w-[70rpx] bg-gray-200 rounded-[16rpx]" />
             </view>
-            
+
             <!-- 骨架屏价格和按钮 -->
             <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
               <view>

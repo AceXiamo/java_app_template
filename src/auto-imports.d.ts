@@ -38,9 +38,12 @@ declare global {
   const fileUrlReplace: typeof import('./utils/index')['fileUrlReplace']
   const formatAmount: typeof import('./utils/tool')['formatAmount']
   const generateFileName: typeof import('./utils/tool')['generateFileName']
+  const getCitiesByProvince: typeof import('./utils/region-data')['getCitiesByProvince']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getDistrictsByCity: typeof import('./utils/region-data')['getDistrictsByCity']
   const getJumpData: typeof import('./utils/index')['getJumpData']
+  const getProvinces: typeof import('./utils/region-data')['getProvinces']
   const getUploadConfig: typeof import('./utils/alioss')['getUploadConfig']
   const h: typeof import('vue')['h']
   const handleImageUpload: typeof import('./utils/tool')['handleImageUpload']
@@ -123,6 +126,7 @@ declare global {
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
+  const searchRegions: typeof import('./utils/region-data')['searchRegions']
   const setJumpData: typeof import('./utils/index')['setJumpData']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
@@ -390,9 +394,12 @@ declare module 'vue' {
     readonly fileUrlReplace: UnwrapRef<typeof import('./utils/index')['fileUrlReplace']>
     readonly formatAmount: UnwrapRef<typeof import('./utils/tool')['formatAmount']>
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
+    readonly getCitiesByProvince: UnwrapRef<typeof import('./utils/region-data')['getCitiesByProvince']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getDistrictsByCity: UnwrapRef<typeof import('./utils/region-data')['getDistrictsByCity']>
     readonly getJumpData: UnwrapRef<typeof import('./utils/index')['getJumpData']>
+    readonly getProvinces: UnwrapRef<typeof import('./utils/region-data')['getProvinces']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly handleImageUpload: UnwrapRef<typeof import('./utils/tool')['handleImageUpload']>
@@ -475,6 +482,7 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
+    readonly searchRegions: UnwrapRef<typeof import('./utils/region-data')['searchRegions']>
     readonly setJumpData: UnwrapRef<typeof import('./utils/index')['setJumpData']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>

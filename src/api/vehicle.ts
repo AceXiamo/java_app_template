@@ -55,7 +55,7 @@ export interface VehicleSearchParams {
   minPrice?: number
   maxPrice?: number
   seats?: number[]
-  sortBy?: 'price' | 'year' | 'hot'
+  sortBy?: 'price' | 'priceDesc' | 'year' | 'hot'
   page?: number
   limit?: number
   latitude?: number
