@@ -14,7 +14,7 @@ const searchParams = ref<VehicleSearchParams>({
   startTime: undefined,
   endTime: undefined,
   page: 1,
-  limit: 3,
+  limit: 10,
   sortBy: 'hot',
   latitude: undefined,
   longitude: undefined,
@@ -37,6 +37,7 @@ const categoryFeatureTags = ref<{ tagName: string, tagType: string, tagColor: st
 const vehicles = ref<Vehicle[]>([])
 const total = ref(0)
 const loading = ref(false)
+const loadingMore = ref(false)
 const noMore = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
@@ -147,11 +148,16 @@ onLoad(() => {
 
 // 搜索车辆
 async function searchVehicleList(isLoadMore = false) {
-  if (loading.value)
+  if (loading.value || loadingMore.value)
     return
 
   try {
-    loading.value = true
+    if (isLoadMore) {
+      loadingMore.value = true
+    }
+    else {
+      loading.value = true
+    }
 
     if (!isLoadMore) {
       searchParams.value.page = 1
@@ -197,6 +203,7 @@ async function searchVehicleList(isLoadMore = false) {
   }
   finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
@@ -274,7 +281,7 @@ function handleSortChange(sortBy: string) {
 
 // 触底加载更多
 function onReachBottom() {
-  if (!loading.value && !noMore.value) {
+  if (!loading.value && !loadingMore.value && !noMore.value) {
     searchParams.value.page = (searchParams.value.page || 0) + 1
     searchVehicleList(true)
   }
@@ -468,7 +475,7 @@ function getVehicleDistance(vehicle: Vehicle): string {
       <!-- 车型轮播图 -->
       <view v-if="categoryGalleryImages.length > 0" class="bg-white">
         <swiper
-          class="h-[300rpx]"
+          class="h-[350rpx]"
           :indicator-dots="true"
           :autoplay="true"
           :interval="3000"
@@ -569,9 +576,10 @@ function getVehicleDistance(vehicle: Vehicle): string {
       <!-- 车辆列表 -->
       <view class="p-[24rpx] space-y-[16rpx]">
         <view
-          v-for="vehicle in vehicles"
+          v-for="(vehicle, index) in vehicles"
           :key="vehicle.vehicleId"
-          class="mb-[24rpx] flex flex-col overflow-hidden rounded-[28rpx] bg-white shadow-[0_8rpx_24rpx_rgba(139,92,246,0.08)]"
+          class="mb-[24rpx] flex flex-col overflow-hidden rounded-[28rpx] bg-white shadow-[0_8rpx_24rpx_rgba(139,92,246,0.08)] animate-fade-in"
+          :style="{ 'animation-delay': `${index * 50}ms` }"
         >
           <!-- 上半部分：图片和车辆信息 -->
           <view class="relative flex">
@@ -696,17 +704,113 @@ function getVehicleDistance(vehicle: Vehicle): string {
           </view>
         </view>
 
+        <!-- 加载更多时的骨架屏 -->
+        <template v-if="loadingMore">
+          <view
+            v-for="n in 2"
+            :key="`skeleton-${n}`"
+            class="mb-[24rpx] mx-[24rpx] flex flex-col overflow-hidden rounded-[28rpx] bg-white shadow-[0_8rpx_24rpx_rgba(139,92,246,0.08)] animate-pulse"
+          >
+            <!-- 骨架屏上半部分 -->
+            <view class="relative flex">
+              <!-- 骨架屏图片 -->
+              <view class="h-[180rpx] w-[240rpx] flex-shrink-0 bg-gray-200 rounded-tl-[28rpx]" />
+              
+              <!-- 骨架屏车辆信息 -->
+              <view class="flex flex-1 flex-col justify-center p-[20rpx] pr-[120rpx]">
+                <!-- 骨架屏车辆名称 -->
+                <view class="mb-[12rpx] h-[36rpx] bg-gray-200 rounded-[8rpx]" />
+                
+                <!-- 骨架屏车辆基本信息 -->
+                <view class="mb-[12rpx] flex gap-[16rpx]">
+                  <view class="h-[24rpx] w-[80rpx] bg-gray-200 rounded-[6rpx]" />
+                  <view class="h-[24rpx] w-[60rpx] bg-gray-200 rounded-[6rpx]" />
+                  <view class="h-[24rpx] w-[70rpx] bg-gray-200 rounded-[6rpx]" />
+                </view>
+                
+                <!-- 骨架屏车辆特性 -->
+                <view class="flex gap-[16rpx]">
+                  <view class="h-[28rpx] w-[90rpx] bg-gray-200 rounded-[8rpx]" />
+                  <view class="h-[28rpx] w-[110rpx] bg-gray-200 rounded-[8rpx]" />
+                </view>
+              </view>
+              
+              <!-- 骨架屏评分 -->
+              <view class="absolute top-[20rpx] right-[20rpx] h-[24rpx] w-[100rpx] bg-gray-200 rounded-[12rpx]" />
+            </view>
+            
+            <!-- 骨架屏标签 -->
+            <view class="flex gap-[8rpx] px-[20rpx] pt-[16rpx]">
+              <view class="h-[32rpx] w-[60rpx] bg-gray-200 rounded-[16rpx]" />
+              <view class="h-[32rpx] w-[80rpx] bg-gray-200 rounded-[16rpx]" />
+              <view class="h-[32rpx] w-[70rpx] bg-gray-200 rounded-[16rpx]" />
+            </view>
+            
+            <!-- 骨架屏价格和按钮 -->
+            <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
+              <view>
+                <view class="h-[36rpx] w-[120rpx] bg-gray-200 rounded-[8rpx] mb-[8rpx]" />
+                <view class="h-[20rpx] w-[180rpx] bg-gray-200 rounded-[6rpx]" />
+              </view>
+              <view class="h-[48rpx] w-[120rpx] bg-gray-200 rounded-[20rpx]" />
+            </view>
+          </view>
+        </template>
+
         <!-- 加载状态 -->
-        <view class="py-[48rpx] text-center text-[28rpx] text-gray-500">
-          <text v-if="loading">
-            加载中...
-          </text>
-          <text v-else-if="noMore && vehicles.length > 0">
-            没有更多了
-          </text>
-          <text v-else-if="vehicles.length === 0 && !loading">
-            暂无搜索结果
-          </text>
+        <view class="py-[48rpx] flex flex-col items-center justify-center">
+          <!-- 初次加载动画 -->
+          <view v-if="loading && !loadingMore" class="flex flex-col items-center space-y-[24rpx]">
+            <!-- 旋转加载动画 -->
+            <view class="relative">
+              <view class="w-[60rpx] h-[60rpx] border-[4rpx] border-gray-200 border-t-purple-500 rounded-full animate-spin" />
+            </view>
+            <!-- 加载文字 -->
+            <text class="text-[26rpx] text-gray-600 font-medium">
+              正在搜索车辆...
+            </text>
+            <!-- 加载进度点 -->
+            <view class="flex items-center space-x-[8rpx]">
+              <view class="w-[8rpx] h-[8rpx] bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0ms;" />
+              <view class="w-[8rpx] h-[8rpx] bg-purple-400 rounded-full animate-pulse" style="animation-delay: 200ms;" />
+              <view class="w-[8rpx] h-[8rpx] bg-purple-400 rounded-full animate-pulse" style="animation-delay: 400ms;" />
+            </view>
+          </view>
+
+          <!-- 加载更多动画 (简化版) -->
+          <view v-else-if="loadingMore" class="flex flex-col items-center space-y-[16rpx]">
+            <view class="flex items-center space-x-[12rpx]">
+              <view class="w-[24rpx] h-[24rpx] border-[2rpx] border-gray-300 border-t-purple-500 rounded-full animate-spin" />
+              <text class="text-[24rpx] text-gray-600">
+                加载更多...
+              </text>
+            </view>
+          </view>
+
+          <!-- 无更多数据 -->
+          <view v-else-if="noMore && vehicles.length > 0" class="flex flex-col items-center space-y-[16rpx]">
+            <view class="w-[48rpx] h-[48rpx] flex items-center justify-center rounded-full bg-gray-100">
+              <text class="i-material-symbols-check-circle text-[32rpx] text-gray-400" />
+            </view>
+            <text class="text-[26rpx] text-gray-500">
+              已显示全部车辆
+            </text>
+          </view>
+
+          <!-- 暂无数据 -->
+          <view v-else-if="vehicles.length === 0 && !loading && !loadingMore" class="flex flex-col items-center space-y-[24rpx]">
+            <view class="w-[80rpx] h-[80rpx] flex items-center justify-center rounded-full bg-gray-50">
+              <text class="i-material-symbols-search-off text-[48rpx] text-gray-300" />
+            </view>
+            <view class="text-center">
+              <text class="block text-[28rpx] text-gray-600 font-medium mb-[8rpx]">
+                暂无搜索结果
+              </text>
+              <text class="text-[24rpx] text-gray-400">
+                试试调整搜索条件或位置
+              </text>
+            </view>
+          </view>
         </view>
       </view>
     </scroll-view>
@@ -735,3 +839,49 @@ function getVehicleDistance(vehicle: Vehicle): string {
 <route lang="yaml">
 layout: home
 </route>
+
+<style scoped>
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* 覆盖默认的 animate-pulse，使其更流畅 */
+.animate-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* 旋转动画 */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
