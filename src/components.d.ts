@@ -18,6 +18,7 @@ declare module '@vue/runtime-core' {
     BottomDrawer: typeof import('./components/BottomDrawer.vue')['default']
     CenterDialog: typeof import('./components/CenterDialog.vue')['default']
     CheckboxItem: typeof import('./components/CheckboxItem.vue')['default']
+    CityDisplayDrawer: typeof import('./components/CityDisplayDrawer.vue')['default']
     ClickButton: typeof import('./components/ClickButton.vue')['default']
     Confirm: typeof import('./components/Confirm.vue')['default']
     DateRangePicker: typeof import('./components/DateRangePicker.vue')['default']

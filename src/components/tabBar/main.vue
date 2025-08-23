@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import { getCurrentLocation, getHomeBanners } from '@/api/home'
 import type { Banner } from '@/api/home'
 import type { AddressInfoWithValidation, ServiceAreaValidation } from '@/api/map'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
+import CityDisplayDrawer from '@/components/CityDisplayDrawer.vue'
 import { useLocationStore } from '@/store/location'
 
 // 数据状态
@@ -14,6 +15,7 @@ const locationStore = useLocationStore()
 const loading = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
+const showCityDrawer = ref(false)
 const searchForm = ref({
   city: '上海',
   address: '上海', // 显示的地址
@@ -316,9 +318,22 @@ function handleAddressConfirm(data: {
   showMapPicker.value = false
 }
 
+// 处理显示城市抽屉
+function handleShowCityDrawer() {
+  showCityDrawer.value = true
+}
+
 onMounted(() => {
   loadBanners()
   getLocation()
+
+  // 监听头部组件发送的城市点击事件
+  uni.$on('showCityDrawer', handleShowCityDrawer)
+})
+
+// 组件销毁时移除事件监听
+onUnmounted(() => {
+  uni.$off('showCityDrawer', handleShowCityDrawer)
 })
 </script>
 
@@ -682,5 +697,8 @@ onMounted(() => {
       :longitude="searchForm.longitude"
       @confirm="handleAddressConfirm"
     />
+
+    <!-- 城市展示抽屉 -->
+    <CityDisplayDrawer v-model:visible="showCityDrawer" />
   </view>
 </template>

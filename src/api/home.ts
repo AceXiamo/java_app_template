@@ -17,6 +17,16 @@ export interface HomeData {
   banners: Banner[]
 }
 
+// 服务区域城市接口
+export interface ServiceCity {
+  areaId: number
+  cityCode: string
+  cityName: string
+  status: 'active' | 'coming_soon' | 'closed'
+  createTime: string
+  updateTime: string
+}
+
 // 获取首页轮播图
 export function getHomeBanners(): Promise<BaseRes<HomeData>> {
   return request.get({
@@ -29,6 +39,16 @@ export function getHomeBanners(): Promise<BaseRes<HomeData>> {
 export function getCurrentLocation(params: {
   latitude: number
   longitude: number
-}): Promise<BaseRes<AddressInfoWithValidation>> {
-  return reverseGeocode(params)
+}): Promise<BaseRes<{
+  address: AddressInfoWithValidation
+  serviceAreaValidation?: import('@/api/map').ServiceAreaValidation
+}>> {
+  return reverseGeocode(params) as any
+}
+
+// 获取已开通服务的城市列表
+export function getServiceCities(): Promise<BaseRes<ServiceCity[]>> {
+  return request.get({
+    url: `${host}/admin/service-area/active-cities`,
+  })
 }
