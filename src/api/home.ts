@@ -1,7 +1,7 @@
 // 首页相关 API
 import { host, request } from '@/utils/request'
 import { reverseGeocode } from '@/api/map'
-import type { AddressInfo } from '@/api/map'
+import type { AddressInfoWithValidation } from '@/api/map'
 
 export interface Banner {
   id: number
@@ -29,6 +29,6 @@ export function getHomeBanners(): Promise<BaseRes<HomeData>> {
 export function getCurrentLocation(params: {
   latitude: number
   longitude: number
-}): Promise<BaseRes<AddressInfo>> {
+}): Promise<BaseRes<AddressInfoWithValidation>> {
   return reverseGeocode(params)
 }

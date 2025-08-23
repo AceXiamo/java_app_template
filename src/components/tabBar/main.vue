@@ -3,13 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import { getCurrentLocation, getHomeBanners } from '@/api/home'
 import type { Banner } from '@/api/home'
-import type { AddressInfo } from '@/api/map'
+import type { AddressInfoWithValidation, ServiceAreaValidation } from '@/api/map'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
+import { useLocationStore } from '@/store/location'
 
 // 数据状态
 const banners = ref<Banner[]>([])
-const currentLocation = ref<AddressInfo | null>(null)
+const locationStore = useLocationStore()
 const loading = ref(false)
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
@@ -144,11 +145,24 @@ async function getLocation() {
     console.log('位置API响应:', response)
 
     if (response.code === 200 && response.data) {
-      currentLocation.value = response.data
-      searchForm.value.city = response.data.city
-      searchForm.value.address = response.data.formattedAddress || response.data.city
-      searchForm.value.latitude = response.data.latitude
-      searchForm.value.longitude = response.data.longitude
+      const addressData = response.data.address
+      const validationData = response.data.serviceAreaValidation
+
+      if (addressData) {
+        // 构造完整的地址信息对象
+        const fullAddressInfo = {
+          ...addressData,
+          serviceAreaValidation: validationData,
+        }
+
+        // 更新位置存储
+        locationStore.updateLocation(fullAddressInfo)
+
+        searchForm.value.city = addressData.city
+        searchForm.value.address = addressData.formattedAddress || addressData.city
+        searchForm.value.latitude = addressData.latitude
+        searchForm.value.longitude = addressData.longitude
+      }
     }
     else {
       throw new Error(`位置API返回错误: ${response.msg || '未知错误'}`)
@@ -171,6 +185,40 @@ async function getLocation() {
 
 // 搜索车辆
 function searchVehicles() {
+  // 检查服务状态
+  if (locationStore.serviceAreaValidation) {
+    const validation = locationStore.serviceAreaValidation
+
+    // 如果服务未开通，给出提示
+    if (!validation.isSupported || validation.status !== 'active') {
+      let message = ''
+
+      if (validation.status === 'coming_soon') {
+        message = `${validation.cityName}服务即将开通，敬请期待！`
+      }
+      else if (validation.status === 'closed') {
+        message = `${validation.cityName}服务暂时关闭，请稍后再试或选择其他城市。`
+      }
+      else {
+        message = `暂时无法在${validation.cityName}提供服务，请选择已开通服务的城市。`
+      }
+
+      uni.showModal({
+        title: '服务提示',
+        content: message,
+        showCancel: true,
+        cancelText: '重新选择',
+        confirmText: '我知道了',
+        success: (res) => {
+          if (res.cancel) {
+            showAddressPicker()
+          }
+        },
+      })
+      return
+    }
+  }
+
   const startDateTime = `${searchForm.value.startDate} ${searchForm.value.startTime}`
   const endDateTime = `${searchForm.value.endDate} ${searchForm.value.endTime}`
 
@@ -183,6 +231,7 @@ function searchVehicles() {
     keywords: searchForm.value.keywords || '',
     startTime: startDateTime,
     endTime: endDateTime,
+    serviceAreaValidation: locationStore.serviceAreaValidation,
   }
 
   setJumpData('searchParams', searchData)
@@ -249,10 +298,21 @@ function handleAddressConfirm(data: {
   address: string
   formattedAddress: string
   poiName?: string
+  serviceAreaValidation?: ServiceAreaValidation
 }) {
   searchForm.value.latitude = data.latitude
   searchForm.value.longitude = data.longitude
   searchForm.value.address = data.formattedAddress || data.address
+
+  // 更新服务区域验证信息
+  if (data.serviceAreaValidation) {
+    locationStore.updateServiceAreaValidation(data.serviceAreaValidation)
+    searchForm.value.city = data.serviceAreaValidation.cityName || searchForm.value.city
+  }
+
+  // 更新显示地址
+  locationStore.updateDisplayAddress(data.formattedAddress || data.address)
+
   showMapPicker.value = false
 }
 
@@ -371,10 +431,18 @@ onMounted(() => {
 
           <!-- 马上找车按钮 -->
           <view
-            class="w-full rounded-full bg-purple-600 py-[24rpx] text-center text-[28rpx] text-white font-medium"
+            class="w-full rounded-full py-[24rpx] text-center text-[28rpx] font-medium transition-colors"
+            :class="locationStore.serviceAreaValidation && !locationStore.getServiceStatus().isActive
+              ? 'bg-gray-400 text-gray-200'
+              : 'bg-purple-600 text-white'"
             @tap="searchVehicles"
           >
-            马上找车
+            <view v-if="locationStore.serviceAreaValidation && !locationStore.getServiceStatus().isActive"
+                  class="flex items-center justify-center">
+              <view class="i-material-symbols:info mr-[8rpx] text-[24rpx]" />
+              <text>{{ locationStore.getServiceStatus().text === '即将开通' ? '即将开通' : '服务未开通' }}</text>
+            </view>
+            <text v-else>马上找车</text>
           </view>
         </view>
       </view>

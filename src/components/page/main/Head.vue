@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { useLocationStore } from '@/store/location'
+
+const locationStore = useLocationStore()
 </script>
 
 <template>
@@ -10,13 +13,9 @@
           i-material-symbols:location-on
           class="text-[32rpx] text-[#8b5cf6]"
         />
-        <text ml-[8rpx] text-[28rpx] text-black font-medium>
-          上海
+        <text class="ml-[8rpx] text-[28rpx] text-black font-medium">
+          {{ locationStore.displayCity }}
         </text>
-        <view
-          i-material-symbols:keyboard-arrow-down
-          class="ml-[4rpx] text-[24rpx] text-gray-600"
-        />
       </view>
     </view>
   </HeadBar>
