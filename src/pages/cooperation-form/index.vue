@@ -129,9 +129,14 @@ async function handleSubmit() {
   })
 
   try {
-    const result = await submitCooperationApplication(form.value)
-    applicationNo.value = result.applicationNo
-    showSuccessModal.value = true
+    const response = await submitCooperationApplication(form.value)
+    if (response.code === 200 && response.data) {
+      applicationNo.value = response.data.applicationNo
+      showSuccessModal.value = true
+    }
+    else {
+      throw new Error(response.msg || '提交失败')
+    }
   }
   catch (error) {
     console.error('提交申请失败:', error)
@@ -204,7 +209,7 @@ function back() {
         <!-- 合作类型选择 -->
         <view class="rounded-[32rpx] bg-white p-[32rpx]">
           <view class="mb-[32rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols:handshake text-[40rpx] text-purple-600" />
+            <text class="i-lets-icons:user-add-alt-duotone text-[40rpx] text-purple-600" />
             <text class="text-[32rpx] text-black font-semibold">
               合作类型 <text class="text-red-500">*</text>
             </text>
@@ -267,7 +272,7 @@ function back() {
         <view class="rounded-[32rpx] bg-white">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols:business text-[40rpx] text-purple-600" />
+              <text class="i-lets-icons:business-duotone text-[40rpx] text-purple-600" />
               <text class="text-[32rpx] text-black font-semibold">
                 基本信息
               </text>
@@ -467,7 +472,7 @@ function back() {
         <view class="rounded-[32rpx] bg-white">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols:lightbulb text-[40rpx] text-purple-600" />
+              <text class="i-lets-icons:bulb-duotone text-[40rpx] text-purple-600" />
               <text class="text-[32rpx] text-black font-semibold">
                 合作意向 <text class="text-red-500">*</text>
               </text>

@@ -130,16 +130,16 @@ function back() {
 <template>
   <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
     <!-- 头部导航 -->
-    <HeadBar bg-color="#9333ea">
+    <HeadBar bg-color="white">
       <view class="h-full flex items-center justify-between px-[32rpx]">
         <view class="flex items-center">
           <view
             class="h-[56rpx] w-[56rpx] flex items-center justify-center rounded-full bg-white/20"
             @tap="back"
           >
-            <text class="i-material-symbols:arrow-back text-[28rpx] text-white" />
+            <text class="i-material-symbols:arrow-back text-[28rpx] text-black" />
           </view>
-          <text class="ml-[20rpx] text-[32rpx] text-white font-semibold">
+          <text class="ml-[20rpx] text-[32rpx] text-black font-semibold">
             竞品车测试申请
           </text>
         </view>
@@ -151,10 +151,10 @@ function back() {
       <view class="p-[32rpx] space-y-[32rpx]">
 
         <!-- 联系信息 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="rounded-[32rpx] bg-white">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols:person text-[40rpx] text-purple-600" />
+              <text class="i-lets-icons:phone-duotone text-[40rpx] text-purple-600" />
               <text class="text-[32rpx] text-black font-semibold">
                 联系信息
               </text>
@@ -236,10 +236,10 @@ function back() {
         </view>
 
         <!-- 测试需求 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="rounded-[32rpx] bg-white">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols:car-rental text-[40rpx] text-purple-600" />
+              <text class="i-lets-icons:send-hor-duotone text-[40rpx] text-purple-600" />
               <text class="text-[32rpx] text-black font-semibold">
                 测试需求 <text class="text-red-500">*</text>
               </text>
@@ -257,7 +257,7 @@ function back() {
             </view>
             <textarea
               v-model="formData.testRequirements"
-              class="w-full min-h-[200rpx] border border-gray-300 rounded bg-transparent px-[16rpx] py-[12rpx] text-[26rpx]"
+              class="w-full min-h-[200rpx] border border-gray-300 rounded bg-transparent text-[26rpx]"
               :class="{ 'border-red-500': errors.testRequirements }"
               placeholder="请详细描述您的竞品车测试需求，包括：公司信息、测试车型、用车数量时长、测试目的要求、时间安排等"
               :auto-height="true"
@@ -275,10 +275,10 @@ function back() {
         </view>
 
         <!-- 服务说明 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="rounded-[32rpx] bg-white">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols:info text-[40rpx] text-purple-600" />
+              <text class="i-lets-icons:info-duotone text-[40rpx] text-purple-600" />
               <text class="text-[32rpx] text-black font-semibold">
                 服务说明
               </text>
@@ -355,7 +355,7 @@ function back() {
     </view>
   </view>
 </template>
+
 <route lang="yaml">
-  layout: home
-  </route>
-  
+layout: home
+</route>

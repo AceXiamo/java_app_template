@@ -1,4 +1,4 @@
-import { request } from '@/utils/request'
+import { host, request } from '@/utils/request'
 
 // 车辆测试申请表单接口类型
 export interface VehicleTestApplicationForm {
@@ -18,12 +18,11 @@ export interface SubmitVehicleTestResponse {
 /**
  * 提交车辆测试申请
  */
-export const submitVehicleTestApplication = async (
-  form: VehicleTestApplicationForm
-): Promise<SubmitVehicleTestResponse> => {
-  return request({
-    url: '/vehicle/test/submit',
-    method: 'POST',
-    data: form
+export function submitVehicleTestApplication(
+  data: VehicleTestApplicationForm,
+): Promise<BaseRes<SubmitVehicleTestResponse>> {
+  return request.post({
+    url: `${host}/api/vehicle/test/submit`,
+    data,
   })
 }

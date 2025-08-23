@@ -558,7 +558,7 @@ onMounted(() => {
             @tap="goToCooperationForm"
           >
             <view class="mb-[16rpx] flex items-center justify-between">
-              <view i-material-symbols:handshake class="text-[48rpx] text-blue-600" />
+              <view i-lets-icons:user-add-alt-duotone class="text-[48rpx] text-blue-600" />
               <text
                 class="rounded-full bg-blue-100 px-[16rpx] py-[8rpx] text-[24rpx] text-blue-600"
               >
@@ -579,9 +579,9 @@ onMounted(() => {
             @tap="goToVehicleTestForm"
           >
             <view class="mb-[16rpx] flex items-center justify-between">
-              <view i-material-symbols:car-rental class="text-[48rpx] text-emerald-600" />
+              <view i-lets-icons:send-hor-duotone class="text-[48rpx] text-purple-600" />
               <text
-                class="rounded-full bg-emerald-100 px-[16rpx] py-[8rpx] text-[24rpx] text-emerald-600"
+                class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[24rpx] text-purple-600"
               >
                 测试
               </text>

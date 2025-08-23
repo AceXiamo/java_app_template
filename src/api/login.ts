@@ -72,7 +72,7 @@ export function login(params: { code: string, appId?: string }): Promise<BaseRes
     url: `${host}/wechat/login`,
     params: {
       code: params.code,
-      appId: params.appId || 'wx30d7fd774ea643d1',
+      appId: params.appId || 'wx4c0815d1a360d938',
     },
   })
 }

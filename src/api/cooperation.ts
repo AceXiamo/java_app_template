@@ -1,4 +1,4 @@
-import { request } from '@/utils/request'
+import { host, request } from '@/utils/request'
 
 // 合作申请表单接口类型
 export interface CooperationApplicationForm {
@@ -24,32 +24,29 @@ export interface SubmitApplicationResponse {
 /**
  * 提交合作申请
  */
-export const submitCooperationApplication = async (
-  form: CooperationApplicationForm
-): Promise<SubmitApplicationResponse> => {
-  return request({
-    url: '/cooperation/apply',
-    method: 'POST',
-    data: form
+export function submitCooperationApplication(
+  data: CooperationApplicationForm,
+): Promise<BaseRes<SubmitApplicationResponse>> {
+  return request.post({
+    url: `${host}/api/cooperation/apply`,
+    data,
   })
 }
 
 /**
- * 获取合作类型配置（如果需要的话）
+ * 获取合作类型配置
  */
-export const getCooperationTypes = async () => {
-  return request({
-    url: '/cooperation/types',
-    method: 'GET'
+export function getCooperationTypes(): Promise<BaseRes<string[]>> {
+  return request.get({
+    url: `${host}/api/cooperation/types`,
   })
 }
 
 /**
- * 获取地区数据（如果需要的话）
+ * 获取地区数据
  */
-export const getRegionData = async () => {
-  return request({
-    url: '/cooperation/regions',
-    method: 'GET'
+export function getRegionData(): Promise<BaseRes<any>> {
+  return request.get({
+    url: `${host}/api/cooperation/regions`,
   })
 }
