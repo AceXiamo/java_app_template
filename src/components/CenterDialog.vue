@@ -44,10 +44,12 @@ watch(() => props.visible, (v) => {
   <view
     v-if="containerVisible"
     absolute inset-0 z-9999 flex flex-col items-center justify-center
-    transition-all duration-200
-    :class="{
-      'bg-black/20': !shadowColor,
-    }"
+    :class="[
+      `mask_${className}`,
+      {
+        'bg-black/20': !shadowColor,
+      }
+    ]"
     :style="{ backgroundColor: shadowColor }"
     @tap="$emit('update:visible', false)"
   >
@@ -107,6 +109,32 @@ watch(() => props.visible, (v) => {
   }
   to {
     transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+.mask_ani_in {
+  animation: mask_fade_in 0.3s forwards;
+}
+
+@keyframes mask_fade_in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mask_ani_out {
+  animation: mask_fade_out 0.3s forwards;
+}
+
+@keyframes mask_fade_out {
+  from {
+    opacity: 1;
+  }
+  to {
     opacity: 0;
   }
 }

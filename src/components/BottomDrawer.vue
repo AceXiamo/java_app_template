@@ -32,7 +32,7 @@ watch(() => props.visible, (v) => {
 
 <template>
   <view
-    v-if="containerVisible" absolute inset-0 bg="black/20" z-9999 flex flex-col justify-end transition-all duration-200 @tap="$emit('update:visible', false)"
+    v-if="containerVisible" absolute inset-0 bg="black/20" z-9999 flex flex-col justify-end :class="`mask_${className}`" @tap="$emit('update:visible', false)"
   >
     <view flex flex-col rounded-t-[32rpx] bg-white p-[30rpx] :class="className" :style="{ minHeight: heightVal }" @tap.stop>
       <view relative flex items-center justify-center>
@@ -73,6 +73,32 @@ watch(() => props.visible, (v) => {
   }
   to {
     transform: translateY(50%);
+    opacity: 0;
+  }
+}
+
+.mask_ani_in {
+  animation: mask_fade_in 0.3s forwards;
+}
+
+@keyframes mask_fade_in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mask_ani_out {
+  animation: mask_fade_out 0.3s forwards;
+}
+
+@keyframes mask_fade_out {
+  from {
+    opacity: 1;
+  }
+  to {
     opacity: 0;
   }
 }
