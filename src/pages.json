@@ -15,6 +15,16 @@
       "layout": "home"
     },
     {
+      "path": "pages/deposit/credit",
+      "type": "page",
+      "layout": "home"
+    },
+    {
+      "path": "pages/deposit/index",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/feedback-form/index",
       "type": "page",
       "layout": "home"

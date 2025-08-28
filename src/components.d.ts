@@ -23,6 +23,7 @@ declare module '@vue/runtime-core' {
     Confirm: typeof import('./components/Confirm.vue')['default']
     DateRangePicker: typeof import('./components/DateRangePicker.vue')['default']
     DateTimePicker: typeof import('./components/DateTimePicker.vue')['default']
+    DepositInsufficientDialog: typeof import('./components/DepositInsufficientDialog.vue')['default']
     FormDate: typeof import('./components/form/Date.vue')['default']
     FormImage: typeof import('./components/form/Image.vue')['default']
     FormInput: typeof import('./components/form/Input.vue')['default']
@@ -37,6 +38,7 @@ declare module '@vue/runtime-core' {
     PageActivityListHead: typeof import('./components/page/activity/list/Head.vue')['default']
     PageActivityReleaseHead: typeof import('./components/page/activity/release/Head.vue')['default']
     PageBookingHead: typeof import('./components/page/booking/Head.vue')['default']
+    PageDepositHead: typeof import('./components/page/deposit/Head.vue')['default']
     PageDiscoverHead: typeof import('./components/page/discover/Head.vue')['default']
     PageGroupActivityHead: typeof import('./components/page/group/activity/Head.vue')['default']
     PageGroupHead: typeof import('./components/page/group/Head.vue')['default']
@@ -71,6 +73,7 @@ declare module '@vue/runtime-core' {
     PremiumTagSelector: typeof import('./components/PremiumTagSelector.vue')['default']
     PremiumTextarea: typeof import('./components/PremiumTextarea.vue')['default']
     QrCode: typeof import('./components/QrCode.vue')['default']
+    RechargeDialog: typeof import('./components/RechargeDialog.vue')['default']
     RenewOrderDrawer: typeof import('./components/RenewOrderDrawer.vue')['default']
     SelectBar: typeof import('./components/SelectBar.vue')['default']
     TabBarDiscover: typeof import('./components/tabBar/discover.vue')['default']
@@ -83,5 +86,6 @@ declare module '@vue/runtime-core' {
     Toast: typeof import('./components/Toast.vue')['default']
     VehicleReviewDrawer: typeof import('./components/VehicleReviewDrawer.vue')['default']
     VerticalPage: typeof import('./components/VerticalPage.vue')['default']
+    WithdrawDialog: typeof import('./components/WithdrawDialog.vue')['default']
   }
 }

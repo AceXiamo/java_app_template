@@ -44,6 +44,10 @@ function goToInvoice() {
   uni.navigateTo({ url: '/pages/my/invoice' })
 }
 
+function goToDeposit() {
+  uni.navigateTo({ url: '/pages/deposit/index' })
+}
+
 // 联系客服 - 使用button的open-type='contact'实现
 
 // 检查用户是否有车主权限（车主或平台管理员）
@@ -280,6 +284,26 @@ function handleLogout() {
               >
                 {{ profileData.services.wallet.statusText }}
               </text>
+              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+            </view>
+          </view>
+
+          <!-- 我的押金 -->
+          <view class="flex items-center justify-between" @tap="goToDeposit">
+            <view class="flex items-center space-x-[24rpx]">
+              <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
+                <text class="i-material-symbols-account-balance-wallet text-[36rpx] text-green-600" />
+              </view>
+              <view>
+                <text class="block text-[28rpx] text-black font-medium">
+                  我的押金
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  押金充值、提现和信用管理
+                </text>
+              </view>
+            </view>
+            <view class="flex items-center space-x-[16rpx]">
               <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
             </view>
           </view>

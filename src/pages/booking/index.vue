@@ -10,6 +10,7 @@ import ServicesSelector from '@/components/booking/ServicesSelector.vue'
 import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
 import { type UserCoupon, getUserCoupons } from '@/api/coupon'
 import { type InsuranceProduct, type ValueAddedService, calculateBookingPrice, createBooking, getInsuranceProducts, getValueAddedServices, requestWxPayment } from '@/api/booking'
+import { calculateOrderDeposit, verifyDepositBalance, type DepositCalculation, formatAmount as formatDepositAmount } from '@/api/deposit'
 import { useUserStore } from '@/store/user'
 
 // 页面参数
@@ -100,6 +101,10 @@ const selectedServices = ref<string[]>([])
 // 费用计算增强
 const insuranceFee = ref(0)
 const servicesFee = ref(0)
+
+// 押金相关
+const depositCalculation = ref<DepositCalculation | null>(null)
+const showDepositInsufficientDialog = ref(false)
 
 // 弹窗状态
 const showPickupMethodDialog = ref(false)
@@ -270,6 +275,7 @@ onLoad(async () => {
   await loadAvailableCoupons()
   await loadInsuranceProducts()
   await loadValueAddedServices()
+  await loadDepositCalculation()
 })
 
 // 加载车辆信息
@@ -427,6 +433,42 @@ async function loadValueAddedServices() {
   catch (error) {
     console.error('加载增值服务失败:', error)
   }
+}
+
+// 加载押金计算
+async function loadDepositCalculation() {
+  try {
+    if (!vehicleInfo.value.vehicleId || !bookingInfo.value.startTime || !bookingInfo.value.endTime) {
+      return
+    }
+
+    const response = await calculateOrderDeposit({
+      vehicleId: vehicleInfo.value.vehicleId,
+      startTime: bookingInfo.value.startTime,
+      endTime: bookingInfo.value.endTime
+    })
+
+    if (response.code === 200 && response.data) {
+      depositCalculation.value = response.data
+      console.log('押金计算结果:', response.data)
+    }
+  }
+  catch (error) {
+    console.error('加载押金计算失败:', error)
+    // 押金计算失败不应该阻止用户下单，但需要提醒
+    uni.showToast({
+      title: '押金计算失败，请稍后重试',
+      icon: 'none'
+    })
+  }
+}
+
+// 导航到押金充值页面
+function navigateToDepositRecharge() {
+  showDepositInsufficientDialog.value = false
+  uni.navigateTo({
+    url: '/pages/deposit/index'
+  })
 }
 
 // 计算租赁天数
@@ -671,6 +713,12 @@ async function submitBooking() {
     return
   }
 
+  // 检查押金是否充足
+  if (depositCalculation.value && !depositCalculation.value.canBook) {
+    showDepositInsufficientDialog.value = true
+    return
+  }
+
   // 验证送车距离是否超限
   if (bookingInfo.value.pickupMethod === 'delivery') {
     const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
@@ -791,6 +839,7 @@ async function submitBooking() {
 async function handleCalculationChange() {
   calculateRentalDays()
   await calculatePrice()
+  await loadDepositCalculation()
   // 价格变化后重新筛选优惠券
   filterAvailableCoupons()
 }
@@ -1478,6 +1527,81 @@ function selectService(serviceId: string) {
           </view>
         </view>
 
+        <!-- 押金信息 -->
+        <view v-if="depositCalculation" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text
+              class="i-material-symbols-account-balance-wallet mr-[12rpx] text-[24rpx] text-purple-600"
+            />
+            <text class="text-[28rpx] text-black font-semibold">
+              押金信息
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view class="flex items-center justify-between">
+              <text class="text-[24rpx] text-gray-600">
+                车辆押金
+              </text>
+              <text class="text-[26rpx] text-black">
+                ¥{{ formatDepositAmount(depositCalculation.vehicleDeposit) }}
+              </text>
+            </view>
+
+            <view
+              v-if="depositCalculation.creditDeduction > 0"
+              class="flex items-center justify-between"
+            >
+              <text class="text-[24rpx] text-gray-600">
+                信用抵扣
+                <text v-if="depositCalculation.creditInfo?.usedCreditType" class="text-[20rpx] text-gray-400">
+                  ({{ depositCalculation.creditInfo.usedCreditType === 'wechat' ? '微信支付分' : '芝麻信用分' }})
+                </text>
+              </text>
+              <text class="text-[26rpx] text-green-600">
+                -¥{{ formatDepositAmount(depositCalculation.creditDeduction) }}
+              </text>
+            </view>
+
+            <view class="border-t border-gray-100 pt-[16rpx]">
+              <view class="flex items-center justify-between">
+                <text class="text-[28rpx] text-black font-semibold">
+                  实际押金
+                </text>
+                <text class="text-[32rpx] text-purple-600 font-bold">
+                  ¥{{ formatDepositAmount(depositCalculation.actualDeposit) }}
+                </text>
+              </view>
+            </view>
+
+            <view class="bg-blue-50 rounded-[12rpx] p-[16rpx]">
+              <view class="mb-[8rpx] flex items-center justify-between">
+                <text class="text-[24rpx] text-blue-700">
+                  当前押金余额
+                </text>
+                <text class="text-[26rpx] text-blue-800 font-medium">
+                  ¥{{ formatDepositAmount(depositCalculation.userBalance) }}
+                </text>
+              </view>
+              
+              <view v-if="depositCalculation.needRecharge > 0" class="flex items-center justify-between">
+                <text class="text-[24rpx] text-orange-600">
+                  需要补充
+                </text>
+                <text class="text-[26rpx] text-orange-600 font-medium">
+                  ¥{{ formatDepositAmount(depositCalculation.needRecharge) }}
+                </text>
+              </view>
+              
+              <view v-else>
+                <text class="text-[20rpx] text-green-600">
+                  ✓ 押金余额充足，可以正常下单
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
         <!-- 费用明细 -->
         <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
           <view class="mb-[24rpx] flex items-center">
@@ -1614,13 +1738,20 @@ function selectService(serviceId: string) {
           </text>
         </view>
         <view
-          class="rounded-[20rpx] bg-purple-600 px-[48rpx] py-[24rpx] text-[28rpx] text-white font-medium"
-          :class="{ 'opacity-50': submitLoading || !agreedToTerms || !isDeliveryDistanceValid }"
+          class="rounded-[20rpx] px-[48rpx] py-[24rpx] text-[28rpx] font-medium"
+          :class="{
+            'bg-purple-600 text-white': !submitLoading && agreedToTerms && isDeliveryDistanceValid && (!depositCalculation || depositCalculation.canBook),
+            'bg-orange-600 text-white': !submitLoading && agreedToTerms && isDeliveryDistanceValid && depositCalculation && !depositCalculation.canBook,
+            'bg-gray-400 text-gray-200': submitLoading || !agreedToTerms || !isDeliveryDistanceValid
+          }"
           :disabled="submitLoading || !agreedToTerms || !isDeliveryDistanceValid"
           @tap="submitBooking"
         >
           <text v-if="submitLoading">
             提交中...
+          </text>
+          <text v-else-if="depositCalculation && !depositCalculation.canBook">
+            充值押金
           </text>
           <text v-else>
             立即预订
@@ -2053,6 +2184,69 @@ function selectService(serviceId: string) {
       :longitude="bookingInfo.userLocation.longitude || vehicleInfo.location?.longitude || 0"
       @confirm="handleMapAddressConfirm"
     />
+
+    <!-- 押金不足提醒弹框 -->
+    <CenterDialog
+      :visible="showDepositInsufficientDialog"
+      title="押金余额不足"
+      @close="showDepositInsufficientDialog = false"
+    >
+      <view class="p-6">
+        <view v-if="depositCalculation" class="space-y-4">
+          <!-- 押金计算详情 -->
+          <view class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <view class="flex justify-between items-center">
+              <text class="text-sm text-gray-600">车辆押金</text>
+              <text class="font-medium">¥{{ formatDepositAmount(depositCalculation.vehicleDeposit) }}</text>
+            </view>
+            <view v-if="depositCalculation.creditDeduction > 0" class="flex justify-between items-center">
+              <text class="text-sm text-gray-600">信用抵扣</text>
+              <text class="font-medium text-green-600">-¥{{ formatDepositAmount(depositCalculation.creditDeduction) }}</text>
+            </view>
+            <view class="border-t pt-3 flex justify-between items-center">
+              <text class="text-base font-medium">实际押金</text>
+              <text class="text-lg font-bold text-orange-600">¥{{ formatDepositAmount(depositCalculation.actualDeposit) }}</text>
+            </view>
+            <view class="flex justify-between items-center">
+              <text class="text-sm text-gray-600">当前余额</text>
+              <text class="font-medium">¥{{ formatDepositAmount(depositCalculation.userBalance) }}</text>
+            </view>
+            <view class="border-t pt-3 flex justify-between items-center">
+              <text class="text-base font-medium text-red-600">需要补充</text>
+              <text class="text-lg font-bold text-red-600">¥{{ formatDepositAmount(depositCalculation.needRecharge) }}</text>
+            </view>
+          </view>
+
+          <!-- 说明文字 -->
+          <view class="bg-blue-50 rounded-lg p-4">
+            <view class="flex items-start">
+              <uni-icons type="info" size="16" color="#3B82F6" class="mt-0.5 mr-2 flex-shrink-0" />
+              <view class="text-xs text-blue-700 space-y-1">
+                <text class="block">• 押金将在您租车期间被冻结</text>
+                <text class="block">• 订单完成后押金自动解冻到账户</text>
+                <text class="block">• 您可以选择保留在押金账户或提现</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view class="flex space-x-3 pt-4">
+            <button 
+              class="flex-1 py-3 px-4 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              @click="showDepositInsufficientDialog = false"
+            >
+              稍后充值
+            </button>
+            <button 
+              class="flex-1 py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              @click="navigateToDepositRecharge"
+            >
+              立即充值
+            </button>
+          </view>
+        </view>
+      </view>
+    </CenterDialog>
   </view>
 </template>
 

@@ -7,6 +7,8 @@ interface NavigateToOptions {
   url: "/pages/main/index" |
        "/pages/booking/index" |
        "/pages/cooperation-form/index" |
+       "/pages/deposit/credit" |
+       "/pages/deposit/index" |
        "/pages/feedback-form/index" |
        "/pages/group/activity" |
        "/pages/group/home" |
