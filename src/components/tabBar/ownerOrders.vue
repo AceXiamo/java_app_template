@@ -7,6 +7,7 @@ import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
 import { type OwnerOrder, type OwnerOrderQueryParams, confirmOrderCompletion, getOwnerOrders, pickupVerify, returnVerify } from '@/api/owner-orders'
 import { uploadFileToOss } from '@/utils/alioss'
+import dayjs from 'dayjs'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
@@ -148,13 +149,7 @@ function formatDateTime(dateTimeStr: string) {
   if (!dateTimeStr) {
     return ''
   }
-  try {
-    const date = new Date(dateTimeStr)
-    return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-  }
-  catch {
-    return dateTimeStr
-  }
+  return dayjs(dateTimeStr).format('M月D日 HH:mm')
 }
 
 // 检查是否已过期

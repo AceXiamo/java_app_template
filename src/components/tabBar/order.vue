@@ -53,13 +53,8 @@ async function onRefresh() {
 
 // 订单操作
 async function contactOwner(orderId: string) {
-  try {
     await orderStore.handleContactOwner(Number(orderId), '用户主动联系')
     uni.showToast({ title: '已联系车主', icon: 'success' })
-  }
-  catch {
-    uni.showToast({ title: '联系车主失败', icon: 'none' })
-  }
 }
 
 // 续租相关状态

@@ -84,18 +84,13 @@ function extractAvailableTags() {
 
   modelCategories.value.forEach((model) => {
     if (model.feature_tags) {
-      try {
-        const tags = JSON.parse(model.feature_tags)
-        if (Array.isArray(tags)) {
-          tags.forEach((tag) => {
-            if (typeof tag === 'string' && tag.trim()) {
-              tagSet.add(tag.trim())
-            }
-          })
-        }
-      }
-      catch {
-        // 忽略解析错误
+      const tags = JSON.parse(model.feature_tags)
+      if (Array.isArray(tags)) {
+        tags.forEach((tag) => {
+          if (typeof tag === 'string' && tag.trim()) {
+            tagSet.add(tag.trim())
+          }
+        })
       }
     }
   })
@@ -346,7 +341,8 @@ function getFeatureTags(model: VehicleCategory): string {
     const tags = JSON.parse(model.feature_tags)
     return Array.isArray(tags) ? tags.join('·') : ''
   }
-  catch {
+  catch (error) {
+    console.error('解析特征标签失败:', error)
     return ''
   }
 }
@@ -436,7 +432,8 @@ function applyTagFilter() {
         modelTags.includes(selectedTag),
       )
     }
-    catch {
+    catch (error) {
+      console.error('解析特征标签失败:', error)
       return false
     }
   })

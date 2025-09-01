@@ -7,8 +7,8 @@ const mode = import.meta.env.MODE
 let domain: string, host: string
 
 if (mode === 'development') {
-  domain = '192.168.31.118:8080'
-  host = `http://${domain}`
+  domain = '127.0.0.1:8443'
+  host = `https://${domain}`
   // domain = 'car-dev.zeabur.app'
   // host = `https://${domain}`
 }

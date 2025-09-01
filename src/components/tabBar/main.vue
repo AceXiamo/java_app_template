@@ -324,6 +324,7 @@ function handleShowCityDrawer() {
 }
 
 onMounted(() => {
+  console.log('onMounted')
   loadBanners()
   getLocation()
 

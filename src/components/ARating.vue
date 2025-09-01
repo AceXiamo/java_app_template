@@ -7,8 +7,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue'])
 
-const maxStars = computed(() => props.maxStars ?? 5)
-const currentStars = ref(props.modelValue ?? maxStars.value)
+const maxStars = computed(() => props.maxStars || 5)
+const currentStars = ref(props.modelValue || maxStars.value)
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== undefined) {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, getCurrentInstance } from 'vue'
-import { debounce } from 'lodash'
+import { computed, getCurrentInstance, ref, watch } from 'vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { reverseGeocode } from '@/api/map'
 import type { ServiceAreaValidation } from '@/api/map'
@@ -71,39 +70,42 @@ const serviceStatusInfo = computed(() => {
       text: '检查中',
       color: 'text-gray-500',
       bgColor: 'bg-gray-100',
-      icon: 'i-material-symbols:help'
+      icon: 'i-material-symbols:help',
     }
   }
 
   const validation = serviceAreaValidation.value
-  
+
   if (validation.isSupported && validation.status === 'active') {
     return {
       text: '已开通',
       color: 'text-green-600',
       bgColor: 'bg-green-50',
-      icon: 'i-material-symbols:check-circle'
+      icon: 'i-material-symbols:check-circle',
     }
-  } else if (validation.status === 'coming_soon') {
+  }
+  else if (validation.status === 'coming_soon') {
     return {
       text: '即将开通',
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
-      icon: 'i-material-symbols:schedule'
+      icon: 'i-material-symbols:schedule',
     }
-  } else if (validation.status === 'closed') {
+  }
+  else if (validation.status === 'closed') {
     return {
       text: '暂时关闭',
       color: 'text-red-600',
       bgColor: 'bg-red-50',
-      icon: 'i-material-symbols:block'
+      icon: 'i-material-symbols:block',
     }
-  } else {
+  }
+  else {
     return {
       text: '暂未开通',
       color: 'text-gray-600',
       bgColor: 'bg-gray-50',
-      icon: 'i-material-symbols:location-off'
+      icon: 'i-material-symbols:location-off',
     }
   }
 })
@@ -167,7 +169,7 @@ async function getAddressFromLocation(latitude: number, longitude: number) {
     if (response.code === 200 && response.data) {
       const addressData = response.data.address
       const validationData = response.data.serviceAreaValidation
-      
+
       if (addressData) {
         addressInfo.value = {
           formattedAddress: addressData.formattedAddress || '未知地址',
@@ -177,7 +179,7 @@ async function getAddressFromLocation(latitude: number, longitude: number) {
           city: addressData.city || '',
           district: addressData.district || '',
         }
-        
+
         if (validationData) {
           serviceAreaValidation.value = validationData
         }
@@ -380,7 +382,7 @@ function backToCurrentLocation() {
                 {{ serviceStatusInfo.text }}
               </text>
             </view>
-            
+
             <view v-if="serviceAreaValidation?.message" class="mt-[8rpx]">
               <text class="text-[22rpx] text-gray-600 leading-[32rpx]">
                 {{ serviceAreaValidation.message }}
@@ -389,13 +391,17 @@ function backToCurrentLocation() {
 
             <!-- 服务提示 -->
             <view v-if="serviceAreaValidation" class="mt-[12rpx]">
-              <view v-if="serviceAreaValidation.isSupported && serviceAreaValidation.status === 'active'" 
-                    class="flex items-center text-[20rpx] text-green-600">
+              <view
+                v-if="serviceAreaValidation.isSupported && serviceAreaValidation.status === 'active'"
+                class="flex items-center text-[20rpx] text-green-600"
+              >
                 <text class="i-material-symbols:check-circle mr-[4rpx] text-[16rpx]" />
                 <text>该城市已开通服务，可正常租车</text>
               </view>
-              <view v-else-if="serviceAreaValidation.status === 'coming_soon'" 
-                    class="flex items-center text-[20rpx] text-orange-600">
+              <view
+                v-else-if="serviceAreaValidation.status === 'coming_soon'"
+                class="flex items-center text-[20rpx] text-orange-600"
+              >
                 <text class="i-material-symbols:schedule mr-[4rpx] text-[16rpx]" />
                 <text>服务即将开通，敬请期待</text>
               </view>

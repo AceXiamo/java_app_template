@@ -15,11 +15,11 @@ const props = withDefaults(defineProps<{
 
 const emits = defineEmits(['update:modelValue'])
 
-const inputValue = ref<string>(props.modelValue ?? '')
+const inputValue = ref<string>(props.modelValue || '')
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== inputValue.value)
-    inputValue.value = newValue ?? ''
+    inputValue.value = newValue || ''
 }, { immediate: true })
 
 watch(inputValue, (newValue) => {
@@ -49,14 +49,14 @@ watch(inputValue, (newValue) => {
       <template v-if="$props.type === 'textarea'">
         <textarea
           v-model="inputValue"
-          :placeholder="placeholder ?? `请输入${$props.label}`"
+          :placeholder="placeholder || `请输入${$props.label}`"
           class="h-[200rpx] flex-auto text-[26rpx]"
           :disabled="$props.disabled"
         />
       </template>
       <template v-else>
         <input
-          v-model="inputValue" :type="$props.type" :placeholder="placeholder ?? `请输入${$props.label}`" class="flex-auto text-right text-[26rpx]"
+          v-model="inputValue" :type="$props.type" :placeholder="placeholder || `请输入${$props.label}`" class="flex-auto text-right text-[26rpx]"
           :disabled="$props.disabled"
         >
       </template>

@@ -18,7 +18,7 @@ const selectedValue = ref<any>(props.modelValue)
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== selectedValue.value)
-    selectedValue.value = newValue ?? ''
+    selectedValue.value = newValue || ''
 }, { immediate: true })
 
 function handleChange(e: { detail: { value: number } }) {
@@ -55,7 +55,7 @@ const selectedLabel = computed(() => {
         <input
           :value="selectedLabel"
           type="text"
-          :placeholder="placeholder ?? `请选择${$props.label}`"
+          :placeholder="placeholder || `请选择${$props.label}`"
           class="flex-auto text-right text-[26rpx]"
           disabled
         >

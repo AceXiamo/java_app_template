@@ -7,6 +7,7 @@ import { getSimilarVehicles, getVehicleDetail, getVehicleReviews } from '@/api/v
 import type { VehicleDetail } from '@/api/vehicle'
 import { getJumpData, setJumpData } from '@/utils/index'
 import PageVehicleHead from '@/components/page/vehicle/Head.vue'
+import dayjs from 'dayjs'
 
 // 页面参数
 const vehicleId = ref('')
@@ -324,8 +325,7 @@ function viewAllReviews() {
 
 // 格式化时间
 function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+  return dayjs(dateString).format('YYYY-MM-DD')
 }
 
 // 打开地图导航

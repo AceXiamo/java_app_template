@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import type { VehicleRentalRequest } from '@/api/vehicle-rental-request'
 import { getApplicationHistory } from '@/api/vehicle-rental-request'
+import dayjs from 'dayjs'
 
 // 页面状态
 const refreshing = ref(false)
@@ -44,13 +45,7 @@ function getStatusStyle(status: string) {
 function formatTime(timeStr: string) {
   if (!timeStr)
     return ''
-  try {
-    const date = new Date(timeStr)
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-  }
-  catch {
-    return timeStr
-  }
+  return dayjs(timeStr).format('YYYY-MM-DD HH:mm')
 }
 
 // 加载申请记录

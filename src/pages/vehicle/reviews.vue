@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { getVehicleReviews } from '@/api/vehicle'
 import type { VehicleReview } from '@/api/vehicle'
+import dayjs from 'dayjs'
 
 // 页面参数
 const vehicleId = ref('')
@@ -185,8 +186,7 @@ function calculateRatingStats() {
 
 // 格式化时间
 function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+  return dayjs(dateString).format('YYYY-MM-DD')
 }
 
 // 预览评价图片
