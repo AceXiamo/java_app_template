@@ -18,6 +18,10 @@ export interface WxUser {
   sessionKey?: string
   unionid?: string
 
+  // 平台相关字段
+  userPlatform?: string // 用户平台 (wx/alipay)
+  alipayUserId?: string // 支付宝用户ID
+
   // 个人资料相关字段
   nickname?: string
   phoneVerified?: boolean
@@ -67,12 +71,39 @@ export interface WxUser {
   userRole?: string
 }
 
-export function login(params: { code: string, appId?: string }): Promise<BaseRes<LoginResult>> {
+// 登录参数接口
+export interface LoginParams {
+  code: string
+  appId?: string
+  platform?: string // 平台标识 (wx/alipay)
+}
+
+// 双平台登录接口
+export function login(params: LoginParams): Promise<BaseRes<LoginResult>> {
   return request.post({
     url: `${host}/wechat/login`,
     params: {
       code: params.code,
       appId: params.appId || 'wx4c0815d1a360d938',
+      platform: params.platform || 'wx',
     },
+  })
+}
+
+// 兼容旧版本的登录接口
+export function wxLogin(params: { code: string, appId?: string }): Promise<BaseRes<LoginResult>> {
+  return login({
+    code: params.code,
+    appId: params.appId,
+    platform: 'wx',
+  })
+}
+
+// 支付宝登录接口
+export function alipayLogin(params: { code: string, appId?: string }): Promise<BaseRes<LoginResult>> {
+  return login({
+    code: params.code,
+    appId: params.appId,
+    platform: 'alipay',
   })
 }

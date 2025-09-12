@@ -3,7 +3,7 @@
 
 <template>
   <HeadBar bg-color="#f9fafb">
-    <view class="flex items-center px-[40rpx] py-[16rpx]">
+    <view class="flex items-center px-[40rpx]">
       <image
         src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/discover_head.png"
         class="h-[70rpx] w-[70rpx] mr-[12rpx] align-middle"

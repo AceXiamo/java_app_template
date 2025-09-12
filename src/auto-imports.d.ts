@@ -21,6 +21,7 @@ declare global {
   const createEventHook: typeof import('@vueuse/core')['createEventHook']
   const createGlobalState: typeof import('@vueuse/core')['createGlobalState']
   const createInjectionState: typeof import('@vueuse/core')['createInjectionState']
+  const createPaymentParams: typeof import('./utils/payment')['createPaymentParams']
   const createReactiveFn: typeof import('@vueuse/core')['createReactiveFn']
   const createReusableTemplate: typeof import('@vueuse/core')['createReusableTemplate']
   const createSharedComposable: typeof import('@vueuse/core')['createSharedComposable']
@@ -40,11 +41,20 @@ declare global {
   const generateFileName: typeof import('./utils/tool')['generateFileName']
   const getCitiesByProvince: typeof import('./utils/region-data')['getCitiesByProvince']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
+  const getCurrentPayType: typeof import('./utils/payment')['getCurrentPayType']
+  const getCurrentPlatform: typeof import('./utils/platform')['getCurrentPlatform']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
   const getDistrictsByCity: typeof import('./utils/region-data')['getDistrictsByCity']
   const getJumpData: typeof import('./utils/index')['getJumpData']
+  const getLoginParams: typeof import('./utils/platform')['getLoginParams']
+  const getPayPlatform: typeof import('./utils/platform')['getPayPlatform']
+  const getPaymentParams: typeof import('./utils/platform')['getPaymentParams']
+  const getPlatformConfig: typeof import('./utils/platform')['getPlatformConfig']
+  const getPlatformDisplayName: typeof import('./utils/platform')['getPlatformDisplayName']
   const getProvinces: typeof import('./utils/region-data')['getProvinces']
   const getUploadConfig: typeof import('./utils/alioss')['getUploadConfig']
+  const getUserIdField: typeof import('./utils/platform')['getUserIdField']
+  const getUserPaymentId: typeof import('./utils/payment')['getUserPaymentId']
   const h: typeof import('vue')['h']
   const handleImageUpload: typeof import('./utils/tool')['handleImageUpload']
   const hasManage: typeof import('./utils/tool')['hasManage']
@@ -53,11 +63,15 @@ declare global {
   const inject: typeof import('vue')['inject']
   const injectLocal: typeof import('@vueuse/core')['injectLocal']
   const inputConfirmRef: typeof import('./utils/components')['inputConfirmRef']
+  const isAlipayPlatform: typeof import('./utils/platform')['isAlipayPlatform']
   const isDefined: typeof import('@vueuse/core')['isDefined']
+  const isMiniProgram: typeof import('./utils/platform')['isMiniProgram']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
+  const isWechatPlatform: typeof import('./utils/platform')['isWechatPlatform']
+  const logPlatformInfo: typeof import('./utils/platform')['logPlatformInfo']
   const logger: typeof import('./utils/logger')['default']
   const makeDestructurable: typeof import('@vueuse/core')['makeDestructurable']
   const markRaw: typeof import('vue')['markRaw']
@@ -106,6 +120,9 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const pausableWatch: typeof import('@vueuse/core')['pausableWatch']
+  const platformLogin: typeof import('./utils/platform')['platformLogin']
+  const platformPay: typeof import('./utils/platform')['platformPay']
+  const processPaymentResponse: typeof import('./utils/payment')['processPaymentResponse']
   const provide: typeof import('vue')['provide']
   const provideLocal: typeof import('@vueuse/core')['provideLocal']
   const rankColor: typeof import('./utils/tool')['rankColor']
@@ -123,6 +140,10 @@ declare global {
   const refThrottled: typeof import('@vueuse/core')['refThrottled']
   const refWithControl: typeof import('@vueuse/core')['refWithControl']
   const request: typeof import('./utils/request')['request']
+  const requestAlipayPayment: typeof import('./utils/payment')['requestAlipayPayment']
+  const requestPlatformPayment: typeof import('./utils/payment')['requestPlatformPayment']
+  const requestWechatPayment: typeof import('./utils/payment')['requestWechatPayment']
+  const requestWxPayment: typeof import('./utils/payment')['requestWxPayment']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
@@ -131,6 +152,8 @@ declare global {
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
+  const showPaymentFailedToast: typeof import('./utils/payment')['showPaymentFailedToast']
+  const showPaymentSuccessToast: typeof import('./utils/payment')['showPaymentSuccessToast']
   const storage: typeof import('./utils/storage')['default']
   const stringToColor: typeof import('./utils/index')['stringToColor']
   const syncRef: typeof import('@vueuse/core')['syncRef']
@@ -330,6 +353,7 @@ declare global {
   const useWindowFocus: typeof import('@vueuse/core')['useWindowFocus']
   const useWindowScroll: typeof import('@vueuse/core')['useWindowScroll']
   const useWindowSize: typeof import('@vueuse/core')['useWindowSize']
+  const validatePaymentParams: typeof import('./utils/payment')['validatePaymentParams']
   const watch: typeof import('vue')['watch']
   const watchArray: typeof import('@vueuse/core')['watchArray']
   const watchAtMost: typeof import('@vueuse/core')['watchAtMost']
@@ -377,6 +401,7 @@ declare module 'vue' {
     readonly createEventHook: UnwrapRef<typeof import('@vueuse/core')['createEventHook']>
     readonly createGlobalState: UnwrapRef<typeof import('@vueuse/core')['createGlobalState']>
     readonly createInjectionState: UnwrapRef<typeof import('@vueuse/core')['createInjectionState']>
+    readonly createPaymentParams: UnwrapRef<typeof import('./utils/payment')['createPaymentParams']>
     readonly createReactiveFn: UnwrapRef<typeof import('@vueuse/core')['createReactiveFn']>
     readonly createReusableTemplate: UnwrapRef<typeof import('@vueuse/core')['createReusableTemplate']>
     readonly createSharedComposable: UnwrapRef<typeof import('@vueuse/core')['createSharedComposable']>
@@ -396,11 +421,20 @@ declare module 'vue' {
     readonly generateFileName: UnwrapRef<typeof import('./utils/tool')['generateFileName']>
     readonly getCitiesByProvince: UnwrapRef<typeof import('./utils/region-data')['getCitiesByProvince']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
+    readonly getCurrentPayType: UnwrapRef<typeof import('./utils/payment')['getCurrentPayType']>
+    readonly getCurrentPlatform: UnwrapRef<typeof import('./utils/platform')['getCurrentPlatform']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getDistrictsByCity: UnwrapRef<typeof import('./utils/region-data')['getDistrictsByCity']>
     readonly getJumpData: UnwrapRef<typeof import('./utils/index')['getJumpData']>
+    readonly getLoginParams: UnwrapRef<typeof import('./utils/platform')['getLoginParams']>
+    readonly getPayPlatform: UnwrapRef<typeof import('./utils/platform')['getPayPlatform']>
+    readonly getPaymentParams: UnwrapRef<typeof import('./utils/platform')['getPaymentParams']>
+    readonly getPlatformConfig: UnwrapRef<typeof import('./utils/platform')['getPlatformConfig']>
+    readonly getPlatformDisplayName: UnwrapRef<typeof import('./utils/platform')['getPlatformDisplayName']>
     readonly getProvinces: UnwrapRef<typeof import('./utils/region-data')['getProvinces']>
     readonly getUploadConfig: UnwrapRef<typeof import('./utils/alioss')['getUploadConfig']>
+    readonly getUserIdField: UnwrapRef<typeof import('./utils/platform')['getUserIdField']>
+    readonly getUserPaymentId: UnwrapRef<typeof import('./utils/payment')['getUserPaymentId']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly handleImageUpload: UnwrapRef<typeof import('./utils/tool')['handleImageUpload']>
     readonly hasManage: UnwrapRef<typeof import('./utils/tool')['hasManage']>
@@ -409,11 +443,15 @@ declare module 'vue' {
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
     readonly inputConfirmRef: UnwrapRef<typeof import('./utils/components')['inputConfirmRef']>
+    readonly isAlipayPlatform: UnwrapRef<typeof import('./utils/platform')['isAlipayPlatform']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
+    readonly isMiniProgram: UnwrapRef<typeof import('./utils/platform')['isMiniProgram']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly isWechatPlatform: UnwrapRef<typeof import('./utils/platform')['isWechatPlatform']>
+    readonly logPlatformInfo: UnwrapRef<typeof import('./utils/platform')['logPlatformInfo']>
     readonly logger: UnwrapRef<typeof import('./utils/logger')['default']>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -462,6 +500,9 @@ declare module 'vue' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
     readonly pausableWatch: UnwrapRef<typeof import('@vueuse/core')['pausableWatch']>
+    readonly platformLogin: UnwrapRef<typeof import('./utils/platform')['platformLogin']>
+    readonly platformPay: UnwrapRef<typeof import('./utils/platform')['platformPay']>
+    readonly processPaymentResponse: UnwrapRef<typeof import('./utils/payment')['processPaymentResponse']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly provideLocal: UnwrapRef<typeof import('@vueuse/core')['provideLocal']>
     readonly rankColor: UnwrapRef<typeof import('./utils/tool')['rankColor']>
@@ -479,6 +520,10 @@ declare module 'vue' {
     readonly refThrottled: UnwrapRef<typeof import('@vueuse/core')['refThrottled']>
     readonly refWithControl: UnwrapRef<typeof import('@vueuse/core')['refWithControl']>
     readonly request: UnwrapRef<typeof import('./utils/request')['request']>
+    readonly requestAlipayPayment: UnwrapRef<typeof import('./utils/payment')['requestAlipayPayment']>
+    readonly requestPlatformPayment: UnwrapRef<typeof import('./utils/payment')['requestPlatformPayment']>
+    readonly requestWechatPayment: UnwrapRef<typeof import('./utils/payment')['requestWechatPayment']>
+    readonly requestWxPayment: UnwrapRef<typeof import('./utils/payment')['requestWxPayment']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
@@ -487,6 +532,8 @@ declare module 'vue' {
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly showPaymentFailedToast: UnwrapRef<typeof import('./utils/payment')['showPaymentFailedToast']>
+    readonly showPaymentSuccessToast: UnwrapRef<typeof import('./utils/payment')['showPaymentSuccessToast']>
     readonly storage: UnwrapRef<typeof import('./utils/storage')['default']>
     readonly stringToColor: UnwrapRef<typeof import('./utils/index')['stringToColor']>
     readonly syncRef: UnwrapRef<typeof import('@vueuse/core')['syncRef']>
@@ -686,6 +733,7 @@ declare module 'vue' {
     readonly useWindowFocus: UnwrapRef<typeof import('@vueuse/core')['useWindowFocus']>
     readonly useWindowScroll: UnwrapRef<typeof import('@vueuse/core')['useWindowScroll']>
     readonly useWindowSize: UnwrapRef<typeof import('@vueuse/core')['useWindowSize']>
+    readonly validatePaymentParams: UnwrapRef<typeof import('./utils/payment')['validatePaymentParams']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchArray: UnwrapRef<typeof import('@vueuse/core')['watchArray']>
     readonly watchAtMost: UnwrapRef<typeof import('@vueuse/core')['watchAtMost']>

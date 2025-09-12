@@ -2,6 +2,10 @@ import { defineUniPages } from '@uni-helper/vite-plugin-uni-pages'
 
 export default defineUniPages({
   pages: [],
+  window: {
+    transparentTitle: 'always',
+    navigationStyle: 'custom',
+  },
   globalStyle: {
     backgroundColor: '@bgColor',
     backgroundColorBottom: '@bgColorBottom',

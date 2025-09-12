@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { formatAmount, rechargeDeposit } from '@/api/deposit'
+import { requestPlatformPayment, processPaymentResponse, showPaymentSuccessToast, showPaymentFailedToast } from '@/utils/payment'
+import { getCurrentPlatform, getPlatformDisplayName } from '@/utils/platform'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 
 interface Props {
@@ -54,37 +56,31 @@ async function handleSubmit() {
 
   try {
     submitting.value = true
+    const platformName = getPlatformDisplayName()
 
     const response = await rechargeDeposit({
       amount: finalAmount.value,
-      paymentMethod: 'wechat',
       returnUrl: 'pages/deposit/index',
     })
 
     if (response.data) {
-      // 调用微信支付
-      uni.requestPayment({
-        ...response.data,
-        success: () => {
-          emits('success')
-          handleClose()
-        },
-        fail: (error: any) => {
-          console.error('支付失败:', error)
-          uni.showToast({
-            title: '支付失败',
-            icon: 'error',
-          })
-        },
-      })
+      // 使用统一支付接口
+      const paymentData = processPaymentResponse(response)
+      const result = await requestPlatformPayment(paymentData)
+      
+      if (result.success) {
+        showPaymentSuccessToast()
+        emits('success')
+        handleClose()
+      } else {
+        showPaymentFailedToast(result.message)
+      }
     }
   }
-  catch (error) {
+  catch (error: any) {
     console.error('充值失败:', error)
-    uni.showToast({
-      title: '充值失败，请重试',
-      icon: 'error',
-    })
+    const platformName = getPlatformDisplayName()
+    showPaymentFailedToast(`${platformName}充值失败，请重试`)
   }
   finally {
     submitting.value = false

@@ -53,8 +53,8 @@ async function onRefresh() {
 
 // 订单操作
 async function contactOwner(orderId: string) {
-    await orderStore.handleContactOwner(Number(orderId), '用户主动联系')
-    uni.showToast({ title: '已联系车主', icon: 'success' })
+  await orderStore.handleContactOwner(Number(orderId), '用户主动联系')
+  uni.showToast({ title: '已联系车主', icon: 'success' })
 }
 
 // 续租相关状态
@@ -403,7 +403,7 @@ function fallbackToAddressSearch(location: string) {
 <template>
   <view class="relative h-full flex flex-col bg-gray-50">
     <!-- 头部导航 -->
-    <OrderHead />
+    <PageOrderHead />
 
     <!-- 订单状态筛选 -->
     <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[40rpx] py-[32rpx]">

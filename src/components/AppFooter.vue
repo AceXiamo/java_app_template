@@ -51,7 +51,7 @@ onShow(() => {
 <template>
   <view
     :style="{
-      paddingBottom: setting.isAppleAndHasLine ? 'calc(env(safe-area-inset-bottom) + 8rpx)' : '8rpx',
+      paddingBottom: setting.safeBottom > 0 ? `${setting.safeBottom}rpx` : setting.isAppleAndHasLine ? 'calc(env(safe-area-inset-bottom) + 8rpx)' : '8rpx',
     }"
     class="border-t border-gray-100 bg-white"
     flex items-center justify-around py-[8rpx]

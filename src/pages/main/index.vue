@@ -23,6 +23,12 @@ onShareTimeline(() => {
 onLoad(async () => {
   // 恢复用户登录状态
   await userStore.restoreUserInfo()
+
+  // #ifdef MP-ALIPAY
+  my.setBackButton({
+    color: '#000000', // 这个api官方文档没有对外公布，实验出来的。
+  })
+  // #endif
 })
 </script>
 

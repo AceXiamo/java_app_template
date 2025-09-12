@@ -1,4 +1,6 @@
 import { host, request } from '@/utils/request'
+import { createPaymentParams, getCurrentPayType, getUserPaymentId, processPaymentResponse, requestPlatformPayment } from '@/utils/payment'
+import type { PayPlatformType, UnifiedPayParams } from '@/utils/platform'
 
 // 保险产品接口
 export interface InsuranceProduct {
@@ -49,6 +51,9 @@ export interface BookingRequest {
   // 新增保险和服务字段
   insuranceProductId?: string
   selectedServices?: string[]
+  // 双平台支付参数
+  paymentMethod?: PayPlatformType // 可选，默认根据平台自动选择
+  payType?: PayPlatformType // 兼容后端接口
 }
 
 export interface BookingResponse {
@@ -57,22 +62,30 @@ export interface BookingResponse {
   status: string
   totalAmount: number
   finalAmount: number
-  payData: {
-    appId: string
-    timeStamp: string
-    nonceStr: string
-    package: string
-    signType: string
-    paySign: string
-  }
+  payData: UnifiedPayParams // 支持双平台支付数据
 }
 
-// 创建预订
-export function createBooking(data: BookingRequest, openId: string): Promise<BaseRes<BookingResponse>> {
-  return request.post({
-    url: `${host}/api/bookings?openId=${openId}`,
-    data,
+// 创建预订 - 支持双平台支付
+export function createBooking(data: BookingRequest, openId?: string): Promise<BaseRes<BookingResponse>> {
+  // 自动添加支付参数
+  const paymentParams = createPaymentParams({
+    ...data,
+    paymentMethod: data.paymentMethod || getCurrentPayType(),
+    payType: data.payType || getCurrentPayType(),
   })
+  
+  return request.post({
+    url: `${host}/api/bookings`,
+    data: paymentParams,
+    params: {
+      openId: openId || getUserPaymentId(), // 自动获取用户支付ID
+    },
+  })
+}
+
+// 创建预订 - 兼容旧版本接口
+export function createBookingLegacy(data: BookingRequest, openId: string): Promise<BaseRes<BookingResponse>> {
+  return createBooking(data, openId)
 }
 
 // 计算预订费用
@@ -106,7 +119,7 @@ export function calculateBookingPrice(params: {
   })
 }
 
-// 微信支付相关接口
+// 微信支付相关接口 - 兼容旧版本
 export interface WxPayParams {
   appId: string
   timeStamp: string
@@ -116,7 +129,7 @@ export interface WxPayParams {
   paySign: string
 }
 
-// 查询支付状态
+// 查询支付状态 - 支持双平台
 export function queryPaymentStatus(orderNo: string): Promise<BaseRes<{
   tradeState: string
   tradeStateDesc: string
@@ -125,32 +138,32 @@ export function queryPaymentStatus(orderNo: string): Promise<BaseRes<{
   totalFee: number
   timeEnd?: string
 }>> {
+  const payType = getCurrentPayType()
   return request.get({
-    url: `${host}/api/wx/pay/query/${orderNo}`,
+    url: `${host}/api/${payType}/pay/query/${orderNo}`,
   })
 }
 
-// 调用微信支付
-export function requestWxPayment(payData: WxPayParams): Promise<void> {
-  return new Promise((resolve, reject) => {
-    uni.requestPayment({
-      provider: 'wxpay',
-      appId: payData.appId,
-      timeStamp: payData.timeStamp,
-      nonceStr: payData.nonceStr,
-      package: payData.package,
-      signType: payData.signType,
-      paySign: payData.paySign,
-      success: () => {
-        console.log('支付成功')
-        resolve()
-      },
-      fail: (error: any) => {
-        console.error('支付失败', error)
-        reject(error)
-      },
-    })
-  })
+// 统一支付接口 - 自动识别平台
+export async function requestBookingPayment(paymentData: UnifiedPayParams | BookingResponse): Promise<void> {
+  let processedPayData: UnifiedPayParams
+  
+  // 如果是预订响应数据，提取支付数据
+  if ('payData' in paymentData) {
+    processedPayData = processPaymentResponse({ data: paymentData.payData })
+  } else {
+    processedPayData = paymentData
+  }
+  
+  const result = await requestPlatformPayment(processedPayData)
+  if (!result.success) {
+    throw new Error(result.message)
+  }
+}
+
+// 调用微信支付 - 兼容旧版本
+export async function requestWxPayment(payData: WxPayParams): Promise<void> {
+  await requestBookingPayment(payData)
 }
 
 // 获取保险产品列表

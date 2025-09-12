@@ -212,6 +212,10 @@
       "layout": "home"
     }
   ],
+  "window": {
+    "transparentTitle": "always",
+    "navigationStyle": "custom"
+  },
   "globalStyle": {
     "backgroundColor": "@bgColor",
     "backgroundColorBottom": "@bgColorBottom",

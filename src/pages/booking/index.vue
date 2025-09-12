@@ -9,8 +9,8 @@ import InsuranceSelector from '@/components/booking/InsuranceSelector.vue'
 import ServicesSelector from '@/components/booking/ServicesSelector.vue'
 import { type Vehicle, getVehicleDetail } from '@/api/vehicle'
 import { type UserCoupon, getUserCoupons } from '@/api/coupon'
-import { type InsuranceProduct, type ValueAddedService, calculateBookingPrice, createBooking, getInsuranceProducts, getValueAddedServices, requestWxPayment } from '@/api/booking'
-import { calculateOrderDeposit, verifyDepositBalance, type DepositCalculation, formatAmount as formatDepositAmount } from '@/api/deposit'
+import { type InsuranceProduct, type ValueAddedService, calculateBookingPrice, createBooking, getInsuranceProducts, getValueAddedServices, requestBookingPayment } from '@/api/booking'
+import { type DepositCalculation, calculateOrderDeposit, formatAmount as formatDepositAmount, verifyDepositBalance } from '@/api/deposit'
 import { useUserStore } from '@/store/user'
 
 // 页面参数
@@ -445,7 +445,7 @@ async function loadDepositCalculation() {
     const response = await calculateOrderDeposit({
       vehicleId: vehicleInfo.value.vehicleId,
       startTime: bookingInfo.value.startTime,
-      endTime: bookingInfo.value.endTime
+      endTime: bookingInfo.value.endTime,
     })
 
     if (response.code === 200 && response.data) {
@@ -458,7 +458,7 @@ async function loadDepositCalculation() {
     // 押金计算失败不应该阻止用户下单，但需要提醒
     uni.showToast({
       title: '押金计算失败，请稍后重试',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -467,7 +467,7 @@ async function loadDepositCalculation() {
 function navigateToDepositRecharge() {
   showDepositInsufficientDialog.value = false
   uni.navigateTo({
-    url: '/pages/deposit/index'
+    url: '/pages/deposit/index',
   })
 }
 
@@ -543,7 +543,7 @@ function calculatePriceLocally() {
     const remainingDays = days % 30
     priceCalculation.value.basePrice
       = months * (vehicleInfo.value.monthlyPrice || 0)
-      + remainingDays * (vehicleInfo.value.dailyPrice || 0)
+        + remainingDays * (vehicleInfo.value.dailyPrice || 0)
   }
   else {
     priceCalculation.value.basePrice = days * (vehicleInfo.value.dailyPrice || 0)
@@ -557,7 +557,7 @@ function calculatePriceLocally() {
     const pricePerKm = vehicleInfo.value.deliveryPricePerKm || 0
 
     priceCalculation.value.deliveryFee = baseFee
-    + Math.max(0, distance - freeDistance) * pricePerKm
+      + Math.max(0, distance - freeDistance) * pricePerKm
   }
   else {
     priceCalculation.value.deliveryFee = 0
@@ -777,12 +777,12 @@ async function submitBooking() {
     const response = await createBooking(bookingData, openId)
 
     if (response.code === 200 && response.data) {
-      // 订单创建成功，直接调用微信支付
+      // 订单创建成功，调用统一支付接口
       const { orderId, orderNo, payData } = response.data
 
       try {
-        // 调用微信支付
-        await requestWxPayment(payData)
+        // 调用统一平台支付
+        await requestBookingPayment(response.data)
 
         // 支付成功
         uni.showToast({
@@ -809,7 +809,7 @@ async function submitBooking() {
           success: (modalRes) => {
             if (modalRes.confirm) {
               uni.redirectTo({
-                url: `/pages/order/detail?orderId=${orderId}`,
+                url: `/pages/order/detail?orderId=${orderNo}`,
               })
             }
             else {
@@ -1574,7 +1574,7 @@ function selectService(serviceId: string) {
               </view>
             </view>
 
-            <view class="bg-blue-50 rounded-[12rpx] p-[16rpx]">
+            <view class="rounded-[12rpx] bg-blue-50 p-[16rpx]">
               <view class="mb-[8rpx] flex items-center justify-between">
                 <text class="text-[24rpx] text-blue-700">
                   当前押金余额
@@ -1583,7 +1583,7 @@ function selectService(serviceId: string) {
                   ¥{{ formatDepositAmount(depositCalculation.userBalance) }}
                 </text>
               </view>
-              
+
               <view v-if="depositCalculation.needRecharge > 0" class="flex items-center justify-between">
                 <text class="text-[24rpx] text-orange-600">
                   需要补充
@@ -1592,7 +1592,7 @@ function selectService(serviceId: string) {
                   ¥{{ formatDepositAmount(depositCalculation.needRecharge) }}
                 </text>
               </view>
-              
+
               <view v-else>
                 <text class="text-[20rpx] text-green-600">
                   ✓ 押金余额充足，可以正常下单
@@ -1742,7 +1742,7 @@ function selectService(serviceId: string) {
           :class="{
             'bg-purple-600 text-white': !submitLoading && agreedToTerms && isDeliveryDistanceValid && (!depositCalculation || depositCalculation.canBook),
             'bg-orange-600 text-white': !submitLoading && agreedToTerms && isDeliveryDistanceValid && depositCalculation && !depositCalculation.canBook,
-            'bg-gray-400 text-gray-200': submitLoading || !agreedToTerms || !isDeliveryDistanceValid
+            'bg-gray-400 text-gray-200': submitLoading || !agreedToTerms || !isDeliveryDistanceValid,
           }"
           :disabled="submitLoading || !agreedToTerms || !isDeliveryDistanceValid"
           @tap="submitBooking"
@@ -2194,51 +2194,77 @@ function selectService(serviceId: string) {
       <view class="p-6">
         <view v-if="depositCalculation" class="space-y-4">
           <!-- 押金计算详情 -->
-          <view class="bg-gray-50 rounded-lg p-4 space-y-3">
-            <view class="flex justify-between items-center">
-              <text class="text-sm text-gray-600">车辆押金</text>
-              <text class="font-medium">¥{{ formatDepositAmount(depositCalculation.vehicleDeposit) }}</text>
+          <view class="rounded-lg bg-gray-50 p-4 space-y-3">
+            <view class="flex items-center justify-between">
+              <text class="text-sm text-gray-600">
+                车辆押金
+              </text>
+              <text class="font-medium">
+                ¥{{ formatDepositAmount(depositCalculation.vehicleDeposit) }}
+              </text>
             </view>
-            <view v-if="depositCalculation.creditDeduction > 0" class="flex justify-between items-center">
-              <text class="text-sm text-gray-600">信用抵扣</text>
-              <text class="font-medium text-green-600">-¥{{ formatDepositAmount(depositCalculation.creditDeduction) }}</text>
+            <view v-if="depositCalculation.creditDeduction > 0" class="flex items-center justify-between">
+              <text class="text-sm text-gray-600">
+                信用抵扣
+              </text>
+              <text class="text-green-600 font-medium">
+                -¥{{ formatDepositAmount(depositCalculation.creditDeduction) }}
+              </text>
             </view>
-            <view class="border-t pt-3 flex justify-between items-center">
-              <text class="text-base font-medium">实际押金</text>
-              <text class="text-lg font-bold text-orange-600">¥{{ formatDepositAmount(depositCalculation.actualDeposit) }}</text>
+            <view class="flex items-center justify-between border-t pt-3">
+              <text class="text-base font-medium">
+                实际押金
+              </text>
+              <text class="text-lg text-orange-600 font-bold">
+                ¥{{ formatDepositAmount(depositCalculation.actualDeposit) }}
+              </text>
             </view>
-            <view class="flex justify-between items-center">
-              <text class="text-sm text-gray-600">当前余额</text>
-              <text class="font-medium">¥{{ formatDepositAmount(depositCalculation.userBalance) }}</text>
+            <view class="flex items-center justify-between">
+              <text class="text-sm text-gray-600">
+                当前余额
+              </text>
+              <text class="font-medium">
+                ¥{{ formatDepositAmount(depositCalculation.userBalance) }}
+              </text>
             </view>
-            <view class="border-t pt-3 flex justify-between items-center">
-              <text class="text-base font-medium text-red-600">需要补充</text>
-              <text class="text-lg font-bold text-red-600">¥{{ formatDepositAmount(depositCalculation.needRecharge) }}</text>
+            <view class="flex items-center justify-between border-t pt-3">
+              <text class="text-base text-red-600 font-medium">
+                需要补充
+              </text>
+              <text class="text-lg text-red-600 font-bold">
+                ¥{{ formatDepositAmount(depositCalculation.needRecharge) }}
+              </text>
             </view>
           </view>
 
           <!-- 说明文字 -->
-          <view class="bg-blue-50 rounded-lg p-4">
+          <view class="rounded-lg bg-blue-50 p-4">
             <view class="flex items-start">
-              <uni-icons type="info" size="16" color="#3B82F6" class="mt-0.5 mr-2 flex-shrink-0" />
+              <uni-icons type="info" size="16" color="#3B82F6" class="mr-2 mt-0.5 flex-shrink-0" />
               <view class="text-xs text-blue-700 space-y-1">
-                <text class="block">• 押金将在您租车期间被冻结</text>
-                <text class="block">• 订单完成后押金自动解冻到账户</text>
-                <text class="block">• 您可以选择保留在押金账户或提现</text>
+                <text class="block">
+                  • 押金将在您租车期间被冻结
+                </text>
+                <text class="block">
+                  • 订单完成后押金自动解冻到账户
+                </text>
+                <text class="block">
+                  • 您可以选择保留在押金账户或提现
+                </text>
               </view>
             </view>
           </view>
 
           <!-- 操作按钮 -->
-          <view class="flex space-x-3 pt-4">
-            <button 
-              class="flex-1 py-3 px-4 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+          <view class="flex pt-4 space-x-3">
+            <button
+              class="flex-1 border border-gray-200 rounded-lg px-4 py-3 text-gray-700 font-medium transition-colors hover:bg-gray-50"
               @click="showDepositInsufficientDialog = false"
             >
               稍后充值
             </button>
-            <button 
-              class="flex-1 py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            <button
+              class="bg-primary hover:bg-primary/90 flex-1 rounded-lg px-4 py-3 text-white font-medium transition-colors"
               @click="navigateToDepositRecharge"
             >
               立即充值

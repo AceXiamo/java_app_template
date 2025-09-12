@@ -289,7 +289,7 @@ function handleLogout() {
           </view>
 
           <!-- 我的押金 -->
-          <view class="flex items-center justify-between" @tap="goToDeposit">
+          <!-- <view class="flex items-center justify-between" @tap="goToDeposit">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-account-balance-wallet text-[36rpx] text-green-600" />
@@ -306,7 +306,7 @@ function handleLogout() {
             <view class="flex items-center space-x-[16rpx]">
               <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
             </view>
-          </view>
+          </view> -->
 
           <!-- 发票管理 -->
           <view class="flex items-center justify-between" @tap="goToInvoice">

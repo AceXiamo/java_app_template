@@ -72,7 +72,6 @@ async function loadBanners() {
   try {
     loading.value = true
     const response = await getHomeBanners()
-    console.log('轮播图API响应:', response)
 
     if (response.code === 200 && response.data && response.data.banners) {
       banners.value = response.data.banners
@@ -137,14 +136,10 @@ async function getLocation() {
       type: 'wgs84',
     })
 
-    console.log('获取到设备位置:', location)
-
     const response = await getCurrentLocation({
       latitude: location.latitude,
       longitude: location.longitude,
     })
-
-    console.log('位置API响应:', response)
 
     if (response.code === 200 && response.data) {
       const addressData = response.data.address
@@ -324,7 +319,6 @@ function handleShowCityDrawer() {
 }
 
 onMounted(() => {
-  console.log('onMounted')
   loadBanners()
   getLocation()
 

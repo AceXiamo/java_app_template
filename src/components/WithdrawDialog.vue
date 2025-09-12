@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { formatAmount, withdrawDeposit } from '@/api/deposit'
+import { getPlatformDisplayName } from '@/utils/platform'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 
 interface Props {
@@ -61,19 +62,26 @@ async function handleSubmit() {
 
   try {
     submitting.value = true
+    const platformName = getPlatformDisplayName()
 
     await withdrawDeposit({
       amount,
       remark: remark.value,
     })
 
+    uni.showToast({
+      title: `${platformName}提现申请已提交`,
+      icon: 'success',
+    })
+    
     emits('success')
     handleClose()
   }
-  catch (error) {
+  catch (error: any) {
     console.error('提现失败:', error)
+    const platformName = getPlatformDisplayName()
     uni.showToast({
-      title: '提现失败，请重试',
+      title: `${platformName}提现失败，请重试`,
       icon: 'error',
     })
   }

@@ -11,7 +11,8 @@ import {
   getMysteryBoxOptions,
   getMysteryBoxPricing,
 } from '@/api/mysteryBox'
-import { queryPaymentStatus, requestWxPayment } from '@/api/booking'
+import { queryPaymentStatus } from '@/api/booking'
+import { requestMysteryBoxPayment } from '@/api/mysteryBox'
 import DateTimePicker from '@/components/DateTimePicker.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 
@@ -261,9 +262,9 @@ async function purchaseMysteryBox() {
 
       // 检查是否有支付数据
       if (order.payData) {
-        // 调用微信支付
+        // 调用统一平台支付
         try {
-          await requestWxPayment(order.payData)
+          await requestMysteryBoxPayment(order)
 
           // 支付成功，查询支付状态确认
           await verifyPaymentStatus(order.orderNo)

@@ -10,21 +10,26 @@ export const useSettingStore = defineStore('setting', () => {
   const capsuleH = ref(0)
   // IOS机型且包含小白条（IOS全面屏机型
   const isAppleAndHasLine = ref(false)
+  // 安全高度
+  const safeBottom = ref(0)
 
   const setIsCustom = (val: boolean) => (isCustom.value = val)
   const setTopH = (val: number) => (topH.value = val)
   const setCapsuleH = (val: number) => (capsuleH.value = val)
   const setIsAppleAndHasLine = (val: boolean) =>
     (isAppleAndHasLine.value = val)
+  const setSafeBottom = (val: number) => (safeBottom.value = val)
 
   return {
     isCustom,
     topH,
     capsuleH,
     isAppleAndHasLine,
+    safeBottom,
     setIsCustom,
     setTopH,
     setCapsuleH,
     setIsAppleAndHasLine,
+    setSafeBottom,
   }
 })

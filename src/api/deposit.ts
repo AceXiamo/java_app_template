@@ -1,4 +1,6 @@
 import { host, request } from '@/utils/request'
+import { createPaymentParams, getCurrentPayType, getUserPaymentId } from '@/utils/payment'
+import type { PayPlatformType } from '@/utils/platform'
 
 // 押金账户信息
 export interface UserDepositAccount {
@@ -46,13 +48,16 @@ export interface DepositCalculation {
 // 押金充值参数
 export interface DepositRechargeParams {
   amount: number
-  paymentMethod: 'wechat' | 'alipay'
+  paymentMethod?: PayPlatformType // 可选，默认根据平台自动选择
+  payType?: PayPlatformType // 兼容后端接口
   returnUrl?: string
 }
 
 // 押金提现参数
 export interface DepositWithdrawParams {
   amount: number
+  paymentMethod?: PayPlatformType // 可选，默认根据平台自动选择
+  payType?: PayPlatformType // 兼容后端接口
   remark?: string
 }
 
@@ -92,12 +97,39 @@ export function getDepositTransactions(params?: {
 }
 
 /**
- * 押金充值
+ * 押金充值 - 支持双平台支付
  */
 export function rechargeDeposit(data: DepositRechargeParams): Promise<BaseRes<any>> {
+  // 自动添加支付参数
+  const paymentParams = createPaymentParams({
+    amount: data.amount,
+    paymentMethod: data.paymentMethod || getCurrentPayType(),
+    payType: data.payType || getCurrentPayType(),
+    returnUrl: data.returnUrl,
+  })
+  
   return request.post({
     url: `${host}/app/deposit/recharge`,
-    data,
+    data: paymentParams,
+    params: {
+      openId: getUserPaymentId(), // 自动获取用户支付ID
+    },
+  })
+}
+
+/**
+ * 押金充值 - 兼容旧版本接口
+ */
+export function rechargeDepositLegacy(data: { 
+  amount: number
+  paymentMethod: 'wechat' | 'alipay'
+  returnUrl?: string
+}): Promise<BaseRes<any>> {
+  const payType = data.paymentMethod === 'alipay' ? 'alipay' : 'wx'
+  return rechargeDeposit({
+    ...data,
+    paymentMethod: payType,
+    payType,
   })
 }
 

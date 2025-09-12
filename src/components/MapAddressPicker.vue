@@ -145,7 +145,11 @@ function onMapReady() {
       addressInitialized.value = true
       // 如果传入了坐标则使用传入的坐标，否则获取当前位置
       if (props.latitude && props.longitude) {
-        getAddressFromLocation(props.latitude, props.longitude)
+        currentLocation.value = {
+          latitude: props.latitude,
+          longitude: props.longitude,
+        }
+        getAddressFromLocation()
       }
       else {
         backToCurrentLocation()
@@ -155,8 +159,8 @@ function onMapReady() {
 }
 
 // 根据经纬度获取地址信息
-async function getAddressFromLocation(latitude: number, longitude: number) {
-  if (!latitude || !longitude)
+async function getAddressFromLocation() {
+  if (!currentLocation.value.latitude || !currentLocation.value.longitude)
     return
 
   try {
@@ -164,7 +168,7 @@ async function getAddressFromLocation(latitude: number, longitude: number) {
     addressInfo.value.formattedAddress = '正在获取地址...'
     serviceAreaValidation.value = null
 
-    const response = await reverseGeocode({ latitude, longitude })
+    const response = await reverseGeocode({ latitude: currentLocation.value.latitude, longitude: currentLocation.value.longitude })
 
     if (response.code === 200 && response.data) {
       const addressData = response.data.address
@@ -211,8 +215,7 @@ const debouncedGetCenterLocation = debounce(() => {
           latitude: res.latitude,
           longitude: res.longitude,
         }
-
-        debouncedGetAddressFromLocation(res.latitude, res.longitude)
+        debouncedGetAddressFromLocation()
       },
       fail: (error: any) => {
         console.error('获取地图中心点失败:', error)
@@ -280,7 +283,7 @@ function backToCurrentLocation() {
 
       // 标记地址已初始化，避免重复调用
       addressInitialized.value = true
-      debouncedGetAddressFromLocation(res.latitude, res.longitude)
+      debouncedGetAddressFromLocation()
     },
     fail: () => {
       uni.showToast({
@@ -312,13 +315,11 @@ function backToCurrentLocation() {
 
         <!-- 中心点标记 -->
         <view class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <view class="relative">
+          <view class="relative flex justify-center -translate-y-full">
             <!-- 定位图标 -->
-            <view class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg">
-              <text class="i-material-symbols-location-on text-[24rpx] text-white" />
-            </view>
+            <view class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg" />
             <!-- 定位线 -->
-            <view class="absolute left-1/2 top-[48rpx] h-[32rpx] w-[2rpx] transform bg-purple-600 -translate-x-1/2" />
+            <view class="absolute top-[48rpx] h-[32rpx] w-[2rpx] transform bg-purple-600" />
           </view>
         </view>
 

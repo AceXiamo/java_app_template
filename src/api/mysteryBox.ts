@@ -1,5 +1,7 @@
 // 百元盲盒相关 API
 import { host, request } from '@/utils/request'
+import { createPaymentParams, getCurrentPayType, getUserPaymentId, processPaymentResponse, requestPlatformPayment } from '@/utils/payment'
+import type { PayPlatformType, UnifiedPayParams } from '@/utils/platform'
 
 // 盲盒活动信息
 export interface MysteryBoxActivity {
@@ -96,14 +98,7 @@ export interface MysteryBoxOrder {
     exchangeTimeLimit: number
   }
   features: string[]
-  payData?: {
-    appId: string
-    timeStamp: string
-    nonceStr: string
-    package: string
-    signType: string
-    paySign: string
-  }
+  payData?: UnifiedPayParams // 支持双平台支付数据
 }
 
 // 盲盒配置（通用接口）
@@ -122,7 +117,10 @@ export interface MysteryBoxConfig {
   features: string[]
 }
 
-// API 接口
+// =================================
+// 盲盒信息查询API
+// =================================
+
 // 获取盲盒活动信息
 export function getMysteryBoxActivity() {
   return request.get({
@@ -148,7 +146,7 @@ export function getMysteryBoxPricing(params: {
   })
 }
 
-// 创建盲盒订单
+// 创建盲盒订单 - 支持双平台支付
 export function createMysteryBoxOrder(params: {
   preferences: {
     energyType: string
@@ -157,11 +155,36 @@ export function createMysteryBoxOrder(params: {
   rentalInfo: {
     startTime: string
   }
+  paymentMethod?: PayPlatformType // 可选，默认根据平台自动选择
+  payType?: PayPlatformType // 兼容后端接口
 }) {
+  // 自动添加支付参数
+  const paymentParams = createPaymentParams({
+    ...params,
+    paymentMethod: params.paymentMethod || getCurrentPayType(),
+    payType: params.payType || getCurrentPayType(),
+  })
+  
   return request.post({
     url: `${host}/api/mystery-box/create-order`,
-    data: params,
+    data: paymentParams,
+    params: {
+      openId: getUserPaymentId(), // 自动获取用户支付ID
+    },
   })
+}
+
+// 创建盲盒订单 - 兼容旧版本接口
+export function createMysteryBoxOrderLegacy(params: {
+  preferences: {
+    energyType: string
+    carType: string
+  }
+  rentalInfo: {
+    startTime: string
+  }
+}) {
+  return createMysteryBoxOrder(params)
 }
 
 // 获取盲盒配置（通用接口）
@@ -171,15 +194,58 @@ export function getMysteryBoxConfig() {
   })
 }
 
-// 购买盲盒（通用接口）
+// 购买盲盒（通用接口）- 支持双平台支付
 export function purchaseMysteryBox(params: {
   energyType: string
   carType: string
   days: number
   location: string
+  paymentMethod?: PayPlatformType // 可选，默认根据平台自动选择
+  payType?: PayPlatformType // 兼容后端接口
 }) {
+  // 自动添加支付参数
+  const paymentParams = createPaymentParams({
+    ...params,
+    paymentMethod: params.paymentMethod || getCurrentPayType(),
+    payType: params.payType || getCurrentPayType(),
+  })
+  
   return request.post({
     url: `${host}/api/mysterybox/purchase`,
-    data: params,
+    data: paymentParams,
+    params: {
+      openId: getUserPaymentId(), // 自动获取用户支付ID
+    },
   })
+}
+
+// 购买盲盒 - 兼容旧版本接口
+export function purchaseMysteryBoxLegacy(params: {
+  energyType: string
+  carType: string
+  days: number
+  location: string
+}) {
+  return purchaseMysteryBox(params)
+}
+
+// =================================
+// 盲盒支付相关API
+// =================================
+
+// 统一盲盒支付接口 - 自动识别平台
+export async function requestMysteryBoxPayment(paymentData: UnifiedPayParams | MysteryBoxOrder): Promise<void> {
+  let processedPayData: UnifiedPayParams
+  
+  // 如果是盲盒订单数据，提取支付数据
+  if ('payData' in paymentData && paymentData.payData) {
+    processedPayData = processPaymentResponse({ data: paymentData.payData })
+  } else {
+    processedPayData = paymentData as UnifiedPayParams
+  }
+  
+  const result = await requestPlatformPayment(processedPayData)
+  if (!result.success) {
+    throw new Error(result.message)
+  }
 }

@@ -4,7 +4,7 @@
 
 <template>
   <HeadBar bg-color="white">
-    <view class="flex items-center px-[40rpx] py-[16rpx]">
+    <view class="flex items-center px-[40rpx]">
       <image
         src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/image_order.png"
         class="h-[70rpx] w-[70rpx] mr-[12rpx] align-middle"
