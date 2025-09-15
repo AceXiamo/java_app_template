@@ -63,6 +63,7 @@ export const useOrderStore = defineStore('order', () => {
       orderListStatus.value = 'hide'
       throw error
     }
+    console.log('orderListStatus', orderListStatus.value)
   }
 
   // 重新加载订单列表

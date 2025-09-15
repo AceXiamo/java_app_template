@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useOrderStore } from '@/store/order'
 import OrderHead from '@/components/page/order/Head.vue'
 import RenewOrderDrawer from '@/components/RenewOrderDrawer.vue'
@@ -8,7 +7,7 @@ import VehicleReviewDrawer from '@/components/VehicleReviewDrawer.vue'
 
 // 使用 order store
 const orderStore = useOrderStore()
-const { orderList, orderListStatus, activeTab } = storeToRefs(orderStore)
+const { orderList, orderListStatus, activeTab } = toRefs(orderStore)
 
 // 定义 tab 数据
 const tabs = [
@@ -793,7 +792,7 @@ function fallbackToAddressSearch(location: string) {
       <!-- 触底加载动画覆盖层 -->
       <view
         class="absolute bottom-0 left-0 right-0 border-t border-gray-100 bg-white/90 shadow-lg backdrop-blur-sm transition-transform duration-300 ease-out"
-        :class="orderListStatus === 'loading' && orderList.length > 0 ? 'translate-y-0' : 'translate-y-full'"
+        :style="{ transform: (orderListStatus === 'loading' && orderList.length > 0) ? 'translateY(0)' : 'translateY(100%)' }"
       >
         <view class="flex items-center justify-center py-[32rpx]">
           <text class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />

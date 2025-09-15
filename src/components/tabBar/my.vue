@@ -55,6 +55,7 @@ function isOwnerOrManager() {
   if (!profileData.value?.userInfo)
     return false
 
+  console.log(profileData.value.userInfo)
   const userRole = profileData.value.userInfo.userRole
   return userRole === 'owner' || userRole === 'platform_manager'
 }
