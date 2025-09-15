@@ -1528,7 +1528,7 @@ function selectService(serviceId: string) {
         </view>
 
         <!-- 押金信息 -->
-        <view v-if="depositCalculation" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+        <!-- <view v-if="depositCalculation" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
           <view class="mb-[24rpx] flex items-center">
             <text
               class="i-material-symbols-account-balance-wallet mr-[12rpx] text-[24rpx] text-purple-600"
@@ -1597,6 +1597,48 @@ function selectService(serviceId: string) {
                 <text class="text-[20rpx] text-green-600">
                   ✓ 押金余额充足，可以正常下单
                 </text>
+              </view>
+            </view>
+          </view>
+        </view> -->
+
+        <!-- 押金改成当面确认，可以提供信用免押 -->
+        <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx] mb-[24rpx]">
+          <view class="mb-[24rpx] flex items-center">
+            <text
+              class="i-material-symbols-security mr-[12rpx] text-[24rpx] text-blue-600"
+            />
+            <text class="text-[28rpx] text-black font-semibold">
+              押金说明
+            </text>
+          </view>
+
+          <view class="space-y-[16rpx]">
+            <view class="rounded-[12rpx] bg-blue-50 p-[20rpx]">
+              <view class="flex items-start">
+                <text class="i-material-symbols-info mr-[8rpx] text-[20rpx] text-blue-600 mt-[4rpx]" />
+                <view class="flex-1">
+                  <text class="text-[24rpx] text-blue-800 font-medium block mb-[8rpx]">
+                    押金当面确认
+                  </text>
+                  <text class="text-[22rpx] text-blue-700 leading-[32rpx]">
+                    为了更好的服务体验，押金将在取车时当面确认具体金额。根据您的信用情况，可能享受信用免押服务。
+                  </text>
+                </view>
+              </view>
+            </view>
+
+            <view class="rounded-[12rpx] bg-green-50 p-[20rpx]">
+              <view class="flex items-start">
+                <text class="i-material-symbols-verified mr-[8rpx] text-[20rpx] text-green-600 mt-[4rpx]" />
+                <view class="flex-1">
+                  <text class="text-[24rpx] text-green-800 font-medium block mb-[8rpx]">
+                    信用免押机会
+                  </text>
+                  <text class="text-[22rpx] text-green-700 leading-[32rpx]">
+                    符合条件的用户可享受微信支付分或芝麻信用免押服务，具体以取车时评估为准。
+                  </text>
+                </view>
               </view>
             </view>
           </view>

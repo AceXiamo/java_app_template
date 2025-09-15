@@ -55,7 +55,7 @@ defineExpose({
     class="opaciry-0 pointer-events-none fixed bottom-0 left-0 right-0 top-0 z-[9999] flex flex-col items-center justify-center transition-all duration-300"
     :style="{ opacity: open ? '1' : '0' }"
   >
-    <view class="flex items-center gap-10rpx rounded-md bg-white px-28rpx py-18rpx text-26rpx shadow-md">
+    <view class="flex items-center gap-10rpx rounded-md bg-white px-28rpx py-18rpx text-26rpx shadow-lg">
       <template v-if="message.type === 'success'">
         <view i-heroicons:check-circle-solid text-[26rpx] text-emerald-500 />
       </template>

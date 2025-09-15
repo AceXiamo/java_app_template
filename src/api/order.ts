@@ -457,3 +457,16 @@ export function createOrder(params: CreateOrderParams): Promise<BaseRes<CreateOr
     data: params,
   })
 }
+
+/**
+ * 继续支付订单
+ */
+export function repayOrder(orderId: number, openId: string, payType: string = 'wx'): Promise<BaseRes<any>> {
+  return request.post({
+    url: `${host}/api/orders/${orderId}/repay`,
+    data: {
+      openId,
+      payType,
+    },
+  })
+}

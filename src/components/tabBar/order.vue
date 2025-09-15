@@ -211,9 +211,45 @@ function viewDetail(orderId: string) {
   }
 }
 
+// 取消订单
+async function cancelOrder(orderId: string) {
+  uni.showModal({
+    title: '确认取消',
+    content: '确定要取消这个订单吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await orderStore.handleCancelOrder(Number(orderId), '用户取消', '用户主动取消订单')
+          uni.showToast({ title: '取消成功', icon: 'success' })
+        } catch (error) {
+          uni.showToast({ title: '取消失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+// 继续支付（跳转到订单详情页）
+function continuePayment(orderId: string) {
+  const order = orderList.value.find(o => o.id === orderId)
+  if (order) {
+    if (order.orderType === 'mystery_box') {
+      uni.navigateTo({ url: `/pages/order/detail?orderId=${order.orderNumber}&type=mystery_box` })
+    } else {
+      uni.navigateTo({ url: `/pages/order/detail?orderId=${order.orderNumber}` })
+    }
+  }
+}
+
 // 处理订单操作
 function handleOrderAction(actionType: string, orderId: string) {
   switch (actionType) {
+    case 'cancel':
+      cancelOrder(orderId)
+      break
+    case 'continuePay':
+      continuePayment(orderId)
+      break
     case 'contact':
       contactOwner(orderId)
       break

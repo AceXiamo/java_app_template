@@ -165,8 +165,6 @@ async function getAddressFromLocation() {
 
   try {
     loading.value = true
-    addressInfo.value.formattedAddress = '正在获取地址...'
-    serviceAreaValidation.value = null
 
     const response = await reverseGeocode({ latitude: currentLocation.value.latitude, longitude: currentLocation.value.longitude })
 
@@ -355,12 +353,12 @@ function backToCurrentLocation() {
 
             <view v-else>
               <text class="text-[28rpx] text-black font-medium leading-[40rpx]">
-                {{ addressInfo.formattedAddress }}
+                {{ addressInfo.poiName || addressInfo.formattedAddress }}
               </text>
 
-              <view v-if="addressInfo.poiName" class="mt-[8rpx] flex items-center">
-                <text class="rounded-[8rpx] bg-purple-50 px-[12rpx] py-[4rpx] text-[20rpx] text-purple-600">
-                  {{ addressInfo.poiName }}
+              <view v-if="addressInfo.poiName && addressInfo.formattedAddress !== addressInfo.poiName" class="mt-[8rpx]">
+                <text class="text-[24rpx] text-gray-500 leading-[32rpx]">
+                  {{ addressInfo.formattedAddress }}
                 </text>
               </view>
             </view>
@@ -368,49 +366,19 @@ function backToCurrentLocation() {
         </view>
 
         <!-- 服务状态显示 -->
-        <view class="mb-[24rpx]">
-          <view class="mb-[8rpx] flex items-center">
+        <view class="mb-[24rpx] flex items-center justify-between">
+          <view class="flex items-center">
             <text class="i-material-symbols:verified mr-[8rpx] text-[24rpx] text-purple-600" />
             <text class="text-[24rpx] text-gray-600">
               服务状态
             </text>
           </view>
 
-          <view class="box-border rounded-[16rpx] p-[16rpx]" :class="serviceStatusInfo.bgColor">
-            <view class="flex items-center">
-              <view class="mr-[8rpx] text-[24rpx]" :class="`${serviceStatusInfo.icon} ${serviceStatusInfo.color}`" />
-              <text class="text-[26rpx] font-medium" :class="serviceStatusInfo.color">
-                {{ serviceStatusInfo.text }}
-              </text>
-            </view>
-
-            <view v-if="serviceAreaValidation?.message" class="mt-[8rpx]">
-              <text class="text-[22rpx] text-gray-600 leading-[32rpx]">
-                {{ serviceAreaValidation.message }}
-              </text>
-            </view>
-
-            <!-- 服务提示 -->
-            <view v-if="serviceAreaValidation" class="mt-[12rpx]">
-              <view
-                v-if="serviceAreaValidation.isSupported && serviceAreaValidation.status === 'active'"
-                class="flex items-center text-[20rpx] text-green-600"
-              >
-                <text class="i-material-symbols:check-circle mr-[4rpx] text-[16rpx]" />
-                <text>该城市已开通服务，可正常租车</text>
-              </view>
-              <view
-                v-else-if="serviceAreaValidation.status === 'coming_soon'"
-                class="flex items-center text-[20rpx] text-orange-600"
-              >
-                <text class="i-material-symbols:schedule mr-[4rpx] text-[16rpx]" />
-                <text>服务即将开通，敬请期待</text>
-              </view>
-              <view v-else class="flex items-center text-[20rpx] text-gray-600">
-                <text class="i-material-symbols:info mr-[4rpx] text-[16rpx]" />
-                <text>暂时无法在该区域提供服务</text>
-              </view>
-            </view>
+          <view class="flex items-center rounded-[12rpx] px-[12rpx] py-[6rpx]" :class="serviceStatusInfo.bgColor">
+            <view class="mr-[6rpx] text-[20rpx]" :class="`${serviceStatusInfo.icon} ${serviceStatusInfo.color}`" />
+            <text class="text-[22rpx] font-medium" :class="serviceStatusInfo.color">
+              {{ serviceStatusInfo.text }}
+            </text>
           </view>
         </view>
 

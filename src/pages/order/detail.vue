@@ -2,7 +2,7 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import HeadBar from '@/components/HeadBar.vue'
-import { type OrderDetail, cancelOrder, getOrderDetail } from '@/api/order'
+import { type OrderDetail, cancelOrder, getOrderDetail, repayOrder } from '@/api/order'
 import { queryPaymentStatus, requestWxPayment } from '@/api/booking'
 
 // 页面参数
@@ -60,7 +60,6 @@ const orderDetail = ref<OrderDetail>({
 })
 
 const loading = ref(false)
-const toastRef = ref()
 
 // 倒计时相关状态
 const countdown = ref({
@@ -179,46 +178,38 @@ function cancelOrderAction() {
 async function continuePay() {
   try {
     uni.showToast({
-      title: '跳转支付...',
+      title: '获取支付参数...',
       icon: 'loading',
     })
 
-    // 查询支付状态，获取支付参数
-    const response = await queryPaymentStatus(orderDetail.value.orderNumber)
+    // 1. 先查询支付状态，如果已支付则直接刷新
+    const statusResponse = await queryPaymentStatus(orderDetail.value.orderNumber)
+    if (statusResponse.code === 200 && statusResponse.data?.tradeState === 'SUCCESS') {
+      toastRef.value?.success('订单已支付')
+      return loadOrderDetail()
+    }
 
-    if (response.code === 200 && response.data) {
-      // 如果已支付，直接刷新页面
-      if (response.data.tradeState === 'SUCCESS') {
-        toastRef.value?.success('订单已支付')
-        await loadOrderDetail()
-        return
-      }
+    // 2. 获取用户openId（实际项目中应该从用户信息中获取）
+    const openId = uni.getStorageSync('openId') || 'test_openid'
 
-      // 这里需要重新创建支付订单，实际项目中应该有专门的重新支付API
-      // 暂时模拟支付参数
-      const payData = {
-        appId: 'your-app-id',
-        timeStamp: String(Date.now()),
-        nonceStr: 'random-string',
-        package: 'prepay_id=wx123456789',
-        signType: 'RSA',
-        paySign: 'signature',
-      }
+    // 3. 调用继续支付API
+    const repayResponse = await repayOrder(Number(orderDetail.value.id), openId, 'wx')
 
-      await requestWxPayment(payData)
+    if (repayResponse.code === 200 && repayResponse.data) {
+      // 4. 调用微信支付
+      await requestWxPayment(repayResponse.data)
 
       toastRef.value?.success('支付成功')
-
       // 重新加载订单详情
       await loadOrderDetail()
     }
     else {
-      throw new Error(response.msg || '获取支付信息失败')
+      throw new Error(repayResponse.message || '获取支付参数失败')
     }
   }
   catch (error: any) {
-    console.error('支付失败:', error)
-    toastRef.value?.error('支付失败，请重试')
+    console.error('继续支付失败:', error)
+    toastRef.value?.error(error.message || '支付失败，请重试')
   }
 }
 
@@ -235,15 +226,16 @@ function isReturnExpired(order: any) {
   if (!order.actualStartTime || !order.rentPeriod?.days) {
     return false
   }
-  
+
   try {
     const actualStartTime = new Date(order.actualStartTime).getTime()
-    const rentalDays = parseInt(order.rentPeriod.days)
+    const rentalDays = Number.parseInt(order.rentPeriod.days)
     const returnDeadline = actualStartTime + (rentalDays * 24 * 60 * 60 * 1000) // 租用天数转毫秒
     const now = new Date().getTime()
-    
+
     return now > returnDeadline
-  } catch (error) {
+  }
+  catch (error) {
     console.error('计算还车超时失败:', error)
     return false
   }
@@ -254,14 +246,15 @@ function getReturnDeadline(order: any) {
   if (!order.actualStartTime || !order.rentPeriod?.days) {
     return null
   }
-  
+
   try {
     const actualStartTime = new Date(order.actualStartTime)
-    const rentalDays = parseInt(order.rentPeriod.days)
+    const rentalDays = Number.parseInt(order.rentPeriod.days)
     const returnDeadline = new Date(actualStartTime.getTime() + (rentalDays * 24 * 60 * 60 * 1000))
-    
+
     return returnDeadline.toISOString()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('计算还车截止时间失败:', error)
     return null
   }
@@ -452,10 +445,16 @@ onUnmounted(() => {
             <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
             <view class="flex-1">
               <view class="mb-[4rpx] flex items-center">
-                <text class="text-[24rpx] text-purple-800 font-medium">取车码</text>
-                <text v-if="['picked', 'returned', 'completed'].includes(orderDetail.status)" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">已使用</text>
+                <text class="text-[24rpx] text-purple-800 font-medium">
+                  取车码
+                </text>
+                <text v-if="['picked', 'returned', 'completed'].includes(orderDetail.status)" class="ml-[8rpx] rounded-full bg-green-100 px-[8rpx] py-[2rpx] text-[18rpx] text-green-600">
+                  已使用
+                </text>
               </view>
-              <text class="text-[56rpx] text-purple-600 font-bold tracking-wider font-mono">{{ orderDetail.pickupCode }}</text>
+              <text class="text-[56rpx] text-purple-600 font-bold tracking-wider font-mono">
+                {{ orderDetail.pickupCode }}
+              </text>
             </view>
             <view v-if="orderDetail.pickupDeadline && orderDetail.status === 'paid'" class="ml-[16rpx] flex flex-col items-end text-right">
               <view class="mb-[2rpx] flex items-center">
@@ -481,14 +480,18 @@ onUnmounted(() => {
             <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-green-600" />
             <view class="flex-1">
               <view class="mb-[4rpx] flex items-center">
-                <text class="text-[24rpx] text-green-800 font-medium">还车码</text>
+                <text class="text-[24rpx] text-green-800 font-medium">
+                  还车码
+                </text>
                 <text class="ml-[8rpx] rounded-full bg-orange-100 px-[8rpx] py-[2rpx] text-[18rpx] text-orange-600">
                   使用中
                 </text>
               </view>
-              <text class="text-[56rpx] text-green-600 font-bold tracking-wider font-mono">{{ orderDetail.returnCode }}</text>
+              <text class="text-[56rpx] text-green-600 font-bold tracking-wider font-mono">
+                {{ orderDetail.returnCode }}
+              </text>
             </view>
-            
+
             <!-- picked状态：显示还车截止时间 -->
             <view v-if="getReturnDeadline(orderDetail)" class="ml-[16rpx] flex flex-col items-end text-right">
               <view class="mb-[2rpx] flex items-center">
@@ -525,7 +528,7 @@ onUnmounted(() => {
               </text>
             </view>
           </view>
-          
+
           <!-- 还车超时警告 (仅picked状态) -->
           <view v-if="orderDetail.status === 'picked' && isReturnExpired(orderDetail)" class="mt-[24rpx] rounded-[16rpx] bg-orange-50 p-[24rpx]">
             <view class="flex items-center">
