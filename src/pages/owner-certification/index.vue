@@ -113,59 +113,80 @@ function onAddressConfirm(data: {
 
 // 文件上传
 async function uploadDocument(type: string) {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['camera', 'album'],
-    success: async (res) => {
-      const tempFilePath = res.tempFilePaths[0]
-
-      const status = uploadStatus.value as any
-      status[type] = true
-
-      uni.showLoading({
-        title: '上传中...',
-      })
-
-      try {
-        const timestamp = Date.now()
-        const fileName = `${type}_${timestamp}.jpg`
-        const ossPath = `vehicle/rental-request/${fileName}`
-
-        const documentUrl = await uploadFileToOss(tempFilePath, ossPath)
-
-        // 更新对应的文档URL
-        switch (type) {
-          case 'registrationCertFront':
-            formData.value.registrationCertFrontUrl = documentUrl
-            break
-          case 'registrationCertBack':
-            formData.value.registrationCertBackUrl = documentUrl
-            break
-          case 'insurancePolicy':
-            formData.value.insurancePolicyUrls.push(documentUrl)
-            break
-          case 'inspectionCert':
-            formData.value.inspectionCertUrl = documentUrl
-            break
-        }
-
-        uni.hideLoading()
+  if (type === 'insurancePolicy') {
+    // 选择 PDF
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'all',
+      success: async (res: any) => {
+        const tempFilePath = res.tempFiles[0].path
+        const fileUrl = await uploadFileToOss(tempFilePath, `vehicle/rental-request/insurance-policy/${Date.now()}.pdf`)
+        formData.value.insurancePolicyUrls.push(fileUrl)
         toastRef.value?.success('上传成功')
-      }
-      catch (error) {
-        console.error('文档上传失败:', error)
-        uni.hideLoading()
-        toastRef.value?.error('上传失败')
-      }
-      finally {
+        uploadStatus.value.insurancePolicy = false
+        const status = uploadStatus.value as any
         status[type] = false
-      }
-    },
-    fail: () => {
-      toastRef.value?.error('选择图片失败')
-    },
-  })
+      },
+      fail: () => {
+        toastRef.value?.error('选择 PDF 失败')
+      },
+    })
+  }
+  else {
+    uni.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['camera', 'album'],
+      success: async (res) => {
+        const tempFilePath = res.tempFilePaths[0]
+
+        const status = uploadStatus.value as any
+        status[type] = true
+
+        uni.showLoading({
+          title: '上传中...',
+        })
+
+        try {
+          const timestamp = Date.now()
+          const fileName = `${type}_${timestamp}.jpg`
+          const ossPath = `vehicle/rental-request/${fileName}`
+
+          const documentUrl = await uploadFileToOss(tempFilePath, ossPath)
+
+          // 更新对应的文档URL
+          switch (type) {
+            case 'registrationCertFront':
+              formData.value.registrationCertFrontUrl = documentUrl
+              break
+            case 'registrationCertBack':
+              formData.value.registrationCertBackUrl = documentUrl
+              break
+            case 'insurancePolicy':
+              formData.value.insurancePolicyUrls.push(documentUrl)
+              break
+            case 'inspectionCert':
+              formData.value.inspectionCertUrl = documentUrl
+              break
+          }
+
+          uni.hideLoading()
+          toastRef.value?.success('上传成功')
+        }
+        catch (error) {
+          console.error('文档上传失败:', error)
+          uni.hideLoading()
+          toastRef.value?.error('上传失败')
+        }
+        finally {
+          status[type] = false
+        }
+      },
+      fail: () => {
+        toastRef.value?.error('选择图片失败')
+      },
+    })
+  }
 }
 
 // 删除保险文件

@@ -47,7 +47,7 @@ export function reverseGeocode(location: LocationInfo): Promise<BaseRes<AddressI
 export function searchAddress(keyword: string, city?: string): Promise<BaseRes<any[]>> {
   return request.get({
     url: `${host}/api/map/search-address`,
-    data: {
+    params: {
       keyword,
       city,
     },

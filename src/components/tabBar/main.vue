@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import dayjs from 'dayjs'
-import { getCurrentLocation, getHomeBanners } from '@/api/home'
-import type { Banner } from '@/api/home'
-import type { AddressInfoWithValidation, ServiceAreaValidation } from '@/api/map'
+import type { ServiceAreaValidation } from '@/api/map'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import CityDisplayDrawer from '@/components/CityDisplayDrawer.vue'
 import { useLocationStore } from '@/store/location'
+import { useHomeStore } from '@/store/home'
 
 // 数据状态
-const banners = ref<Banner[]>([])
 const locationStore = useLocationStore()
-const loading = ref(false)
+const homeStore = useHomeStore()
 const showDatePicker = ref(false)
 const showMapPicker = ref(false)
 const showCityDrawer = ref(false)
@@ -67,116 +65,18 @@ const displayEndTime = computed(() => {
   return `${dateText} ${searchForm.value.endTime}`
 })
 
-// 获取轮播图数据
-async function loadBanners() {
-  try {
-    loading.value = true
-    const response = await getHomeBanners()
-
-    if (response.code === 200 && response.data && response.data.banners) {
-      banners.value = response.data.banners
-    }
-    else {
-      throw new Error(`API返回错误: ${response.msg || '未知错误'}`)
-    }
+// 初始化搜索表单地址信息
+function initSearchFormAddress() {
+  if (locationStore.currentLocation) {
+    const location = locationStore.currentLocation
+    searchForm.value.city = location.city
+    searchForm.value.address = location.formattedAddress || location.city
+    searchForm.value.latitude = location.latitude
+    searchForm.value.longitude = location.longitude
   }
-  catch (error) {
-    console.error('获取轮播图失败:', error)
-
-    // 显示用户友好的错误提示
-    uni.showToast({
-      title: '轮播图加载失败，已使用默认数据',
-      icon: 'none',
-      duration: 2000,
-    })
-
-    // 设置默认轮播图
-    banners.value = [
-      {
-        id: 1,
-        title: '新用户首单5折',
-        subtitle: '驾驭未来，选择电动',
-        imageUrl:
-          'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        linkType: 'page',
-        linkUrl: '/pages/activity/newUser',
-        isActive: true,
-      },
-      {
-        id: 2,
-        title: '月租8折优惠',
-        subtitle: '长期租赁，更多优惠',
-        imageUrl:
-          'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        linkType: 'page',
-        linkUrl: '/pages/monthly-rental',
-        isActive: true,
-      },
-      {
-        id: 3,
-        title: '盲盒惊喜价',
-        subtitle: '¥99起，神秘车型等你解锁',
-        imageUrl:
-          'https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        linkType: 'page',
-        linkUrl: '/pages/mystery-box',
-        isActive: true,
-      },
-    ]
-  }
-  finally {
-    loading.value = false
-  }
-}
-
-// 获取位置信息
-async function getLocation() {
-  try {
-    const location = await uni.getLocation({
-      type: 'wgs84',
-    })
-
-    const response = await getCurrentLocation({
-      latitude: location.latitude,
-      longitude: location.longitude,
-    })
-
-    if (response.code === 200 && response.data) {
-      const addressData = response.data.address
-      const validationData = response.data.serviceAreaValidation
-
-      if (addressData) {
-        // 构造完整的地址信息对象
-        const fullAddressInfo = {
-          ...addressData,
-          serviceAreaValidation: validationData,
-        }
-
-        // 更新位置存储
-        locationStore.updateLocation(fullAddressInfo)
-
-        searchForm.value.city = addressData.city
-        searchForm.value.address = addressData.formattedAddress || addressData.city
-        searchForm.value.latitude = addressData.latitude
-        searchForm.value.longitude = addressData.longitude
-      }
-    }
-    else {
-      throw new Error(`位置API返回错误: ${response.msg || '未知错误'}`)
-    }
-  }
-  catch (error) {
-    console.error('获取位置失败:', error)
-
-    // 显示用户友好的错误提示
-    uni.showToast({
-      title: '定位失败，已使用默认位置',
-      icon: 'none',
-      duration: 2000,
-    })
-
-    searchForm.value.city = '上海'
-    searchForm.value.address = '上海'
+  else {
+    searchForm.value.city = locationStore.displayCity
+    searchForm.value.address = locationStore.displayAddress
   }
 }
 
@@ -310,6 +210,9 @@ function handleAddressConfirm(data: {
   // 更新显示地址
   locationStore.updateDisplayAddress(data.formattedAddress || data.address)
 
+  // 同时更新位置存储，标记定位已完成
+  homeStore.locationLoaded = true
+
   showMapPicker.value = false
 }
 
@@ -319,8 +222,8 @@ function handleShowCityDrawer() {
 }
 
 onMounted(() => {
-  loadBanners()
-  getLocation()
+  // 初始化搜索表单地址信息
+  initSearchFormAddress()
 
   // 监听头部组件发送的城市点击事件
   uni.$on('showCityDrawer', handleShowCityDrawer)
@@ -352,7 +255,7 @@ onUnmounted(() => {
             :interval="4000"
             :indicator-dots="false"
           >
-            <swiper-item v-for="banner in banners" :key="banner.id">
+            <swiper-item v-for="banner in homeStore.banners" :key="banner.id">
               <image
                 :src="banner.imageUrl"
                 class="h-full w-full object-cover"
@@ -425,10 +328,10 @@ onUnmounted(() => {
 
           <!-- 搜索框 -->
           <view class="mb-[32rpx]">
-            <view class="relative flex">
+            <view class="relative flex items-center">
               <view
                 i-lucide:search
-                class="absolute left-[24rpx] top-1/2 transform text-[26rpx] text-gray-400 -translate-y-1/2"
+                class="absolute left-[24rpx] transform text-[26rpx] text-gray-400"
               />
               <input
                 v-model="searchForm.keywords"

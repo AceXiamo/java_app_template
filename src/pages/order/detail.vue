@@ -4,6 +4,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import HeadBar from '@/components/HeadBar.vue'
 import { type OrderDetail, cancelOrder, getOrderDetail, repayOrder } from '@/api/order'
 import { queryPaymentStatus, requestWxPayment } from '@/api/booking'
+import { useUserStore } from '@/store/user'
 
 // 页面参数
 interface OrderDetailParams {
@@ -58,7 +59,7 @@ const orderDetail = ref<OrderDetail>({
   updateTime: '',
   remark: '',
 })
-
+const userStore = useUserStore()
 const loading = ref(false)
 
 // 倒计时相关状态
@@ -190,7 +191,7 @@ async function continuePay() {
     }
 
     // 2. 获取用户openId（实际项目中应该从用户信息中获取）
-    const openId = uni.getStorageSync('openId') || 'test_openid'
+    const openId = userStore.getUserOpenId()
 
     // 3. 调用继续支付API
     const repayResponse = await repayOrder(Number(orderDetail.value.id), openId, 'wx')
@@ -199,7 +200,10 @@ async function continuePay() {
       // 4. 调用微信支付
       await requestWxPayment(repayResponse.data)
 
-      toastRef.value?.success('支付成功')
+      uni.showToast({
+        title: '支付成功',
+        icon: 'success',
+      })
       // 重新加载订单详情
       await loadOrderDetail()
     }
@@ -209,7 +213,10 @@ async function continuePay() {
   }
   catch (error: any) {
     console.error('继续支付失败:', error)
-    toastRef.value?.error(error.message || '支付失败，请重试')
+    uni.showToast({
+      title: '支付失败，请重试',
+      icon: 'none',
+    })
   }
 }
 

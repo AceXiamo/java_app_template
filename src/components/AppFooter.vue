@@ -4,16 +4,19 @@ import type { ActiveMenu } from '@/store/menu'
 import { useMenuStore } from '@/store/menu'
 import { useOrderStore } from '@/store/order'
 import { useProfileStore } from '@/store/profile'
+import { useHomeStore } from '@/store/home'
 
 const setting = useSettingStore()
 const { active } = toRefs(useMenuStore())
 const orderStore = useOrderStore()
 const profileStore = useProfileStore()
+const homeStore = useHomeStore()
 
 function load() {
   switch (active.value) {
     case 'home':
-      // 首页数据加载（如果有需要的话）
+      // 加载首页数据
+      homeStore.initHomeData()
       break
     case 'order':
       // 加载订单数据

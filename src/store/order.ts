@@ -166,7 +166,7 @@ export const useOrderStore = defineStore('order', () => {
   }
 
   // 取消订单
-  const handleCancelOrder = async (orderId: number, reason: string, description: string) => {
+  const handleCancelOrder = async (orderId: string, reason: string, description: string) => {
     try {
       const response = await cancelOrder(orderId, reason, description)
       // 取消成功后重新加载订单列表

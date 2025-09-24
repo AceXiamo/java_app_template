@@ -269,7 +269,7 @@ onMounted(async () => {
             <view class="relative">
               <view class="h-[160rpx] w-[160rpx] overflow-hidden border-4 border-gray-200 rounded-full">
                 <image
-                  :src="profileData?.userInfo?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&h=300'"
+                  :src="profileData?.userInfo?.avatar || 'https://xiamo-server.oss-cn-chengdu.aliyuncs.com/vehicles/images/1757982818754_0_basicprofile.jpeg'"
                   class="h-full w-full object-cover"
                   mode="aspectFill"
                 />

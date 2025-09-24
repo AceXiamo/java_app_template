@@ -1,8 +1,25 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, ref, watch } from 'vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
-import { reverseGeocode } from '@/api/map'
+import { reverseGeocode, searchAddress } from '@/api/map'
 import type { ServiceAreaValidation } from '@/api/map'
+
+const props = withDefaults(defineProps<MapAddressPickerProps>(), {
+  title: '选择位置',
+  latitude: undefined,
+  longitude: undefined,
+})
+
+const emit = defineEmits<MapAddressPickerEmits>()
+
+// 防抖函数
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
 
 interface MapAddressPickerProps {
   visible: boolean
@@ -23,13 +40,6 @@ interface MapAddressPickerEmits {
   }): void
 }
 
-const props = withDefaults(defineProps<MapAddressPickerProps>(), {
-  title: '选择位置',
-  latitude: undefined,
-  longitude: undefined,
-})
-
-const emit = defineEmits<MapAddressPickerEmits>()
 // 当前组件实例
 const instance = getCurrentInstance()
 
@@ -48,6 +58,7 @@ const addressInfo = ref({
   province: '',
   city: '',
   district: '',
+  streetName: '',
 })
 
 // 服务区域验证信息
@@ -62,6 +73,13 @@ const mapReady = ref(false)
 
 // 是否已经初始化过地址
 const addressInitialized = ref(false)
+
+// 搜索相关状态
+const searchKeyword = ref('')
+const searchResults = ref<any[]>([])
+const searchLoading = ref(false)
+const showSearchResults = ref(false)
+const searchInputFocused = ref(false)
 
 // 服务状态信息
 const serviceStatusInfo = computed(() => {
@@ -166,7 +184,7 @@ async function getAddressFromLocation() {
   try {
     loading.value = true
 
-    const response = await reverseGeocode({ latitude: currentLocation.value.latitude, longitude: currentLocation.value.longitude })
+    const response: any = await reverseGeocode({ latitude: currentLocation.value.latitude, longitude: currentLocation.value.longitude })
 
     if (response.code === 200 && response.data) {
       const addressData = response.data.address
@@ -180,6 +198,7 @@ async function getAddressFromLocation() {
           province: addressData.province || '',
           city: addressData.city || '',
           district: addressData.district || '',
+          streetName: addressData.streetName || '',
         }
 
         if (validationData) {
@@ -291,6 +310,151 @@ function backToCurrentLocation() {
     },
   })
 }
+
+// 搜索地址（防抖处理）
+const debouncedSearchAddress = debounce(async (keyword: string) => {
+  if (!keyword.trim()) {
+    searchResults.value = []
+    showSearchResults.value = false
+    return
+  }
+
+  try {
+    searchLoading.value = true
+    // const response = await searchAddress(keyword, addressInfo.value.city)
+    const response = await searchAddress(keyword)
+
+    if (response.code === 200 && response.data) {
+      searchResults.value = response.data
+      showSearchResults.value = true
+    }
+    else {
+      searchResults.value = []
+      showSearchResults.value = false
+    }
+  }
+  catch (error) {
+    console.error('搜索地址失败:', error)
+    searchResults.value = []
+    showSearchResults.value = false
+  }
+  finally {
+    searchLoading.value = false
+  }
+}, 300)
+
+// 搜索输入变化
+function onSearchInput(value: string) {
+  searchKeyword.value = value
+  debouncedSearchAddress(value)
+}
+
+// 搜索输入框获得焦点
+function onSearchFocus() {
+  searchInputFocused.value = true
+  if (searchKeyword.value.trim() && searchResults.value.length > 0) {
+    showSearchResults.value = true
+  }
+}
+
+// 搜索输入框失去焦点
+function onSearchBlur() {
+  searchInputFocused.value = false
+  // 延迟隐藏搜索结果，以便用户可以点击搜索结果
+  setTimeout(() => {
+    if (!searchInputFocused.value) {
+      showSearchResults.value = false
+    }
+  }, 200)
+}
+
+// 选择搜索结果
+function selectSearchResult(result: any) {
+  const locationCoords = result.location.split(',')
+  const longitude = Number.parseFloat(locationCoords[0])
+  const latitude = Number.parseFloat(locationCoords[1])
+
+  // 更新当前位置
+  currentLocation.value = {
+    latitude,
+    longitude,
+  }
+
+  // 更新地址信息
+  addressInfo.value = {
+    formattedAddress: result.formatted_address,
+    address: result.formatted_address,
+    poiName: result.name || '',
+    province: result.province || '',
+    city: result.city || '',
+    district: result.district || '',
+    streetName: result.street?.join(',') || '',
+  }
+
+  // 移动地图到选中位置
+  if (mapContext.value) {
+    mapContext.value.moveToLocation({
+      latitude,
+      longitude,
+    })
+  }
+
+  // 清空搜索
+  searchKeyword.value = ''
+  searchResults.value = []
+  showSearchResults.value = false
+
+  // 获取详细地址信息和服务区域验证
+  getAddressFromLocation()
+}
+
+// 清空搜索
+function clearSearch() {
+  searchKeyword.value = ''
+  searchResults.value = []
+  showSearchResults.value = false
+}
+
+// 获取地理层级文本
+function getLevelText(level: string): string {
+  const levelMap: Record<string, string> = {
+    住宅区: '住宅区',
+    兴趣点: 'POI',
+    道路: '道路',
+    建筑物: '建筑',
+    公司企业: '企业',
+    政府机构: '机构',
+    商务住宅: '商住',
+    生活服务: '服务',
+    餐饮服务: '餐饮',
+    购物服务: '购物',
+    体育休闲服务: '休闲',
+    医疗保健服务: '医疗',
+    住宿服务: '住宿',
+    风景名胜: '景点',
+    交通设施服务: '交通',
+  }
+  return levelMap[level] || level
+}
+
+// 获取地址路径
+function getLocationPath(result: any): string {
+  const pathParts = []
+
+  if (result.province && result.province !== result.city) {
+    pathParts.push(result.province)
+  }
+
+  if (result.city) {
+    pathParts.push(result.city)
+  }
+
+  if (result.district && result.district !== result.city) {
+    pathParts.push(result.district)
+  }
+
+  return pathParts.join(' · ')
+}
 </script>
 
 <template>
@@ -300,8 +464,108 @@ function backToCurrentLocation() {
     @update:visible="handleClose"
   >
     <view class="h-max flex flex-col pt-[30rpx]">
+      <!-- 搜索框 -->
+      <view class="relative mb-[24rpx]">
+        <view class="relative flex items-center">
+          <input
+            v-model="searchKeyword"
+            class="w-full border border-gray-200 rounded-[16rpx] border-solid bg-white px-[48rpx] py-[24rpx] text-[28rpx] focus:border-purple-600 placeholder-gray-400"
+            placeholder="搜索地址、建筑或地标"
+            @input="onSearchInput($event.detail.value)"
+            @focus="onSearchFocus"
+            @blur="onSearchBlur"
+          >
+          <!-- 搜索图标 -->
+          <view class="absolute left-[16rpx]">
+            <text class="i-material-symbols-search text-[24rpx] text-gray-400" />
+          </view>
+          <!-- 清空按钮 -->
+          <view
+            v-if="searchKeyword"
+            class="absolute right-[16rpx] h-[32rpx] w-[32rpx] flex items-center justify-center rounded-full bg-gray-300"
+            @tap="clearSearch"
+          >
+            <text class="i-material-symbols-close text-[20rpx] text-white" />
+          </view>
+          <!-- 加载指示器 -->
+          <view
+            v-if="searchLoading"
+            class="absolute right-[16rpx]"
+          >
+            <view class="h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full" />
+          </view>
+        </view>
+
+        <!-- 搜索结果列表 -->
+        <view
+          v-if="showSearchResults && searchResults.length > 0"
+          class="absolute top-full z-10 mt-[8rpx] max-h-[400rpx] w-full overflow-y-auto border border-gray-200 rounded-[16rpx] bg-white shadow-lg"
+        >
+          <view
+            v-for="(result, index) in searchResults"
+            :key="index"
+            class="border-b border-gray-100 p-[24rpx] transition-colors last:border-b-0 active:bg-gray-50"
+            @tap="selectSearchResult(result)"
+          >
+            <view class="flex items-start">
+              <!-- 位置图标 -->
+              <view class="mr-[16rpx] mt-[4rpx] flex-shrink-0">
+                <view class="h-[32rpx] w-[32rpx] flex items-center justify-center rounded-full bg-purple-100">
+                  <text class="i-material-symbols-location-on text-[20rpx] text-purple-600" />
+                </view>
+              </view>
+
+              <!-- 地址信息 -->
+              <view class="min-w-0 flex-1">
+                <!-- 主要地址名称 -->
+                <text class="block text-[28rpx] text-black font-medium leading-[40rpx]">
+                  {{ result.formatted_address }}
+                </text>
+
+                <!-- 地理层级信息 -->
+                <view class="mt-[8rpx] flex flex-wrap items-center gap-[8rpx]">
+                  <!-- 地点类型标签 -->
+                  <view
+                    v-if="result.level"
+                    class="flex rounded-[8rpx] bg-blue-50 px-[12rpx] py-[2rpx]"
+                  >
+                    <text class="text-[20rpx] text-blue-600 font-medium">
+                      {{ getLevelText(result.level) }}
+                    </text>
+                  </view>
+
+                  <!-- 地址路径 -->
+                  <text class="text-[22rpx] text-gray-500">
+                    {{ getLocationPath(result) }}
+                  </text>
+                </view>
+              </view>
+
+              <!-- 选择箭头 -->
+              <view class="ml-[8rpx] flex-shrink-0 self-center">
+                <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 无搜索结果提示 -->
+        <view
+          v-if="showSearchResults && searchResults.length === 0 && !searchLoading && searchKeyword.trim()"
+          class="absolute top-full z-10 mt-[8rpx] w-full border border-gray-200 rounded-[16rpx] bg-white p-[48rpx] text-center shadow-lg"
+        >
+          <text class="i-material-symbols-search-off mb-[16rpx] block text-[48rpx] text-gray-300" />
+          <text class="text-[26rpx] text-gray-500">
+            未找到相关地址
+          </text>
+          <text class="mt-[8rpx] block text-[22rpx] text-gray-400">
+            试试其他关键词
+          </text>
+        </view>
+      </view>
+
       <!-- 地图容器 -->
-      <view class="relative h-[500rpx]">
+      <view class="relative h-[500rpx] flex justify-center items-center">
         <map
           id="addressPickerMap"
           class="h-full w-full"
@@ -312,7 +576,7 @@ function backToCurrentLocation() {
         />
 
         <!-- 中心点标记 -->
-        <view class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <view class="absolute transform -translate-y-1/2">
           <view class="relative flex justify-center -translate-y-full">
             <!-- 定位图标 -->
             <view class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg" />
@@ -356,9 +620,9 @@ function backToCurrentLocation() {
                 {{ addressInfo.poiName || addressInfo.formattedAddress }}
               </text>
 
-              <view v-if="addressInfo.poiName && addressInfo.formattedAddress !== addressInfo.poiName" class="mt-[8rpx]">
+              <view v-if="addressInfo.poiName && addressInfo.streetName !== addressInfo.poiName" class="mt-[8rpx]">
                 <text class="text-[24rpx] text-gray-500 leading-[32rpx]">
-                  {{ addressInfo.formattedAddress }}
+                  {{ addressInfo.streetName }}
                 </text>
               </view>
             </view>

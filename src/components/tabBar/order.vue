@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useOrderStore } from '@/store/order'
+import { useUserStore } from '@/store/user'
+import { repayOrder } from '@/api/order'
+import { queryPaymentStatus, requestWxPayment } from '@/api/booking'
 import OrderHead from '@/components/page/order/Head.vue'
 import RenewOrderDrawer from '@/components/RenewOrderDrawer.vue'
 import VehicleReviewDrawer from '@/components/VehicleReviewDrawer.vue'
@@ -8,6 +11,9 @@ import VehicleReviewDrawer from '@/components/VehicleReviewDrawer.vue'
 // 使用 order store
 const orderStore = useOrderStore()
 const { orderList, orderListStatus, activeTab } = toRefs(orderStore)
+
+// 使用 user store
+const userStore = useUserStore()
 
 // 定义 tab 数据
 const tabs = [
@@ -215,37 +221,80 @@ function viewDetail(orderId: string) {
 async function cancelOrder(orderId: string) {
   uni.showModal({
     title: '确认取消',
-    content: '确定要取消这个订单吗？',
+    content: '确定要取消此订单吗？',
     success: async (res) => {
       if (res.confirm) {
         try {
-          await orderStore.handleCancelOrder(Number(orderId), '用户取消', '用户主动取消订单')
-          uni.showToast({ title: '取消成功', icon: 'success' })
-        } catch (error) {
-          uni.showToast({ title: '取消失败', icon: 'none' })
+          await orderStore.handleCancelOrder(orderId, '用户主动取消', '不想要了')
+          uni.showToast({ title: '订单已取消', icon: 'success' })
+        }
+        catch (error: any) {
+          console.error('取消订单失败:', error)
+          uni.showToast({ title: '取消失败，请重试', icon: 'none' })
         }
       }
-    }
+    },
   })
 }
 
-// 继续支付（跳转到订单详情页）
-function continuePayment(orderId: string) {
+// 继续支付
+async function continuePayment(orderId: string) {
   const order = orderList.value.find(o => o.id === orderId)
-  if (order) {
-    if (order.orderType === 'mystery_box') {
-      uni.navigateTo({ url: `/pages/order/detail?orderId=${order.orderNumber}&type=mystery_box` })
-    } else {
-      uni.navigateTo({ url: `/pages/order/detail?orderId=${order.orderNumber}` })
+  if (!order) {
+    uni.showToast({ title: '订单信息不存在', icon: 'none' })
+    return
+  }
+
+  try {
+    uni.showToast({
+      title: '获取支付参数...',
+      icon: 'loading',
+    })
+
+    // 1. 先查询支付状态，如果已支付则直接刷新
+    const statusResponse = await queryPaymentStatus(order.orderNumber)
+    if (statusResponse.code === 200 && statusResponse.data?.tradeState === 'SUCCESS') {
+      uni.showToast({ title: '订单已支付', icon: 'success' })
+      // 重新加载订单列表
+      orderStore.reloadOrderList()
+      return
     }
+
+    // 2. 获取用户openId
+    const openId = userStore.getUserOpenId()
+
+    // 3. 调用继续支付API
+    const repayResponse = await repayOrder(Number(order.id), openId, 'wx')
+
+    if (repayResponse.code === 200 && repayResponse.data) {
+      // 4. 调用微信支付
+      await requestWxPayment(repayResponse.data)
+
+      uni.showToast({
+        title: '支付成功',
+        icon: 'success',
+      })
+      // 重新加载订单列表
+      orderStore.reloadOrderList()
+    }
+    else {
+      throw new Error(repayResponse.message || '获取支付参数失败')
+    }
+  }
+  catch (error: any) {
+    console.error('继续支付失败:', error)
+    uni.showToast({
+      title: '支付失败，请重试',
+      icon: 'none',
+    })
   }
 }
 
 // 处理订单操作
-function handleOrderAction(actionType: string, orderId: string) {
+function handleOrderAction(actionType: string, orderId: string, orderNumber?: string) {
   switch (actionType) {
     case 'cancel':
-      cancelOrder(orderId)
+      cancelOrder(orderNumber!)
       break
     case 'continuePay':
       continuePayment(orderId)
@@ -808,7 +857,7 @@ function fallbackToAddressSearch(location: string) {
                   'bg-purple-600 text-white': action.style === 'primary',
                   'bg-purple-50 text-purple-600 border border-purple-200': action.style === 'outline',
                 }"
-                @tap.stop="handleOrderAction(action.type, order.id)"
+                @tap.stop="handleOrderAction(action.type, order.id, order.orderNumber)"
               >
                 {{ action.text }}
               </view>
