@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-// @ts-expect-error uqrcodejs没有类型定义
-import UQRCode from 'uqrcodejs'
 import HeadBar from '@/components/HeadBar.vue'
 import { uploadFileToOss } from '@/utils/alioss'
-import { type PickupVerifyRequest, getContractStatus, getOwnerOrderDetail, pickupVerify } from '@/api/owner-orders'
+import { type PickupVerifyRequest, getContractStatus, getDepositQRCode, getOwnerOrderDetail, pickupVerify } from '@/api/owner-orders'
 
 // 页面参数
 interface PickupVerifyParams {
@@ -61,7 +59,7 @@ const depositInfo = reactive({
   type: 'wechat_pay', // alipay_credit | wechat_pay，默认选中微信支付
   amount: 500,
   status: 'pending', // pending | paid | confirmed
-  qrCode: '', // 二维码base64数据URL
+  qrCodeUrl: '', // 二维码图片URL（后端生成）
   paymentTime: '',
 })
 
@@ -115,7 +113,7 @@ async function loadOrderInfo() {
       await loadContractStatus()
 
       // 初始化微信支付二维码（默认选中微信支付）
-      await generateWechatPayQRCode()
+      await loadDepositQRCode()
     }
     else {
       throw new Error(response.msg || '获取订单详情失败')
@@ -241,8 +239,8 @@ function selectDepositType(type: string) {
   // 重置状态
   if (type === 'wechat_pay') {
     depositInfo.status = 'pending'
-    // 生成微信支付二维码
-    generateWechatPayQRCode()
+    // 获取微信支付二维码
+    loadDepositQRCode()
     // 模拟微信支付状态检查（实际开发中应该通过回调或轮询获取）
     setTimeout(() => {
       if (Math.random() > 0.3) { // 70% 概率模拟支付成功
@@ -257,34 +255,28 @@ function selectDepositType(type: string) {
   }
   else if (type === 'alipay_credit') {
     depositInfo.status = 'confirmed'
-    depositInfo.qrCode = '' // 清空二维码
+    depositInfo.qrCodeUrl = '' // 清空二维码
   }
 }
 
-// 生成微信支付二维码
-async function generateWechatPayQRCode() {
+// 从后端获取押金支付二维码
+async function loadDepositQRCode() {
   try {
-    // 构建二维码内容：ORDER_DEPOSIT#{orderCode}
-    const qrContent = `ORDER_DEPOSIT#${pageParams.value.orderNo}`
+    const response = await getDepositQRCode(Number(pageParams.value.orderId))
+    console.log('response', response)
 
-    // 使用uqrcodejs生成二维码
-    const qr = new UQRCode()
-    qr.data = qrContent
-    qr.size = 300
-    qr.margin = 10
-    qr.backgroundColor = '#ffffff'
-    qr.foregroundColor = '#000000'
-    qr.correctLevel = UQRCode.CorrectLevel.M
-
-    // 生成base64格式的二维码
-    const qrCodeDataURL = qr.make()
-
-    depositInfo.qrCode = qrCodeDataURL
+    if (response.code === 200 && response.data) {
+      depositInfo.qrCodeUrl = response.data.qrCodeUrl
+      depositInfo.amount = response.data.amount
+    }
+    else {
+      throw new Error(response.msg || '获取二维码失败')
+    }
   }
   catch (error) {
-    console.error('生成二维码失败:', error)
+    console.error('获取二维码失败:', error)
     uni.showToast({
-      title: '生成二维码失败',
+      title: '获取二维码失败',
       icon: 'none',
     })
   }
@@ -782,15 +774,15 @@ async function completePickupVerify() {
                 请用户扫码支付押金
               </text>
               <view class="mx-auto mb-[16rpx] h-[300rpx] w-[300rpx] flex items-center justify-center rounded-[12rpx] bg-white">
-                <!-- 显示真实的二维码 -->
+                <!-- 显示后端生成的二维码 -->
                 <image
-                  v-if="depositInfo.qrCode"
-                  :src="depositInfo.qrCode"
+                  v-if="depositInfo.qrCodeUrl"
+                  :src="depositInfo.qrCodeUrl"
                   mode="aspectFit"
                   class="h-full w-full"
                 />
                 <text v-else class="text-[24rpx] text-gray-500">
-                  生成二维码中...
+                  获取二维码中...
                 </text>
               </view>
 

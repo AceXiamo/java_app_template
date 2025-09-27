@@ -713,11 +713,11 @@ async function submitBooking() {
     return
   }
 
-  // 检查押金是否充足
-  if (depositCalculation.value && !depositCalculation.value.canBook) {
-    showDepositInsufficientDialog.value = true
-    return
-  }
+  // // 检查押金是否充足
+  // if (depositCalculation.value && !depositCalculation.value.canBook) {
+  //   showDepositInsufficientDialog.value = true
+  //   return
+  // }
 
   // 验证送车距离是否超限
   if (bookingInfo.value.pickupMethod === 'delivery') {
@@ -1791,9 +1791,6 @@ function selectService(serviceId: string) {
         >
           <text v-if="submitLoading">
             提交中...
-          </text>
-          <text v-else-if="depositCalculation && !depositCalculation.canBook">
-            充值押金
           </text>
           <text v-else>
             立即预订

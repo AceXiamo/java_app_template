@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { useProfileStore } from '@/store/profile'
-import Head from '@/components/page/my/Head.vue'
+import { useUserStore } from '@/store/user'
+import { createDepositPayOrder } from '@/api/deposit-payment'
 
 // 使用 profile store
 const profileStore = useProfileStore()
 const { profileData } = storeToRefs(profileStore)
+const { openId } = storeToRefs(useUserStore())
 
 // 导航方法
 function goToProfile() {
@@ -46,6 +48,118 @@ function goToInvoice() {
 
 function goToDeposit() {
   uni.navigateTo({ url: '/pages/deposit/index' })
+}
+
+// 扫码功能
+function scanCode() {
+  uni.scanCode({
+    success: (res) => {
+      console.log('扫码结果:', res.result)
+      handleScanResult(res.result)
+    },
+    fail: (err) => {
+      console.error('扫码失败:', err)
+      uni.showToast({
+        title: '扫码失败',
+        icon: 'none',
+      })
+    },
+  })
+}
+
+// 处理扫码结果
+async function handleScanResult(scanResult: string) {
+  try {
+    // 检查二维码前缀并处理相应的业务逻辑
+    if (scanResult.startsWith('ORDER_DEPOSIT#')) {
+      // 押金支付二维码
+      const orderNo = scanResult.replace('ORDER_DEPOSIT#', '')
+      await handleDepositPayment(orderNo)
+    }
+    else if (scanResult.startsWith('ORDER_RETURN#')) {
+      // 还车二维码
+      const orderNo = scanResult.replace('ORDER_RETURN#', '')
+      await handleReturnPayment(orderNo)
+    }
+    else {
+      // 其他类型的二维码
+      uni.showToast({
+        title: '不支持的二维码类型',
+        icon: 'none',
+      })
+    }
+  }
+  catch (error) {
+    console.error('处理扫码结果失败:', error)
+    uni.showToast({
+      title: '处理失败，请重试',
+      icon: 'none',
+    })
+  }
+}
+
+// 处理押金支付
+async function handleDepositPayment(orderNo: string) {
+  try {
+    uni.showLoading({ title: '处理中...' })
+
+    // 检查用户是否已登录
+    if (!openId.value) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none',
+      })
+      return
+    }
+
+    // 调用后端API获取微信支付参数
+    const response = await createDepositPayOrder(orderNo, openId.value)
+
+    if (response.code === 200) {
+      const payData = response.data
+
+      // 调用微信支付
+      uni.requestPayment({
+        appId: payData.appId,
+        timeStamp: payData.timeStamp,
+        nonceStr: payData.nonceStr,
+        package: payData.package,
+        signType: payData.signType,
+        paySign: payData.paySign,
+        success: () => {
+          uni.showToast({
+            title: '支付成功',
+            icon: 'success',
+          })
+
+          setTimeout(() => {
+            uni.navigateTo({ url: `/pages/order/detail?orderNo=${orderNo}` })
+          }, 1000)
+        },
+      })
+    }
+    else {
+      throw new Error(response.msg || '获取支付参数失败')
+    }
+  }
+  catch (error) {
+    console.error('处理押金支付失败:', error)
+    uni.showToast({
+      title: error instanceof Error ? error.message : '支付处理失败',
+      icon: 'none',
+    })
+  }
+  finally {
+    uni.hideLoading()
+  }
+}
+
+// 处理还车支付（预留）
+async function handleReturnPayment(orderNo: string) {
+  uni.showToast({
+    title: '还车功能开发中',
+    icon: 'none',
+  })
 }
 
 // 联系客服 - 使用button的open-type='contact'实现
@@ -141,7 +255,7 @@ function handleLogout() {
             />
             <text
               class="i-material-symbols-qr-code-scanner text-[32rpx] text-white/80"
-              @tap="goToProfile"
+              @tap="scanCode"
             />
           </view>
         </view>
@@ -432,10 +546,10 @@ function handleLogout() {
 
           <!-- 联系客服 -->
           <view class="relative flex items-center justify-between">
-            <button open-type="contact" class="absolute inset-0 opacity-0 z-1">
+            <button open-type="contact" class="absolute inset-0 z-1 opacity-0">
               联系客服
             </button>
-            <view class="flex items-center space-x-[24rpx] relative z-1">
+            <view class="relative z-1 flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
                 <text class="i-material-symbols-support-agent text-[36rpx] text-purple-600" />
               </view>

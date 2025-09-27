@@ -366,6 +366,15 @@ export function submitContractSignature(orderId: number, signature: string): Pro
 }
 
 /**
+ * 获取押金支付二维码
+ */
+export function getDepositQRCode(orderId: number): Promise<BaseRes<{ qrCodeUrl: string; amount: number }>> {
+  return request.get({
+    url: `${host}/api/orders/${orderId}/deposit-qrcode`,
+  })
+}
+
+/**
  * 确认订单完成 - 车主/平台方使用
  */
 export function confirmOrderCompletion(orderId: number, completedBy: string, remark?: string): Promise<BaseRes<any>> {
