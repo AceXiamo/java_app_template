@@ -1,4 +1,4 @@
-import { request, host } from '@/utils/request'
+import { host, request } from '@/utils/request'
 
 /**
  * 创建押金支付订单
@@ -11,6 +11,7 @@ export function createDepositPayOrder(orderNo: string, openId: string): Promise<
   paySign: string
   depositOrderNo: string
   amount: number
+  orderId: string
 }>> {
   return request.post({
     url: `${host}/api/wx/pay/deposit/create`,
