@@ -6,6 +6,7 @@
 interface NavigateToOptions {
   url: "/pages/main/index" |
        "/pages/booking/index" |
+       "/pages/contract/sign" |
        "/pages/cooperation-form/index" |
        "/pages/deposit/credit" |
        "/pages/deposit/index" |
@@ -33,6 +34,7 @@ interface NavigateToOptions {
        "/pages/owner/index" |
        "/pages/owner/order-detail" |
        "/pages/owner/orders" |
+       "/pages/owner/pickup-verify" |
        "/pages/owner/revenue" |
        "/pages/owner/withdrawal-methods" |
        "/pages/owner-certification/index" |

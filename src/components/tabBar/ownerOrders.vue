@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import dayjs from 'dayjs'
 import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
 import { useUserStore } from '@/store/user'
 import { type OwnerOrder, type OwnerOrderQueryParams, confirmOrderCompletion, getOwnerOrders, pickupVerify, returnVerify } from '@/api/owner-orders'
 import { uploadFileToOss } from '@/utils/alioss'
-import dayjs from 'dayjs'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
@@ -166,12 +166,11 @@ const currentAction = ref<'pickup' | 'return'>('pickup')
 const currentOrder = ref<any>(null)
 const uploadedPhotos = ref<string[]>([])
 
-// 取车验证
+// 取车验证 - 跳转到专门页面
 function startPickupVerification(order: any) {
-  currentOrder.value = order
-  currentAction.value = 'pickup'
-  uploadedPhotos.value = []
-  photoDrawerVisible.value = true
+  uni.navigateTo({
+    url: `/pages/owner/pickup-verify?orderNo=${order.orderNo}&orderId=${order.orderId}`,
+  })
 }
 
 // 还车验证
@@ -205,7 +204,7 @@ async function chooseImage() {
     uni.showLoading({ title: '上传照片中...' })
 
     // 批量上传照片到OSS
-    const uploadPromises = res.tempFilePaths.map(async (tempFilePath, index) => {
+    const uploadPromises = res.tempFilePaths.map(async (tempFilePath: string, index: number) => {
       try {
         // 生成唯一的文件名
         const timestamp = Date.now()
@@ -295,7 +294,7 @@ async function submitVerification() {
     uni.hideLoading()
     console.error('验证失败:', error)
     uni.showToast({
-      title: error?.message || '验证失败，请重试',
+      title: (error as any)?.message || '验证失败，请重试',
       icon: 'none',
       duration: 3000,
     })
@@ -350,7 +349,7 @@ async function confirmCompletion(order: any) {
     uni.hideLoading()
     console.error('确认订单完成失败:', error)
     uni.showToast({
-      title: error?.message || '确认完成失败，请重试',
+      title: (error as any)?.message || '确认完成失败，请重试',
       icon: 'none',
       duration: 3000,
     })
@@ -594,7 +593,7 @@ async function confirmCompletion(order: any) {
                   </view>
                   <view
                     class="flex-1 rounded-full bg-gray-100 py-[20rpx] text-center text-[26rpx] text-gray-600 font-medium transition-colors duration-200 active:bg-gray-200"
-                    @tap="contactUser(order.userPhone)"
+                    @tap="contactUser(order.userPhone || '')"
                   >
                     联系用户
                   </view>

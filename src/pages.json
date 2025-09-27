@@ -10,6 +10,11 @@
       "layout": "home"
     },
     {
+      "path": "pages/contract/sign",
+      "type": "page",
+      "layout": "home"
+    },
+    {
       "path": "pages/cooperation-form/index",
       "type": "page",
       "layout": "home"
@@ -141,6 +146,11 @@
     {
       "path": "pages/owner/orders",
       "type": "page"
+    },
+    {
+      "path": "pages/owner/pickup-verify",
+      "type": "page",
+      "layout": "home"
     },
     {
       "path": "pages/owner/revenue",

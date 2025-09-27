@@ -146,6 +146,21 @@ function contactService() {
   })
 }
 
+// 签署合同
+function signContract() {
+  if (!orderDetail.value.id) {
+    uni.showToast({
+      title: '订单信息错误',
+      icon: 'none',
+    })
+    return
+  }
+  
+  uni.navigateTo({
+    url: `/pages/contract/sign?orderId=${orderDetail.value.id}&orderNo=${orderDetail.value.orderNumber}`,
+  })
+}
+
 // 取消订单
 function cancelOrderAction() {
   uni.showModal({
@@ -514,6 +529,29 @@ onUnmounted(() => {
                 已超时
               </text>
             </view>
+          </view>
+
+          <!-- 合同签署提示 (paid状态显示) -->
+          <view v-if="['paid', 'picked'].includes(orderDetail.status)" class="mt-[24rpx] rounded-[16rpx] bg-blue-50 p-[24rpx]">
+            <view class="flex items-center justify-between">
+              <view class="flex items-center">
+                <text class="i-material-symbols-contract-edit mr-[8rpx] text-[24rpx] text-blue-600" />
+                <text class="text-[26rpx] text-blue-800 font-medium">
+                  电子合同签署
+                </text>
+              </view>
+              <view
+                class="rounded-[12rpx] bg-blue-600 px-[20rpx] py-[8rpx] flex"
+                @tap="signContract"
+              >
+                <text class="text-[22rpx] text-white font-medium">
+                  立即签署
+                </text>
+              </view>
+            </view>
+            <text class="mt-[8rpx] text-[20rpx] text-blue-700">
+              为保障双方权益，请及时签署租车合同
+            </text>
           </view>
 
           <!-- 待支付提示 -->
