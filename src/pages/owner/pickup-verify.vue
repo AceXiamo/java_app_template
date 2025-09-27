@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import HeadBar from '@/components/HeadBar.vue'
 import { uploadFileToOss } from '@/utils/alioss'
-import { type PickupVerifyRequest, getContractStatus, getDepositQRCode, getOwnerOrderDetail, pickupVerify } from '@/api/owner-orders'
+import { type PickupVerifyRequest, getContractStatus, getDepositQRCode, getDepositStatus, getOwnerOrderDetail, pickupVerify } from '@/api/owner-orders'
 
 // 页面参数
 interface PickupVerifyParams {
@@ -59,8 +59,11 @@ const depositInfo = reactive({
   type: 'wechat_pay', // alipay_credit | wechat_pay，默认选中微信支付
   amount: 500,
   status: 'pending', // pending | paid | confirmed
+  statusText: '待支付',
+  statusType: 'pending' as 'pending' | 'paid' | 'failed',
   qrCodeUrl: '', // 二维码图片URL（后端生成）
   paymentTime: '',
+  transactionId: '',
 })
 
 // 合同签署信息
@@ -111,6 +114,9 @@ async function loadOrderInfo() {
 
       // 初始化合同状态
       await loadContractStatus()
+
+      // 初始化押金状态（包含金额和支付状态）
+      await refreshDepositStatus()
 
       // 初始化微信支付二维码（默认选中微信支付）
       await loadDepositQRCode()
@@ -225,7 +231,7 @@ const allInfoComplete = computed(() => {
     && vehicleStatus.vehiclePhotos.length >= 4
     && vehicleStatus.verificationPhotos.length >= 1
   const depositComplete = depositInfo.type && (
-    (depositInfo.type === 'wechat_pay' && depositInfo.status === 'paid')
+    (depositInfo.type === 'wechat_pay' && depositInfo.statusType === 'paid')
     || (depositInfo.type === 'alipay_credit') // 支付宝免押直接认为完成
   )
   const contractComplete = contractInfo.signed
@@ -238,20 +244,10 @@ function selectDepositType(type: string) {
   depositInfo.type = type
   // 重置状态
   if (type === 'wechat_pay') {
-    depositInfo.status = 'pending'
+    // 刷新押金状态
+    refreshDepositStatus()
     // 获取微信支付二维码
     loadDepositQRCode()
-    // 模拟微信支付状态检查（实际开发中应该通过回调或轮询获取）
-    setTimeout(() => {
-      if (Math.random() > 0.3) { // 70% 概率模拟支付成功
-        depositInfo.status = 'paid'
-        depositInfo.paymentTime = new Date().toLocaleString()
-        uni.showToast({
-          title: '支付成功',
-          icon: 'success',
-        })
-      }
-    }, 3000)
   }
   else if (type === 'alipay_credit') {
     depositInfo.status = 'confirmed'
@@ -279,6 +275,63 @@ async function loadDepositQRCode() {
       title: '获取二维码失败',
       icon: 'none',
     })
+  }
+}
+
+// 刷新押金状态
+async function refreshDepositStatus() {
+  try {
+    uni.showLoading({ title: '检查状态中...' })
+
+    // 调用API获取最新的押金状态
+    const response = await getDepositStatus(Number(pageParams.value.orderId))
+
+    if (response.code === 200 && response.data) {
+      const depositData = response.data
+
+      // 更新押金信息
+      depositInfo.amount = depositData.depositAmount
+      depositInfo.statusText = depositData.statusText
+      depositInfo.statusType = depositData.statusType
+      depositInfo.paymentTime = depositData.depositPaymentTime || ''
+      depositInfo.transactionId = depositData.depositWechatTransactionId || ''
+
+      // 更新状态显示
+      if (depositData.statusType === 'paid') {
+        depositInfo.status = 'paid'
+        uni.showToast({
+          title: '押金支付成功',
+          icon: 'success',
+        })
+      }
+      else if (depositData.statusType === 'failed') {
+        depositInfo.status = 'failed'
+        uni.showToast({
+          title: '押金支付失败',
+          icon: 'none',
+        })
+      }
+      else {
+        depositInfo.status = 'pending'
+        uni.showToast({
+          title: `当前状态：${depositData.statusText}`,
+          icon: 'none',
+        })
+      }
+    }
+    else {
+      throw new Error(response.msg || '获取押金状态失败')
+    }
+  }
+  catch (error) {
+    console.error('刷新押金状态失败:', error)
+    uni.showToast({
+      title: '刷新失败，请重试',
+      icon: 'none',
+    })
+  }
+  finally {
+    uni.hideLoading()
   }
 }
 
@@ -711,9 +764,22 @@ async function completePickupVerify() {
                 押金处理
               </text>
             </view>
-            <text class="text-[24rpx] text-orange-600 font-bold">
-              ¥{{ depositInfo.amount }}
-            </text>
+            <view class="flex items-center space-x-[16rpx]">
+              <text class="text-[24rpx] text-orange-600 font-bold">
+                ¥{{ depositInfo.amount }}
+              </text>
+              <!-- 刷新状态按钮 - 仅微信支付时显示 -->
+              <view
+                v-if="depositInfo.type === 'wechat_pay'"
+                class="flex items-center rounded-[8rpx] bg-orange-100 px-[16rpx] py-[8rpx]"
+                @tap="refreshDepositStatus"
+              >
+                <text class="i-material-symbols-refresh mr-[4rpx] text-[20rpx] text-orange-600" />
+                <text class="text-[20rpx] text-orange-600 font-medium">
+                  刷新状态
+                </text>
+              </view>
+            </view>
           </view>
 
           <!-- 押金类型 Tab -->
@@ -787,18 +853,36 @@ async function completePickupVerify() {
               </view>
 
               <!-- 支付状态显示 -->
-              <view v-if="depositInfo.status === 'paid'" class="rounded-[8rpx] bg-green-50 p-[12rpx]">
+              <view v-if="depositInfo.statusType === 'paid'" class="rounded-[8rpx] bg-green-50 p-[12rpx]">
                 <text class="i-material-symbols-check-circle mr-[8rpx] text-[20rpx] text-green-600" />
                 <text class="text-[22rpx] text-green-700">
-                  支付成功
+                  {{ depositInfo.statusText }}
                 </text>
                 <text v-if="depositInfo.paymentTime" class="mt-[4rpx] block text-[18rpx] text-green-600">
                   支付时间：{{ depositInfo.paymentTime }}
                 </text>
+                <text v-if="depositInfo.transactionId" class="mt-[4rpx] block text-[18rpx] text-green-600">
+                  交易单号：{{ depositInfo.transactionId }}
+                </text>
+              </view>
+              <view v-else-if="depositInfo.statusType === 'failed'" class="rounded-[8rpx] bg-red-50 p-[12rpx]">
+                <text class="i-material-symbols-error mr-[8rpx] text-[20rpx] text-red-600" />
+                <text class="text-[22rpx] text-red-700">
+                  {{ depositInfo.statusText }}
+                </text>
+                <text class="mt-[4rpx] block text-[18rpx] text-red-600">
+                  请重新扫码支付或联系客服
+                </text>
               </view>
               <view v-else class="space-y-[8rpx]">
+                <view class="rounded-[8rpx] bg-yellow-50 p-[12rpx]">
+                  <text class="i-material-symbols-schedule mr-[8rpx] text-[20rpx] text-yellow-600" />
+                  <text class="text-[22rpx] text-yellow-700">
+                    {{ depositInfo.statusText }}
+                  </text>
+                </view>
                 <text class="block text-[20rpx] text-gray-500">
-                  支付完成后状态会自动更新
+                  支付完成后状态会自动更新，也可点击右上角刷新状态
                 </text>
                 <text class="block text-[18rpx] text-gray-400">
                   二维码内容：ORDER_DEPOSIT#{{ pageParams.orderNo }}

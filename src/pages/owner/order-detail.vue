@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import HeadBar from '@/components/HeadBar.vue'
-import { type OwnerOrderDetail, getOwnerOrderDetail, confirmOrderCompletion } from '@/api/owner-orders'
+import { type OwnerOrderDetail, confirmOrderCompletion, getOwnerOrderDetail } from '@/api/owner-orders'
 
 // 页面参数
 const props = defineProps<{
@@ -203,11 +203,12 @@ async function confirmCompletion() {
         },
         fail: () => {
           resolve(false)
-        }
+        },
       })
     })
 
-    if (!result) return
+    if (!result)
+      return
 
     uni.showLoading({ title: '确认完成中...' })
 
@@ -215,23 +216,23 @@ async function confirmCompletion() {
     await confirmOrderCompletion(orderDetail.value.order_id, '车主', '车主确认订单已完成')
 
     uni.hideLoading()
-    uni.showToast({ 
-      title: '订单已确认完成', 
+    uni.showToast({
+      title: '订单已确认完成',
       icon: 'success',
-      duration: 2000
+      duration: 2000,
     })
 
     // 更新本地状态
     orderDetail.value.status = 'completed'
     orderDetail.value.statusText = '已完成'
-    
-  } catch (error) {
+  }
+  catch (error) {
     uni.hideLoading()
     console.error('确认订单完成失败:', error)
-    uni.showToast({ 
-      title: error?.message || '确认完成失败，请重试', 
+    uni.showToast({
+      title: error?.message || '确认完成失败，请重试',
       icon: 'none',
-      duration: 3000
+      duration: 3000,
     })
   }
 }
@@ -430,10 +431,18 @@ uni.setNavigationBarTitle({
                 {{ orderDetail.vehicle.name }}
               </text>
               <view class="mb-[8rpx] flex items-center text-[20rpx] text-gray-600 space-x-[16rpx]">
-                <text v-if="orderDetail.vehicle.license_plate">{{ orderDetail.vehicle.license_plate }}</text>
-                <text v-if="orderDetail.vehicle.seats">{{ orderDetail.vehicle.seats }}座</text>
-                <text v-if="orderDetail.vehicle.car_type">{{ orderDetail.vehicle.car_type }}</text>
-                <text v-if="orderDetail.vehicle.energy_type">{{ orderDetail.vehicle.energy_type }}</text>
+                <text v-if="orderDetail.vehicle.license_plate">
+                  {{ orderDetail.vehicle.license_plate }}
+                </text>
+                <text v-if="orderDetail.vehicle.seats">
+                  {{ orderDetail.vehicle.seats }}座
+                </text>
+                <text v-if="orderDetail.vehicle.car_type">
+                  {{ orderDetail.vehicle.car_type }}
+                </text>
+                <text v-if="orderDetail.vehicle.energy_type">
+                  {{ orderDetail.vehicle.energy_type }}
+                </text>
               </view>
               <view class="flex items-center justify-between">
                 <view v-if="orderDetail.vehicle.rating && orderDetail.vehicle.rating_count" class="flex items-center space-x-[8rpx]">
@@ -642,34 +651,100 @@ uni.setNavigationBarTitle({
           </view>
         </view>
 
-        <!-- 验证照片 -->
-        <view v-if="orderDetail.pickup_verification_photos?.length || orderDetail.return_verification_photos?.length" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
+        <!-- 验车信息 -->
+        <view v-if="orderDetail.pickup_mileage || orderDetail.pickup_battery_level || orderDetail.pickup_fuel_photo || orderDetail.pickup_vehicle_photos?.length || orderDetail.pickup_verification_photos?.length || orderDetail.return_verification_photos?.length" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
           <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
-            验证照片
+            验车信息
           </text>
 
-          <!-- 取车验证照片 -->
-          <view v-if="orderDetail.pickup_verification_photos?.length" class="mb-[24rpx]">
-            <text class="mb-[12rpx] block text-[24rpx] text-gray-700 font-medium">
-              取车验证
-            </text>
-            <view class="flex flex-wrap gap-[12rpx]">
-              <view
-                v-for="(photo, index) in orderDetail.pickup_verification_photos"
-                :key="index"
-                class="h-[90rpx] w-[120rpx] overflow-hidden rounded-[8rpx] bg-gray-200"
-                @tap="previewImage(orderDetail.pickup_verification_photos!, photo)"
-              >
-                <image :src="photo" class="h-full w-full" mode="aspectFill" />
+          <!-- 取车验证信息 -->
+          <view v-if="orderDetail.pickup_mileage || orderDetail.pickup_battery_level || orderDetail.pickup_fuel_photo || orderDetail.pickup_vehicle_photos?.length || orderDetail.pickup_verification_photos?.length" class="mb-[32rpx]">
+            <view class="mb-[16rpx] flex items-center space-x-[12rpx]">
+              <text class="i-material-symbols-directions-car text-[24rpx] text-purple-600" />
+              <text class="text-[24rpx] text-gray-700 font-medium">
+                取车验证
+              </text>
+            </view>
+
+            <!-- 车辆状态信息 -->
+            <view class="mb-[20rpx] rounded-[12rpx] bg-purple-50 p-[20rpx]">
+              <text class="mb-[12rpx] block text-[22rpx] text-purple-800 font-medium">
+                车辆状态
+              </text>
+              <view class="space-y-[8rpx]">
+                <view v-if="orderDetail.pickup_mileage" class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    里程数
+                  </text>
+                  <text class="text-[20rpx] text-gray-800 font-medium">
+                    {{ orderDetail.pickup_mileage }} 公里
+                  </text>
+                </view>
+                <view v-if="orderDetail.pickup_battery_level" class="flex items-center justify-between">
+                  <text class="text-[20rpx] text-gray-600">
+                    电量
+                  </text>
+                  <text class="text-[20rpx] text-gray-800 font-medium">
+                    {{ orderDetail.pickup_battery_level }}%
+                  </text>
+                </view>
+                <view v-if="orderDetail.pickup_fuel_photo" class="mt-[12rpx]">
+                  <text class="mb-[8rpx] block text-[20rpx] text-gray-600">
+                    油表照片
+                  </text>
+                  <view
+                    class="h-[120rpx] w-[160rpx] overflow-hidden rounded-[8rpx] bg-gray-200"
+                    @tap="previewImage([orderDetail.pickup_fuel_photo!], orderDetail.pickup_fuel_photo!)"
+                  >
+                    <image :src="orderDetail.pickup_fuel_photo" class="h-full w-full" mode="aspectFill" />
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <!-- 车辆外观照片 -->
+            <view v-if="orderDetail.pickup_vehicle_photos?.length" class="mb-[20rpx]">
+              <text class="mb-[12rpx] block text-[22rpx] text-gray-700 font-medium">
+                车辆外观照片
+              </text>
+              <view class="flex flex-wrap gap-[12rpx]">
+                <view
+                  v-for="(photo, index) in orderDetail.pickup_vehicle_photos"
+                  :key="index"
+                  class="h-[90rpx] w-[120rpx] overflow-hidden rounded-[8rpx] bg-gray-200"
+                  @tap="previewImage(orderDetail.pickup_vehicle_photos!, photo)"
+                >
+                  <image :src="photo" class="h-full w-full" mode="aspectFill" />
+                </view>
+              </view>
+            </view>
+
+            <!-- 取车验证照片 -->
+            <view v-if="orderDetail.pickup_verification_photos?.length" class="mb-[20rpx]">
+              <text class="mb-[12rpx] block text-[22rpx] text-gray-700 font-medium">
+                取车验证照片
+              </text>
+              <view class="flex flex-wrap gap-[12rpx]">
+                <view
+                  v-for="(photo, index) in orderDetail.pickup_verification_photos"
+                  :key="index"
+                  class="h-[90rpx] w-[120rpx] overflow-hidden rounded-[8rpx] bg-gray-200"
+                  @tap="previewImage(orderDetail.pickup_verification_photos!, photo)"
+                >
+                  <image :src="photo" class="h-full w-full" mode="aspectFill" />
+                </view>
               </view>
             </view>
           </view>
 
           <!-- 还车验证照片 -->
           <view v-if="orderDetail.return_verification_photos?.length">
-            <text class="mb-[12rpx] block text-[24rpx] text-gray-700 font-medium">
-              还车验证
-            </text>
+            <view class="mb-[16rpx] flex items-center space-x-[12rpx]">
+              <text class="i-material-symbols-assignment-return text-[24rpx] text-green-600" />
+              <text class="text-[22rpx] text-gray-700 font-medium">
+                还车验证照片
+              </text>
+            </view>
             <view class="flex flex-wrap gap-[12rpx]">
               <view
                 v-for="(photo, index) in orderDetail.return_verification_photos"
@@ -679,6 +754,119 @@ uni.setNavigationBarTitle({
               >
                 <image :src="photo" class="h-full w-full" mode="aspectFill" />
               </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 押金信息 -->
+        <view v-if="orderDetail.deposit_amount || orderDetail.deposit_type" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
+          <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
+            押金信息
+          </text>
+
+          <view class="space-y-[16rpx]">
+            <!-- 押金金额 -->
+            <view v-if="orderDetail.deposit_amount" class="rounded-[12rpx] bg-orange-50 p-[20rpx]">
+              <view class="mb-[8rpx] flex items-center justify-between">
+                <view class="flex items-center space-x-[12rpx]">
+                  <text class="i-material-symbols-account-balance-wallet text-[24rpx] text-orange-600" />
+                  <text class="text-[24rpx] text-orange-800 font-medium">
+                    押金金额
+                  </text>
+                </view>
+                <text class="text-[28rpx] text-orange-600 font-bold">
+                  ¥{{ orderDetail.deposit_amount }}
+                </text>
+              </view>
+
+              <!-- 押金类型 -->
+              <view v-if="orderDetail.deposit_type" class="mb-[8rpx] flex items-center justify-between">
+                <text class="text-[20rpx] text-gray-600">
+                  押金类型
+                </text>
+                <text class="text-[20rpx] text-gray-800">
+                  {{ orderDetail.deposit_type === 'wechat_pay' ? '微信支付' : '支付宝免押' }}
+                </text>
+              </view>
+
+              <!-- 微信支付状态 -->
+              <view v-if="orderDetail.deposit_type === 'wechat_pay' && orderDetail.deposit_wechat_pay_status" class="mb-[8rpx] flex items-center justify-between">
+                <text class="text-[20rpx] text-gray-600">
+                  支付状态
+                </text>
+                <view class="flex items-center space-x-[8rpx]">
+                  <text
+                    class="text-[20rpx]"
+                    :class="{
+                      'text-green-600': orderDetail.deposit_wechat_pay_status === 'paid',
+                      'text-yellow-600': orderDetail.deposit_wechat_pay_status === 'processing',
+                      'text-red-600': orderDetail.deposit_wechat_pay_status === 'failed',
+                      'text-gray-600': !['paid', 'processing', 'failed'].includes(orderDetail.deposit_wechat_pay_status),
+                    }"
+                  >
+                    {{
+                      orderDetail.deposit_wechat_pay_status === 'paid' ? '支付成功'
+                      : orderDetail.deposit_wechat_pay_status === 'processing' ? '支付处理中'
+                        : orderDetail.deposit_wechat_pay_status === 'failed' ? '支付失败' : '待支付'
+                    }}
+                  </text>
+                  <text
+                    v-if="orderDetail.deposit_wechat_pay_status === 'paid'"
+                    class="i-material-symbols-check-circle text-[16rpx] text-green-600"
+                  />
+                </view>
+              </view>
+
+              <!-- 押金支付时间 -->
+              <view v-if="orderDetail.deposit_payment_time" class="mb-[8rpx] flex items-center justify-between">
+                <text class="text-[20rpx] text-gray-600">
+                  支付时间
+                </text>
+                <text class="text-[20rpx] text-gray-800">
+                  {{ formatDateTime(orderDetail.deposit_payment_time) }}
+                </text>
+              </view>
+
+              <!-- 微信交易单号 -->
+              <view v-if="orderDetail.deposit_wechat_transaction_id" class="flex items-center justify-between">
+                <text class="text-[20rpx] text-gray-600">
+                  交易单号
+                </text>
+                <text class="text-[18rpx] text-gray-500 font-mono">
+                  {{ orderDetail.deposit_wechat_transaction_id }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 合同签署信息 -->
+        <view v-if="orderDetail.contract_signed !== undefined" class="rounded-[20rpx] bg-white p-[32rpx] shadow-sm">
+          <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
+            合同签署
+          </text>
+
+          <view class="rounded-[12rpx] p-[20rpx]" :class="orderDetail.contract_signed ? 'bg-green-50' : 'bg-gray-50'">
+            <view class="mb-[8rpx] flex items-center space-x-[12rpx]">
+              <text
+                class="text-[24rpx]"
+                :class="orderDetail.contract_signed ? 'i-material-symbols-check-circle text-green-600' : 'i-material-symbols-schedule text-gray-600'"
+              />
+              <text
+                class="text-[24rpx] font-medium"
+                :class="orderDetail.contract_signed ? 'text-green-800' : 'text-gray-700'"
+              >
+                {{ orderDetail.contract_signed ? '合同已签署' : '待用户签署' }}
+              </text>
+            </view>
+
+            <view v-if="orderDetail.contract_sign_time" class="flex items-center justify-between">
+              <text class="text-[20rpx] text-gray-600">
+                签署时间
+              </text>
+              <text class="text-[20rpx] text-gray-800">
+                {{ formatDateTime(orderDetail.contract_sign_time) }}
+              </text>
             </view>
           </view>
         </view>
@@ -722,7 +910,7 @@ uni.setNavigationBarTitle({
           <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
             保险信息
           </text>
-          
+
           <view class="space-y-[16rpx]">
             <view
               v-for="(insurance, index) in orderDetail.insurance"
@@ -762,7 +950,7 @@ uni.setNavigationBarTitle({
           <text class="mb-[20rpx] block text-[28rpx] text-gray-900 font-bold">
             增值服务
           </text>
-          
+
           <view class="space-y-[16rpx]">
             <view
               v-for="(service, index) in orderDetail.services"
@@ -838,7 +1026,7 @@ uni.setNavigationBarTitle({
               查看时间线
             </view>
           </template>
-          
+
           <!-- 其他状态：默认按钮 -->
           <template v-else>
             <view

@@ -239,11 +239,6 @@ async function chooseImage() {
   catch (error) {
     uni.hideLoading()
     console.error('上传照片失败:', error)
-    uni.showToast({
-      title: '上传照片失败，请重试',
-      icon: 'none',
-      duration: 2000,
-    })
   }
 }
 

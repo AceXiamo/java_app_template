@@ -77,9 +77,26 @@ export interface OwnerOrderDetail {
     phone: string
   }
 
+  // 验车信息
+  pickup_mileage?: number
+  pickup_battery_level?: number
+  pickup_fuel_photo?: string
+  pickup_vehicle_photos?: string[]
+
   // 验证照片
   pickup_verification_photos?: string[]
   return_verification_photos?: string[]
+
+  // 押金信息
+  deposit_amount?: number
+  deposit_type?: string
+  deposit_wechat_pay_status?: string
+  deposit_payment_time?: string
+  deposit_wechat_transaction_id?: string
+
+  // 合同签署信息
+  contract_signed?: boolean
+  contract_sign_time?: string
 
   // 保险信息
   insurance?: Array<{
@@ -371,6 +388,23 @@ export function submitContractSignature(orderId: number, signature: string): Pro
 export function getDepositQRCode(orderId: number): Promise<BaseRes<{ qrCodeUrl: string; amount: number }>> {
   return request.get({
     url: `${host}/api/orders/${orderId}/deposit-qrcode`,
+  })
+}
+
+/**
+ * 获取押金状态信息
+ */
+export function getDepositStatus(orderId: number): Promise<BaseRes<{
+  depositAmount: number
+  depositType: string
+  depositWechatPayStatus: string
+  depositPaymentTime: string
+  depositWechatTransactionId: string
+  statusText: string
+  statusType: 'pending' | 'paid' | 'failed'
+}>> {
+  return request.get({
+    url: `${host}/api/orders/${orderId}/deposit-status`,
   })
 }
 
