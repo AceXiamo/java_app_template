@@ -420,3 +420,21 @@ export function confirmOrderCompletion(orderId: number, completedBy: string, rem
     },
   })
 }
+
+// 合同模板接口定义
+export interface ContractTemplate {
+  templateImages: string[]
+  totalPages: number
+  configKey: string
+  lastUpdated?: string
+  message?: string
+}
+
+/**
+ * 获取合同模板图片
+ */
+export function getContractTemplate(): Promise<BaseRes<ContractTemplate>> {
+  return request.get({
+    url: `${host}/api/orders/contract-template`,
+  })
+}

@@ -133,7 +133,7 @@ async function handleDepositPayment(orderNo: string) {
           })
 
           setTimeout(() => {
-            uni.navigateTo({ url: `/pages/order/detail?orderId=${payData.orderId}` })
+            uni.navigateTo({ url: `/pages/order/detail?orderId=${payData.orderNo}` })
           }, 1000)
         },
       })

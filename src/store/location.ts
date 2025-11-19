@@ -15,9 +15,10 @@ export const useLocationStore = defineStore('location', () => {
   // 更新位置信息
   const updateLocation = (location: AddressInfoWithValidation) => {
     currentLocation.value = location
-    displayCity.value = location.city
+    // 区分直辖市和非直辖市
+    displayCity.value = location.city === '[]' ? location.province : location.city
     displayAddress.value = location.formattedAddress || location.city
-    
+
     // 更新服务区域验证信息
     if (location.serviceAreaValidation) {
       serviceAreaValidation.value = location.serviceAreaValidation
@@ -41,35 +42,38 @@ export const useLocationStore = defineStore('location', () => {
       return {
         text: '未知',
         color: 'text-gray-500',
-        isActive: false
+        isActive: false,
       }
     }
 
     const validation = serviceAreaValidation.value
-    
+
     if (validation.isSupported && validation.status === 'active') {
       return {
         text: '已开通',
         color: 'text-green-600',
-        isActive: true
+        isActive: true,
       }
-    } else if (validation.status === 'coming_soon') {
+    }
+    else if (validation.status === 'coming_soon') {
       return {
         text: '即将开通',
         color: 'text-orange-600',
-        isActive: false
+        isActive: false,
       }
-    } else if (validation.status === 'closed') {
+    }
+    else if (validation.status === 'closed') {
       return {
         text: '暂时关闭',
         color: 'text-red-600',
-        isActive: false
+        isActive: false,
       }
-    } else {
+    }
+    else {
       return {
         text: '暂未开通',
         color: 'text-gray-600',
-        isActive: false
+        isActive: false,
       }
     }
   }

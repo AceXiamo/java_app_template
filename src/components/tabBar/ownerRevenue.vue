@@ -1,20 +1,16 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import HeadBar from '@/components/HeadBar.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
 import { useOwnerStore } from '@/store/owner'
-import { useUserStore } from '@/store/user'
 import { type OwnerRevenueQueryParams, getOwnerRevenueRecords } from '@/api/owner-revenue'
-import { applyWithdrawal, getOwnerWithdrawalMethods, getWithdrawalRecords, type OwnerWithdrawalMethod } from '@/api/owner-withdrawal'
+import { applyWithdrawal, getOwnerWithdrawalMethods, getWithdrawalRecords } from '@/api/owner-withdrawal'
 
 // 使用 owner store
 const ownerStore = useOwnerStore()
 const { revenueData } = storeToRefs(ownerStore)
-
-// 使用 user store
-const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
 
 // 设置当前页面
 ownerStore.setActive('revenue')
@@ -29,7 +25,6 @@ const detailsData = reactive({
 })
 
 // 加载状态
-const loading = ref(false)
 const revenueLoading = ref(false)
 const withdrawalLoading = ref(false)
 
@@ -58,13 +53,22 @@ const selectedWithdrawalMethod = ref<any>(null)
 // 提现方式数据 - 从API获取
 const withdrawalMethods = ref<any[]>([])
 
-// 页面初始化时加载数据
-onMounted(async () => {
+// 页面显示时加载数据（Tab切换由 OwnerFooter 统一管理）
+onShow(async () => {
   await Promise.all([
     loadRevenueDetails(),
     loadWithdrawalMethods(),
     loadWithdrawalRecords(),
     ownerStore.loadOwnerData(), // 确保收益数据是最新的
+  ])
+})
+
+// 首次加载时也执行一次
+onMounted(async () => {
+  await Promise.all([
+    loadRevenueDetails(),
+    loadWithdrawalMethods(),
+    loadWithdrawalRecords(),
   ])
 })
 
@@ -774,9 +778,18 @@ async function loadWithdrawalRecords() {
           <!-- 提现单号和状态 -->
           <view class="border-b border-gray-100 bg-gray-50/50 px-[24rpx] py-[16rpx]">
             <view class="flex items-center justify-between">
-              <text class="text-[24rpx] text-gray-600">
-                {{ record.withdrawalNo }}
-              </text>
+              <view class="flex items-center space-x-[12rpx]">
+                <text class="text-[24rpx] text-gray-600">
+                  {{ record.withdrawalNo }}
+                </text>
+                <!-- 🆕 自动分账标识 -->
+                <text
+                  v-if="record.withdrawalType === 'auto_profit_sharing'"
+                  class="rounded-full bg-purple-100 px-[12rpx] py-[4rpx] text-[18rpx] text-purple-600"
+                >
+                  自动分账
+                </text>
+              </view>
               <text
                 class="rounded-full px-[16rpx] py-[6rpx] text-[20rpx] font-medium"
                 :class="getWithdrawalStatusStyle(record.status)"
@@ -789,16 +802,17 @@ async function loadWithdrawalRecords() {
           <!-- 提现详情 -->
           <view class="p-[24rpx] space-y-[16rpx]">
             <!-- 金额信息 -->
-            <view class="rounded-lg bg-blue-50/50 p-[16rpx]">
+            <view class="rounded-lg p-[16rpx]" :class="record.withdrawalType === 'auto_profit_sharing' ? 'bg-purple-50/50' : 'bg-blue-50/50'">
               <view class="mb-[8rpx] flex items-center justify-between">
                 <text class="text-[24rpx] text-gray-600">
-                  提现金额
+                  {{ record.withdrawalType === 'auto_profit_sharing' ? '分账金额' : '提现金额' }}
                 </text>
-                <text class="text-[28rpx] text-blue-600 font-semibold">
+                <text class="text-[28rpx] font-semibold" :class="record.withdrawalType === 'auto_profit_sharing' ? 'text-purple-600' : 'text-blue-600'">
                   ¥{{ record.amount.toFixed(2) }}
                 </text>
               </view>
-              <view class="mb-[8rpx] flex items-center justify-between">
+              <!-- 手续费 (仅手动提现显示) -->
+              <view v-if="record.withdrawalType !== 'auto_profit_sharing' && record.fee > 0" class="mb-[8rpx] flex items-center justify-between">
                 <text class="text-[24rpx] text-gray-600">
                   手续费
                 </text>
@@ -814,10 +828,22 @@ async function loadWithdrawalRecords() {
                   ¥{{ record.actualAmount.toFixed(2) }}
                 </text>
               </view>
+              <!-- 🆕 自动分账附加信息 -->
+              <view v-if="record.withdrawalType === 'auto_profit_sharing'" class="mt-[12rpx] border-t border-purple-100 pt-[12rpx]">
+                <view class="flex items-center space-x-[8rpx]">
+                  <text class="i-material-symbols-check-circle text-[18rpx] text-purple-600" />
+                  <text class="text-[20rpx] text-purple-600">
+                    系统自动分账，无手续费
+                  </text>
+                </view>
+              </view>
             </view>
 
-            <!-- 提现方式信息 -->
-            <view class="flex items-center justify-between">
+            <!-- 提现方式信息 (手动提现才显示) -->
+            <view
+              v-if="record.withdrawalType !== 'auto_profit_sharing'"
+              class="flex items-center justify-between"
+            >
               <text class="text-[24rpx] text-gray-600">
                 {{ getWithdrawalMethodLabel(record) }}
               </text>
@@ -826,11 +852,27 @@ async function loadWithdrawalRecords() {
               </text>
             </view>
 
+            <!-- 🆕 自动分账说明 (仅自动分账显示) -->
+            <view
+              v-if="record.withdrawalType === 'auto_profit_sharing' && record.remark"
+              class="rounded-lg bg-purple-50 p-[16rpx]"
+            >
+              <view class="mb-[8rpx] flex items-center space-x-[8rpx]">
+                <text class="i-material-symbols-info text-[20rpx] text-purple-600" />
+                <text class="text-[22rpx] text-purple-800 font-medium">
+                  分账说明
+                </text>
+              </view>
+              <text class="text-[20rpx] text-purple-700 leading-relaxed">
+                {{ record.remark }}
+              </text>
+            </view>
+
             <!-- 时间信息 -->
             <view class="space-y-[8rpx]">
               <view class="flex items-center justify-between">
                 <text class="text-[24rpx] text-gray-600">
-                  申请时间
+                  {{ record.withdrawalType === 'auto_profit_sharing' ? '分账时间' : '申请时间' }}
                 </text>
                 <text class="text-[24rpx] text-gray-600">
                   {{ record.applyTime }}
@@ -877,15 +919,15 @@ async function loadWithdrawalRecords() {
           <text class="mb-[16rpx] block text-[26rpx] font-semibold">
             提现金额
           </text>
-          <view class="relative flex">
+          <view class="relative flex items-center">
             <input
               v-model="withdrawalAmount"
-              class="w-full relative z-1 border border-gray-300 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[20rpx] text-[28rpx] placeholder:text-gray-400"
+              class="relative z-1 w-full border border-gray-300 rounded-[12rpx] bg-gray-50 px-[24rpx] py-[20rpx] text-[28rpx] placeholder:text-gray-400"
               placeholder="请输入提现金额"
               type="digit"
             >
             <view
-              class="absolute z-2 right-[16rpx] top-1/2 transform border border-purple-600 rounded-[8rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600 -translate-y-1/2"
+              class="absolute right-[16rpx] z-2 transform border border-purple-600 rounded-[8rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600 -translate-y-1/2"
               @tap="withdrawalAmount = revenueData.balance.toFixed(2)"
             >
               全部

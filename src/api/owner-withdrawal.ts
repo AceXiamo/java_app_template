@@ -26,7 +26,8 @@ export interface OwnerWithdrawalRecord {
   ownerId: number
   withdrawalNo: string
   withdrawalMethodId?: number
-  withdrawalType: string
+  revenueId?: number  // 🆕 关联的收益记录ID（自动分账时使用）
+  withdrawalType: string  // manual手动提现、auto_profit_sharing自动分账、bank银行卡、wechat微信、alipay支付宝
   amount: number
   fee: number
   processingFeeRate?: number
@@ -45,9 +46,14 @@ export interface OwnerWithdrawalRecord {
   bankReferenceNo?: string
   failureReason?: string
   operatorId?: number
-  remark?: string
+  remark?: string  // 🆕 自动分账时包含分账说明
   createTime: string
   updateTime: string
+
+  // 扩展字段（从提现方式关联）
+  methodType?: string
+  methodName?: string
+  accountInfo?: string
 }
 
 /**
@@ -56,7 +62,7 @@ export interface OwnerWithdrawalRecord {
  */
 export function getOwnerWithdrawalMethods(): Promise<BaseRes<OwnerWithdrawalMethod[]>> {
   return request.get({
-    url: `${host}/owner/withdrawal/methods`
+    url: `${host}/owner/withdrawal/methods`,
   })
 }
 
@@ -66,7 +72,7 @@ export function getOwnerWithdrawalMethods(): Promise<BaseRes<OwnerWithdrawalMeth
  */
 export function getOwnerDefaultWithdrawalMethod(): Promise<BaseRes<OwnerWithdrawalMethod>> {
   return request.get({
-    url: `${host}/owner/withdrawal/default-method`
+    url: `${host}/owner/withdrawal/default-method`,
   })
 }
 
@@ -76,7 +82,7 @@ export function getOwnerDefaultWithdrawalMethod(): Promise<BaseRes<OwnerWithdraw
 export function addOwnerWithdrawalMethod(method: Partial<OwnerWithdrawalMethod>): Promise<BaseRes<string>> {
   return request.post({
     url: `${host}/owner/withdrawal/methods`,
-    data: method
+    data: method,
   })
 }
 
@@ -87,7 +93,7 @@ export function addOwnerWithdrawalMethod(method: Partial<OwnerWithdrawalMethod>)
 export function setDefaultWithdrawalMethod(methodId: number): Promise<BaseRes<string>> {
   return request.put({
     url: `${host}/owner/withdrawal/default-method`,
-    params: { methodId }
+    params: { methodId },
   })
 }
 
@@ -98,7 +104,7 @@ export function setDefaultWithdrawalMethod(methodId: number): Promise<BaseRes<st
 export function deleteWithdrawalMethod(methodId: number): Promise<BaseRes<string>> {
   return request.delete({
     url: `${host}/owner/withdrawal/methods`,
-    params: { methodId }
+    params: { methodId },
   })
 }
 
@@ -107,18 +113,18 @@ export function deleteWithdrawalMethod(methodId: number): Promise<BaseRes<string
  * 后端通过 SecurityUtils 自动获取当前用户ID
  */
 export function applyWithdrawal(data: {
-  amount: number;
-  methodId: number;
+  amount: number
+  methodId: number
 }): Promise<BaseRes<{
-  withdrawalId: number;
-  withdrawalNo: string;
-  actualAmount: number;
-  fee: number;
-  estimatedArrivalTime: string;
-}>> {
+    withdrawalId: number
+    withdrawalNo: string
+    actualAmount: number
+    fee: number
+    estimatedArrivalTime: string
+  }>> {
   return request.post({
     url: `${host}/owner/withdrawal/apply`,
-    data
+    data,
   })
 }
 
@@ -128,7 +134,7 @@ export function applyWithdrawal(data: {
  */
 export function getWithdrawalRecords(): Promise<BaseRes<OwnerWithdrawalRecord[]>> {
   return request.get({
-    url: `${host}/owner/withdrawal/records`
+    url: `${host}/owner/withdrawal/records`,
   })
 }
 
@@ -138,7 +144,7 @@ export function getWithdrawalRecords(): Promise<BaseRes<OwnerWithdrawalRecord[]>
  */
 export function getOwnerBalance(): Promise<BaseRes<{ balance: number }>> {
   return request.get({
-    url: `${host}/owner/withdrawal/balance`
+    url: `${host}/owner/withdrawal/balance`,
   })
 }
 
@@ -146,11 +152,11 @@ export function getOwnerBalance(): Promise<BaseRes<{ balance: number }>> {
  * 计算提现手续费
  */
 export function calculateWithdrawalFee(amount: number): Promise<BaseRes<{
-  fee: number;
-  actualAmount: number;
+  fee: number
+  actualAmount: number
 }>> {
   return request.post({
     url: `${host}/owner/withdrawal/calculate-fee`,
-    data: { amount }
+    data: { amount },
   })
 }

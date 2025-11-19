@@ -298,6 +298,11 @@ export interface OrderDetail {
   couponId?: number
   isRenewable?: boolean
 
+  // 合同信息
+  contractSigned?: boolean
+  contractSignTime?: string
+  contractSignature?: string
+
   vehicle: {
     id: number
     name: string

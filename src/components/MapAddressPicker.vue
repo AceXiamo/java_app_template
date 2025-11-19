@@ -13,8 +13,11 @@ const props = withDefaults(defineProps<MapAddressPickerProps>(), {
 const emit = defineEmits<MapAddressPickerEmits>()
 
 // 防抖函数
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: number
   return (...args: Parameters<T>) => {
     clearTimeout(timeout)
     timeout = setTimeout(() => func(...args), wait)
@@ -30,14 +33,17 @@ interface MapAddressPickerProps {
 
 interface MapAddressPickerEmits {
   (e: 'update:visible', visible: boolean): void
-  (e: 'confirm', data: {
-    latitude: number
-    longitude: number
-    address: string
-    formattedAddress: string
-    poiName?: string
-    serviceAreaValidation?: ServiceAreaValidation
-  }): void
+  (
+    e: 'confirm',
+    data: {
+      latitude: number
+      longitude: number
+      address: string
+      formattedAddress: string
+      poiName?: string
+      serviceAreaValidation?: ServiceAreaValidation
+    },
+  ): void
 }
 
 // 当前组件实例
@@ -80,6 +86,8 @@ const searchResults = ref<any[]>([])
 const searchLoading = ref(false)
 const showSearchResults = ref(false)
 const searchInputFocused = ref(false)
+// 搜索面板是否展开
+const searchPanelExpanded = ref(false)
 
 // 服务状态信息
 const serviceStatusInfo = computed(() => {
@@ -129,26 +137,35 @@ const serviceStatusInfo = computed(() => {
 })
 
 // 监听props变化
-watch(() => props.visible, (visible) => {
-  if (visible) {
-    // 重置初始化状态
-    addressInitialized.value = false
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) {
+      // 重置初始化状态
+      addressInitialized.value = false
+      // 重置搜索状态
+      collapseSearchPanel()
 
-    // 如果传入了坐标则使用传入的坐标
-    if (props.latitude && props.longitude) {
-      currentLocation.value = {
-        latitude: props.latitude,
-        longitude: props.longitude,
+      // 如果传入了坐标则使用传入的坐标
+      if (props.latitude && props.longitude) {
+        currentLocation.value = {
+          latitude: props.latitude,
+          longitude: props.longitude,
+        }
+        // 重置地址信息
+        addressInfo.value.formattedAddress = '正在获取地址...'
       }
-      // 重置地址信息
-      addressInfo.value.formattedAddress = '正在获取地址...'
+      else {
+        // 如果没有传入坐标，自动获取当前位置
+        backToCurrentLocation()
+      }
     }
     else {
-      // 如果没有传入坐标，自动获取当前位置
-      backToCurrentLocation()
+      // 关闭时重置搜索状态
+      collapseSearchPanel()
     }
-  }
-})
+  },
+)
 
 // 地图初始化
 function onMapReady() {
@@ -184,7 +201,10 @@ async function getAddressFromLocation() {
   try {
     loading.value = true
 
-    const response: any = await reverseGeocode({ latitude: currentLocation.value.latitude, longitude: currentLocation.value.longitude })
+    const response: any = await reverseGeocode({
+      latitude: currentLocation.value.latitude,
+      longitude: currentLocation.value.longitude,
+    })
 
     if (response.code === 200 && response.data) {
       const addressData = response.data.address
@@ -327,6 +347,7 @@ const debouncedSearchAddress = debounce(async (keyword: string) => {
     if (response.code === 200 && response.data) {
       searchResults.value = response.data
       showSearchResults.value = true
+      console.log('搜索结果:', response.data)
     }
     else {
       searchResults.value = []
@@ -344,37 +365,63 @@ const debouncedSearchAddress = debounce(async (keyword: string) => {
 }, 300)
 
 // 搜索输入变化
-function onSearchInput(value: string) {
+function onSearchInput(e: any) {
+  const value = e.detail?.value || e
   searchKeyword.value = value
+  
+  // 有输入内容时展开面板
+  if (value.trim()) {
+    searchPanelExpanded.value = true
+    // 立即设置为加载状态
+    searchLoading.value = true
+    showSearchResults.value = false
+  }
+  else {
+    // 无内容时收起
+    searchPanelExpanded.value = false
+    showSearchResults.value = false
+  }
+  
   debouncedSearchAddress(value)
 }
 
 // 搜索输入框获得焦点
 function onSearchFocus() {
   searchInputFocused.value = true
-  if (searchKeyword.value.trim() && searchResults.value.length > 0) {
-    showSearchResults.value = true
+  // 如果有内容就展开，否则点击时不展开
+  if (searchKeyword.value.trim()) {
+    searchPanelExpanded.value = true
   }
 }
 
 // 搜索输入框失去焦点
 function onSearchBlur() {
-  searchInputFocused.value = false
-  // 延迟隐藏搜索结果，以便用户可以点击搜索结果
+  // 延迟处理，给点击事件足够时间执行
   setTimeout(() => {
-    if (!searchInputFocused.value) {
-      showSearchResults.value = false
-    }
-  }, 200)
+    searchInputFocused.value = false
+  }, 300)
+}
+
+// 收起搜索面板
+function collapseSearchPanel() {
+  searchPanelExpanded.value = false
+  searchInputFocused.value = false
+  searchKeyword.value = ''
+  searchResults.value = []
+  showSearchResults.value = false
 }
 
 // 选择搜索结果
 function selectSearchResult(result: any) {
+  console.log('选择搜索结果:', result)
+  
   const locationCoords = result.location.split(',')
   const longitude = Number.parseFloat(locationCoords[0])
   const latitude = Number.parseFloat(locationCoords[1])
 
-  // 更新当前位置
+  console.log('解析坐标:', { latitude, longitude })
+
+  // 更新当前位置（这会触发地图重新渲染到新坐标）
   currentLocation.value = {
     latitude,
     longitude,
@@ -391,24 +438,18 @@ function selectSearchResult(result: any) {
     streetName: result.street?.join(',') || '',
   }
 
-  // 移动地图到选中位置
-  if (mapContext.value) {
-    mapContext.value.moveToLocation({
-      latitude,
-      longitude,
-    })
-  }
+  console.log('地图中心点已更新:', currentLocation.value)
 
-  // 清空搜索
-  searchKeyword.value = ''
-  searchResults.value = []
-  showSearchResults.value = false
+  // 收起搜索面板（延迟一下让用户看到地址更新）
+  setTimeout(() => {
+    collapseSearchPanel()
+  }, 100)
 
   // 获取详细地址信息和服务区域验证
   getAddressFromLocation()
 }
 
-// 清空搜索
+// 清空搜索输入
 function clearSearch() {
   searchKeyword.value = ''
   searchResults.value = []
@@ -458,158 +499,223 @@ function getLocationPath(result: any): string {
 </script>
 
 <template>
-  <BottomDrawer
-    :visible="visible"
-    :title="title"
-    @update:visible="handleClose"
-  >
-    <view class="h-max flex flex-col pt-[30rpx]">
-      <!-- 搜索框 -->
-      <view class="relative mb-[24rpx]">
+  <BottomDrawer :visible="visible" :title="title" @update:visible="handleClose">
+    <view class="relative flex h-max flex-col">
+      <!-- 搜索框（固定在顶部） -->
+      <view class="relative z-30 bg-white pb-[24rpx] pt-[30rpx]">
         <view class="relative flex items-center">
           <input
             v-model="searchKeyword"
-            class="w-full border border-gray-200 rounded-[16rpx] border-solid bg-white px-[48rpx] py-[24rpx] text-[28rpx] focus:border-purple-600 placeholder-gray-400"
+            class="w-full border border-gray-200 rounded-[16rpx] border-solid bg-white px-[48rpx] py-[24rpx] text-[28rpx] placeholder-gray-400 transition-all"
+            :class="searchPanelExpanded ? 'border-purple-600 shadow-sm' : ''"
             placeholder="搜索地址、建筑或地标"
-            @input="onSearchInput($event.detail.value)"
+            @input="onSearchInput"
             @focus="onSearchFocus"
             @blur="onSearchBlur"
           >
+
           <!-- 搜索图标 -->
           <view class="absolute left-[16rpx]">
             <text class="i-material-symbols-search text-[24rpx] text-gray-400" />
           </view>
+
           <!-- 清空按钮 -->
           <view
             v-if="searchKeyword"
-            class="absolute right-[16rpx] h-[32rpx] w-[32rpx] flex items-center justify-center rounded-full bg-gray-300"
-            @tap="clearSearch"
+            class="absolute right-[16rpx] z-10 h-[32rpx] w-[32rpx] flex items-center justify-center rounded-full bg-gray-300 active:scale-90"
+            @tap.stop="clearSearch"
           >
             <text class="i-material-symbols-close text-[20rpx] text-white" />
           </view>
+
           <!-- 加载指示器 -->
-          <view
-            v-if="searchLoading"
-            class="absolute right-[16rpx]"
-          >
-            <view class="h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full" />
+          <view v-if="searchLoading && !searchKeyword" class="absolute right-[16rpx]">
+            <view
+              class="h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full"
+            />
           </view>
         </view>
+      </view>
 
-        <!-- 搜索结果列表 -->
-        <view
-          v-if="showSearchResults && searchResults.length > 0"
-          class="absolute top-full z-10 mt-[8rpx] max-h-[400rpx] w-full overflow-y-auto border border-gray-200 rounded-[16rpx] bg-white shadow-lg"
-        >
-          <view
-            v-for="(result, index) in searchResults"
-            :key="index"
-            class="border-b border-gray-100 p-[24rpx] transition-colors last:border-b-0 active:bg-gray-50"
-            @tap="selectSearchResult(result)"
-          >
-            <view class="flex items-start">
-              <!-- 位置图标 -->
-              <view class="mr-[16rpx] mt-[4rpx] flex-shrink-0">
-                <view class="h-[32rpx] w-[32rpx] flex items-center justify-center rounded-full bg-purple-100">
-                  <text class="i-material-symbols-location-on text-[20rpx] text-purple-600" />
-                </view>
-              </view>
+      <!-- 内容区域：地图 + 搜索结果浮层 -->
+      <view class="relative">
+        <!-- 地图容器（固定高度） -->
+        <view class="relative h-[500rpx] overflow-hidden rounded-[16rpx] flex items-center justify-center">
+          <map
+            id="addressPickerMap"
+            class="h-full w-full"
+            :latitude="currentLocation.latitude"
+            :longitude="currentLocation.longitude"
+            @updated="onMapReady"
+            @regionchange="onMapMove"
+          />
 
-              <!-- 地址信息 -->
-              <view class="min-w-0 flex-1">
-                <!-- 主要地址名称 -->
-                <text class="block text-[28rpx] text-black font-medium leading-[40rpx]">
-                  {{ result.formatted_address }}
-                </text>
+          <!-- 中心点标记 -->
+          <view class="absolute transform -translate-y-1/2">
+            <view class="relative flex justify-center -translate-y-full">
+              <!-- 定位图标 -->
+              <view
+                class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg"
+              />
+              <!-- 定位线 -->
+              <view
+                class="absolute top-[48rpx] h-[32rpx] w-[2rpx] transform bg-purple-600"
+              />
+            </view>
+          </view>
 
-                <!-- 地理层级信息 -->
-                <view class="mt-[8rpx] flex flex-wrap items-center gap-[8rpx]">
-                  <!-- 地点类型标签 -->
-                  <view
-                    v-if="result.level"
-                    class="flex rounded-[8rpx] bg-blue-50 px-[12rpx] py-[2rpx]"
-                  >
-                    <text class="text-[20rpx] text-blue-600 font-medium">
-                      {{ getLevelText(result.level) }}
-                    </text>
-                  </view>
-
-                  <!-- 地址路径 -->
-                  <text class="text-[22rpx] text-gray-500">
-                    {{ getLocationPath(result) }}
-                  </text>
-                </view>
-              </view>
-
-              <!-- 选择箭头 -->
-              <view class="ml-[8rpx] flex-shrink-0 self-center">
-                <text class="i-material-symbols-chevron-right text-[24rpx] text-gray-400" />
-              </view>
+          <!-- 回到当前位置按钮 -->
+          <view class="absolute bottom-[24rpx] right-[24rpx]">
+            <view
+              class="h-[80rpx] w-[80rpx] flex items-center justify-center rounded-full bg-white shadow-lg active:scale-90"
+              @tap="backToCurrentLocation"
+            >
+              <text
+                class="i-material-symbols-my-location translate-x-[1px] text-[32rpx] text-purple-600"
+              />
             </view>
           </view>
         </view>
 
-        <!-- 无搜索结果提示 -->
+        <!-- 搜索结果浮层（覆盖在地图上方） -->
         <view
-          v-if="showSearchResults && searchResults.length === 0 && !searchLoading && searchKeyword.trim()"
-          class="absolute top-full z-10 mt-[8rpx] w-full border border-gray-200 rounded-[16rpx] bg-white p-[48rpx] text-center shadow-lg"
+          class="absolute left-0 right-0 top-0 z-20 overflow-hidden rounded-[16rpx] bg-white shadow-lg transition-all duration-300 ease-out"
+          :class="searchPanelExpanded ? 'translate-y-0 opacity-100' : '-translate-y-[20rpx] opacity-0 pointer-events-none'"
+          :style="{
+            maxHeight: searchPanelExpanded ? '500rpx' : '0',
+          }"
+          @tap.stop
         >
-          <text class="i-material-symbols-search-off mb-[16rpx] block text-[48rpx] text-gray-300" />
-          <text class="text-[26rpx] text-gray-500">
-            未找到相关地址
-          </text>
-          <text class="mt-[8rpx] block text-[22rpx] text-gray-400">
-            试试其他关键词
-          </text>
-        </view>
-      </view>
-
-      <!-- 地图容器 -->
-      <view class="relative h-[500rpx] flex justify-center items-center">
-        <map
-          id="addressPickerMap"
-          class="h-full w-full"
-          :latitude="currentLocation.latitude"
-          :longitude="currentLocation.longitude"
-          @updated="onMapReady"
-          @regionchange="onMapMove"
-        />
-
-        <!-- 中心点标记 -->
-        <view class="absolute transform -translate-y-1/2">
-          <view class="relative flex justify-center -translate-y-full">
-            <!-- 定位图标 -->
-            <view class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg" />
-            <!-- 定位线 -->
-            <view class="absolute top-[48rpx] h-[32rpx] w-[2rpx] transform bg-purple-600" />
-          </view>
-        </view>
-
-        <!-- 回到当前位置按钮 -->
-        <view class="absolute bottom-[24rpx] right-[24rpx]">
+          <!-- 搜索加载中 -->
           <view
-            class="h-[80rpx] w-[80rpx] flex items-center justify-center rounded-full bg-white shadow-lg"
-            @tap="backToCurrentLocation"
+            v-show="searchLoading && searchKeyword.trim()"
+            class="flex flex-col items-center justify-center py-[100rpx]"
           >
-            <text class="i-material-symbols-my-location translate-x-[1px] text-[32rpx] text-purple-600" />
+            <view
+              class="mb-[16rpx] h-[40rpx] w-[40rpx] animate-spin border-4 border-gray-200 border-t-purple-600 rounded-full"
+            />
+            <text class="text-[26rpx] text-gray-500">
+              搜索中...
+            </text>
+          </view>
+
+          <!-- 搜索结果列表 -->
+          <scroll-view
+            v-show="showSearchResults && searchResults.length > 0 && !searchLoading"
+            scroll-y
+            class="max-h-[440rpx]"
+          >
+            <view
+              v-for="(result, index) in searchResults"
+              :key="index"
+              class="mx-[30rpx] border-b border-gray-100 py-[20rpx] transition-colors last:border-b-0 active:bg-gray-50"
+              @tap.stop="selectSearchResult(result)"
+            >
+              <view class="flex items-start">
+                <!-- 位置图标 -->
+                <view class="mr-[12rpx] mt-[2rpx] flex-shrink-0">
+                  <view
+                    class="h-[36rpx] w-[36rpx] flex items-center justify-center rounded-full bg-purple-50"
+                  >
+                    <text
+                      class="i-material-symbols-location-on text-[20rpx] text-purple-600"
+                    />
+                  </view>
+                </view>
+
+                <!-- 地址信息 -->
+                <view class="min-w-0 flex-1">
+                  <!-- 主要地址名称 -->
+                  <text
+                    class="block text-[28rpx] text-black font-medium leading-[40rpx]"
+                  >
+                    {{ result.formatted_address }}
+                  </text>
+
+                  <!-- 地理层级信息 -->
+                  <view class="mt-[4rpx] flex flex-wrap items-center gap-[8rpx]">
+                    <!-- 地点类型标签 -->
+                    <view
+                      v-if="result.level"
+                      class="flex rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx]"
+                    >
+                      <text class="text-[20rpx] text-blue-600">
+                        {{ getLevelText(result.level) }}
+                      </text>
+                    </view>
+
+                    <!-- 地址路径 -->
+                    <text class="text-[22rpx] text-gray-400">
+                      {{ getLocationPath(result) }}
+                    </text>
+                  </view>
+                </view>
+
+                <!-- 选择箭头 -->
+                <view class="ml-[8rpx] flex-shrink-0 self-center">
+                  <text
+                    class="i-material-symbols-chevron-right text-[24rpx] text-gray-300"
+                  />
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+
+          <!-- 无搜索结果提示 -->
+          <view
+            v-show="
+              showSearchResults
+                && searchResults.length === 0
+                && !searchLoading
+                && searchKeyword.trim()
+            "
+            class="flex flex-col items-center justify-center py-[100rpx]"
+          >
+            <text
+              class="i-material-symbols-search-off mb-[16rpx] block text-[64rpx] text-gray-300"
+            />
+            <text class="text-[26rpx] text-gray-500">
+              未找到相关地址
+            </text>
+            <text class="mt-[8rpx] block text-[22rpx] text-gray-400">
+              试试其他关键词
+            </text>
+          </view>
+
+          <!-- 收起按钮 -->
+          <view
+            v-show="searchPanelExpanded"
+            class="border-t border-gray-100 bg-white py-[16rpx] text-center"
+            @tap="collapseSearchPanel"
+          >
+            <view class="inline-flex items-center gap-[8rpx] active:opacity-70">
+              <text class="text-[24rpx] text-gray-500">收起</text>
+              <text class="i-material-symbols-keyboard-arrow-up text-[24rpx] text-gray-500" />
+            </view>
           </view>
         </view>
       </view>
 
       <!-- 地址信息面板 -->
-      <view class="border-t border-gray-100 bg-white p-[24rpx]">
+      <view class="border-t border-gray-100 bg-white py-[24rpx]">
         <!-- 地址显示 -->
         <view class="mb-[24rpx]">
           <view class="mb-[8rpx] flex items-center">
-            <text class="i-material-symbols-location-on mr-[8rpx] text-[24rpx] text-purple-600" />
+            <text
+              class="i-material-symbols-location-on mr-[8rpx] text-[24rpx] text-purple-600"
+            />
             <text class="text-[24rpx] text-gray-600">
               选中位置
             </text>
           </view>
 
-          <view class="box-border min-h-[120rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]">
+          <view
+            class="box-border min-h-[120rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]"
+          >
             <view v-if="loading" class="flex items-center">
-              <view class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full" />
+              <view
+                class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full"
+              />
               <text class="text-[26rpx] text-gray-600">
                 正在获取地址...
               </text>
@@ -620,7 +726,13 @@ function getLocationPath(result: any): string {
                 {{ addressInfo.poiName || addressInfo.formattedAddress }}
               </text>
 
-              <view v-if="addressInfo.poiName && addressInfo.streetName !== addressInfo.poiName" class="mt-[8rpx]">
+              <view
+                v-if="
+                  addressInfo.poiName
+                    && addressInfo.streetName !== addressInfo.poiName
+                "
+                class="mt-[8rpx]"
+              >
                 <text class="text-[24rpx] text-gray-500 leading-[32rpx]">
                   {{ addressInfo.streetName }}
                 </text>
@@ -632,15 +744,26 @@ function getLocationPath(result: any): string {
         <!-- 服务状态显示 -->
         <view class="mb-[24rpx] flex items-center justify-between">
           <view class="flex items-center">
-            <text class="i-material-symbols:verified mr-[8rpx] text-[24rpx] text-purple-600" />
+            <text
+              class="i-material-symbols:verified mr-[8rpx] text-[24rpx] text-purple-600"
+            />
             <text class="text-[24rpx] text-gray-600">
               服务状态
             </text>
           </view>
 
-          <view class="flex items-center rounded-[12rpx] px-[12rpx] py-[6rpx]" :class="serviceStatusInfo.bgColor">
-            <view class="mr-[6rpx] text-[20rpx]" :class="`${serviceStatusInfo.icon} ${serviceStatusInfo.color}`" />
-            <text class="text-[22rpx] font-medium" :class="serviceStatusInfo.color">
+          <view
+            class="flex items-center rounded-[12rpx] px-[12rpx] py-[6rpx]"
+            :class="serviceStatusInfo.bgColor"
+          >
+            <view
+              class="mr-[6rpx] text-[20rpx]"
+              :class="`${serviceStatusInfo.icon} ${serviceStatusInfo.color}`"
+            />
+            <text
+              class="text-[22rpx] font-medium"
+              :class="serviceStatusInfo.color"
+            >
               {{ serviceStatusInfo.text }}
             </text>
           </view>
@@ -649,14 +772,18 @@ function getLocationPath(result: any): string {
         <!-- 确认按钮 -->
         <view
           class="w-full rounded-[16rpx] py-[24rpx] text-center text-[28rpx] font-medium"
-          :class="loading || confirming
-            ? 'bg-gray-300 text-gray-500'
-            : 'bg-purple-600 text-white shadow-sm'"
+          :class="
+            loading || confirming
+              ? 'bg-gray-300 text-gray-500'
+              : 'bg-purple-600 text-white shadow-sm'
+          "
           :disabled="loading || confirming"
           @tap="handleConfirm"
         >
           <view v-if="confirming" class="flex items-center justify-center">
-            <view class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-400 border-t-white rounded-full" />
+            <view
+              class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-400 border-t-white rounded-full"
+            />
             <text>确认中...</text>
           </view>
           <text v-else>

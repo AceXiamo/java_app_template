@@ -167,6 +167,8 @@ async function searchVehicleList(isLoadMore = false) {
       total.value = 0 // 重置总数
     }
 
+    // delete keywords
+    delete searchParams.value.keywords
     const response = await searchVehicles(searchParams.value)
 
     if (response.code === 200 && response.data) {
@@ -460,6 +462,16 @@ function getVehicleDistance(vehicle: Vehicle): string {
   }
   return `${distance.toFixed(1)}km`
 }
+
+// 格式化租用结束时间
+function formatRentalEndTime(endTime: string): string {
+  const end = new Date(endTime)
+  const month = end.getMonth() + 1
+  const day = end.getDate()
+  const hour = end.getHours().toString().padStart(2, '0')
+  const minute = end.getMinutes().toString().padStart(2, '0')
+  return `${month}月${day}日 ${hour}:${minute}`
+}
 </script>
 
 <template>
@@ -587,6 +599,14 @@ function getVehicleDistance(vehicle: Vehicle): string {
             <!-- 车辆图片 -->
             <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
               <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[28rpx]" />
+              <!-- 租用中标识（左上角） -->
+              <view
+                v-if="vehicle.rentalInfo"
+                class="absolute top-[12rpx] left-[12rpx] flex items-center rounded-full bg-red-500/90 px-[12rpx] py-[4rpx]"
+              >
+                <text class="i-material-symbols-schedule mr-[4rpx] text-[20rpx] text-white" />
+                <text class="text-[20rpx] text-white font-medium">租用中</text>
+              </view>
               <!-- 距离信息（右下角，真实距离） -->
               <view class="absolute bottom-[12rpx] right-[12rpx] flex items-center rounded-full bg-white/80 px-[12rpx] py-[4rpx]">
                 <text class="i-material-symbols-location-on mr-[4rpx] text-[20rpx] text-purple-500" />
@@ -637,7 +657,18 @@ function getVehicleDistance(vehicle: Vehicle): string {
             </view>
           </view>
           <!-- 标签栏（图片和价格栏之间，换行展示） -->
-          <view v-if="vehicle.tags && vehicle.tags.length" class="flex flex-row flex-wrap gap-[8rpx] px-[20rpx] pt-[16rpx]">
+          <view v-if="(vehicle.tags && vehicle.tags.length) || vehicle.rentalInfo" class="flex flex-row flex-wrap gap-[8rpx] px-[20rpx] pt-[16rpx]">
+            <!-- 租期信息标签 -->
+            <view
+              v-if="vehicle.rentalInfo"
+              class="flex items-center rounded-[16rpx] bg-orange-50 border border-orange-200 px-[12rpx] py-[4rpx]"
+            >
+              <text class="i-material-symbols-event mr-[6rpx] text-[18rpx] text-orange-600" />
+              <text class="text-[18rpx] text-orange-700 font-medium">
+                租至 {{ formatRentalEndTime(vehicle.rentalInfo.endTime) }}
+              </text>
+            </view>
+            <!-- 原有标签 -->
             <template v-for="tag in vehicle.tags" :key="tag.tagName">
               <!-- 图片标签：直接展示完整的UI设计图片 -->
               <image
@@ -696,10 +727,19 @@ function getVehicleDistance(vehicle: Vehicle): string {
             </view>
 
             <!-- 快速预订按钮 -->
-            <view class="flex rounded-[20rpx] from-purple-500 to-purple-400 bg-gradient-to-r px-[24rpx] py-[12rpx]" @tap="quickBook(vehicle.vehicleId)">
-              <text class="i-material-symbols-bolt mr-[8rpx] text-[24rpx] text-white" />
+            <view
+              class="flex rounded-[20rpx] px-[24rpx] py-[12rpx]"
+              :class="vehicle.rentalInfo
+                ? 'bg-gray-300'
+                : 'from-purple-500 to-purple-400 bg-gradient-to-r'"
+              @tap="vehicle.rentalInfo ? null : quickBook(vehicle.vehicleId)"
+            >
+              <text
+                :class="vehicle.rentalInfo ? 'i-material-symbols-block' : 'i-material-symbols-bolt'"
+                class="mr-[8rpx] text-[24rpx] text-white"
+              />
               <text class="text-[24rpx] text-white font-medium">
-                立即预订
+                {{ vehicle.rentalInfo ? '租用中' : '立即预订' }}
               </text>
             </view>
           </view>

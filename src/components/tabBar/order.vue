@@ -308,6 +308,10 @@ function handleOrderAction(actionType: string, orderId: string, orderNumber?: st
     case 'review':
       rateOrder(orderId)
       break
+    case 'viewReview':
+      // 已完成评价，显示提示
+      uni.showToast({ title: '已完成评价', icon: 'success' })
+      break
     case 'rebook':
       reOrder(orderId)
       break
@@ -315,7 +319,7 @@ function handleOrderAction(actionType: string, orderId: string, orderNumber?: st
       viewDetail(orderId)
       break
     default:
-      uni.showToast({ title: '操作暂未实现', icon: 'none' })
+      // uni.showToast({ title: '操作暂未实现', icon: 'none' })
   }
 }
 

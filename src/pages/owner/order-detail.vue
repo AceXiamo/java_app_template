@@ -195,7 +195,7 @@ async function confirmCompletion() {
     const result = await new Promise<boolean>((resolve) => {
       uni.showModal({
         title: '确认订单完成',
-        content: `确认订单 ${orderDetail.value.order_no} 已完成？完成后车辆将进入维护状态。`,
+        content: `确认订单 ${orderDetail.value.order_no} 已完成？`,
         confirmText: '确认完成',
         cancelText: '取消',
         success: (res) => {

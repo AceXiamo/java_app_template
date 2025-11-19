@@ -3,7 +3,7 @@ import { nextTick, onMounted, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import HeadBar from '@/components/HeadBar.vue'
 import { uploadFileToOss } from '@/utils/alioss'
-import { submitContractSignature } from '@/api/owner-orders'
+import { getContractTemplate, submitContractSignature } from '@/api/owner-orders'
 
 // 页面参数
 interface ContractSignParams {
@@ -58,18 +58,26 @@ async function loadContractTemplate() {
   try {
     loading.value = true
 
-    // TODO: 调用API获取合同模板
-    // const response = await getContractTemplate({
-    //   orderId: pageParams.value.orderId
-    // })
+    // 调用API获取合同模板
+    const response = await getContractTemplate()
+    console.log(response)
 
-    // 模拟数据
-    contractInfo.templateImages = [
-      'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800',
-      'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
-    ]
+    if (response.code === 200 && response.data) {
+      contractInfo.templateImages = response.data.templateImages || []
 
+      // 如果没有模板图片，显示提示信息
+      if (contractInfo.templateImages.length === 0) {
+        uni.showToast({
+          title: response.data.message || '暂无合同模板',
+          icon: 'none',
+        })
+      }
+    }
+    else {
+      throw new Error(response.msg || '获取合同模板失败')
+    }
+
+    // 设置订单信息（这里可以根据需要调用订单详情API）
     contractInfo.orderInfo = {
       orderNo: pageParams.value.orderNo,
       vehicleName: '特斯拉 Model 3',
@@ -82,9 +90,12 @@ async function loadContractTemplate() {
   catch (error) {
     console.error('加载合同模板失败:', error)
     uni.showToast({
-      title: '加载合同失败',
+      title: error instanceof Error ? error.message : '加载合同失败',
       icon: 'none',
     })
+
+    // 发生错误时使用空数组
+    contractInfo.templateImages = []
   }
   finally {
     loading.value = false
@@ -295,7 +306,7 @@ function goBack() {
         <view class="absolute left-[20rpx] flex items-center" @tap="goBack">
           <text class="i-material-symbols-arrow-back text-[32rpx] text-gray-700" />
         </view>
-        <text class="absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold pointer-events-none">
+        <text class="pointer-events-none absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
           签署合同
         </text>
       </view>

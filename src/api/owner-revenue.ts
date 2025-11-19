@@ -64,6 +64,21 @@ export interface OwnerRevenueRecord {
   licensePlate?: string
   userNickname?: string
   userPhone?: string
+  packageType?: string
+  remark?: string
+
+  // 分账相关字段
+  profitSharingStatus?: string  // pending, processing, success, failed, not_required
+  profitSharingTime?: string
+  profitSharingOrderNo?: string
+  profitSharingReceiverOpenid?: string
+  profitSharingAmount?: number  // 实际分账金额（受30%限制）
+  remainingWithdrawalAmount?: number  // 🆕 剩余待提现金额
+  profitSharingFailureReason?: string
+  profitSharingRetryCount?: number
+  profitSharingMode?: string  // auto, manual, immediate
+  expectedSharingDate?: string
+  paymentOrderNo?: string
 }
 
 // 收益查询参数接口

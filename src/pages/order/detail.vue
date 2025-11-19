@@ -148,6 +148,15 @@ function contactService() {
 
 // 签署合同
 function signContract() {
+  // 检查合同是否已签署
+  if (orderDetail.value.contractSigned) {
+    uni.showToast({
+      title: '合同已签署',
+      icon: 'none',
+    })
+    return
+  }
+
   if (!orderDetail.value.id) {
     uni.showToast({
       title: '订单信息错误',
@@ -155,7 +164,7 @@ function signContract() {
     })
     return
   }
-  
+
   uni.navigateTo({
     url: `/pages/contract/sign?orderId=${orderDetail.value.id}&orderNo=${orderDetail.value.orderNumber}`,
   })
@@ -531,8 +540,8 @@ onUnmounted(() => {
             </view>
           </view>
 
-          <!-- 合同签署提示 (paid状态显示) -->
-          <view v-if="['paid', 'picked'].includes(orderDetail.status)" class="mt-[24rpx] rounded-[16rpx] bg-blue-50 p-[24rpx]">
+          <!-- 合同签署提示 (未签署状态) -->
+          <view v-if="['paid', 'picked'].includes(orderDetail.status) && !orderDetail.contractSigned" class="mt-[24rpx] rounded-[16rpx] bg-blue-50 p-[24rpx]">
             <view class="flex items-center justify-between">
               <view class="flex items-center">
                 <text class="i-material-symbols-contract-edit mr-[8rpx] text-[24rpx] text-blue-600" />
@@ -552,6 +561,29 @@ onUnmounted(() => {
             <text class="mt-[8rpx] text-[20rpx] text-blue-700">
               为保障双方权益，请及时签署租车合同
             </text>
+          </view>
+
+          <!-- 合同已签署状态 -->
+          <view v-if="['paid', 'picked', 'returned', 'completed'].includes(orderDetail.status) && orderDetail.contractSigned" class="mt-[24rpx] rounded-[16rpx] bg-green-50 p-[24rpx]">
+            <view class="flex items-center justify-between">
+              <view class="flex items-center">
+                <text class="i-material-symbols-check-circle mr-[8rpx] text-[24rpx] text-green-600" />
+                <text class="text-[26rpx] text-green-800 font-medium">
+                  电子合同已签署
+                </text>
+              </view>
+              <view class="rounded-[12rpx] bg-green-600 px-[20rpx] py-[8rpx] flex">
+                <text class="text-[22rpx] text-white font-medium">
+                  已完成
+                </text>
+              </view>
+            </view>
+            <view v-if="orderDetail.contractSignTime" class="mt-[8rpx] flex items-center">
+              <text class="i-material-symbols-schedule mr-[4rpx] text-[18rpx] text-green-600" />
+              <text class="text-[20rpx] text-green-700">
+                签署时间：{{ orderDetail.contractSignTime }}
+              </text>
+            </view>
           </view>
 
           <!-- 待支付提示 -->

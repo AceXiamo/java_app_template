@@ -43,6 +43,13 @@ export interface Vehicle {
   maxDeliveryDistance: number
   operationType: 'platform' | 'owner' // platform: 平台自营, owner: 车主优选
   ownerNickname?: string // 车主昵称（仅当operationType为owner时有值）
+  // 租用信息（仅当车辆租用中时有值）
+  rentalInfo?: {
+    orderId: number
+    orderNo: string
+    startTime: string
+    endTime: string
+  }
 }
 
 export interface VehicleSearchParams {

@@ -114,26 +114,39 @@ function changeMonth(direction: 'prev' | 'next') {
 function selectDate(date: string) {
   const dayInfo = calendarDays.value.find(d => d.date === date)
 
-  // 过去的日期或非本月日期不可选择
-  if (!dayInfo || dayInfo.isPast || !dayInfo.isCurrentMonth) {
+  // 只有过去的日期不可选择
+  if (!dayInfo || dayInfo.isPast) {
     return
   }
 
-  if (selectionMode.value === 'start') {
+  // 如果没有选择任何日期，设为开始日期
+  if (!selectedStartDate.value && !selectedEndDate.value) {
     selectedStartDate.value = date
-    selectedEndDate.value = ''
-    selectionMode.value = 'end'
+    return
   }
-  else {
-    if (dayjs(date).isBefore(dayjs(selectedStartDate.value))) {
+
+  // 如果只选择了开始日期
+  if (selectedStartDate.value && !selectedEndDate.value) {
+    const clickedDate = dayjs(date)
+    const startDate = dayjs(selectedStartDate.value)
+
+    if (clickedDate.isBefore(startDate)) {
+      // 点击的日期更早，将其设为开始日期，原开始日期变为结束日期
+      selectedEndDate.value = selectedStartDate.value
       selectedStartDate.value = date
-      selectedEndDate.value = ''
-      selectionMode.value = 'end'
     }
     else {
+      // 点击的日期更晚，设为结束日期
       selectedEndDate.value = date
     }
-    selectionMode.value = 'start'
+    return
+  }
+
+  // 如果两个日期都已选择，重置并开始新的选择
+  if (selectedStartDate.value && selectedEndDate.value) {
+    selectedStartDate.value = date
+    selectedEndDate.value = ''
+    return
   }
 }
 
@@ -152,7 +165,7 @@ function getDateStatus(date: string) {
 function getDateButtonClass(dayInfo: any) {
   const status = getDateStatus(dayInfo.date)
 
-  // 非本月或过去的日期 - 置灰且禁用
+  // 过去的日期 - 置灰且禁用
   if (dayInfo.isPast) {
     return 'bg-transparent text-gray-300 cursor-not-allowed'
   }
@@ -165,6 +178,11 @@ function getDateButtonClass(dayInfo: any) {
   // 范围内的日期 - 浅紫色背景
   if (status.isInRange) {
     return 'bg-purple-50 text-purple-600'
+  }
+
+  // 非当前月份的日期 - 浅灰色文字
+  if (!dayInfo.isCurrentMonth) {
+    return 'text-gray-400 hover:bg-gray-50'
   }
 
   // 今天且未选中 - 白色背景紫色边框
@@ -183,6 +201,15 @@ function handleClose() {
 
 // 确认选择
 function handleConfirm() {
+  // 验证是否选择了完整的日期
+  if (!selectedStartDate.value || !selectedEndDate.value) {
+    uni.showToast({
+      title: '请选择完整的时间段',
+      icon: 'none',
+    })
+    return
+  }
+
   const startDateTime = `${selectedStartDate.value} ${selectedStartTime.value}`
   const endDateTime = `${selectedEndDate.value} ${selectedEndTime.value}`
 
@@ -273,8 +300,11 @@ function handleConfirm() {
             <text class="mb-[4rpx] block text-center text-[24rpx] text-gray-900 font-medium">
               取车时间
             </text>
-            <text class="mb-[16rpx] block text-center text-[20rpx] text-gray-500">
+            <text v-if="selectedStartDate" class="mb-[16rpx] block text-center text-[20rpx] text-gray-500">
               {{ dayjs(selectedStartDate).format('MM月DD日') }}
+            </text>
+            <text v-else class="mb-[16rpx] block text-center text-[20rpx] text-gray-400">
+              请选择日期
             </text>
             <picker
               mode="selector"
@@ -297,8 +327,11 @@ function handleConfirm() {
             <text class="mb-[4rpx] block text-center text-[24rpx] text-gray-900 font-medium">
               还车时间
             </text>
-            <text class="mb-[16rpx] block text-center text-[20rpx] text-gray-500">
+            <text v-if="selectedEndDate" class="mb-[16rpx] block text-center text-[20rpx] text-gray-500">
               {{ dayjs(selectedEndDate).format('MM月DD日') }}
+            </text>
+            <text v-else class="mb-[16rpx] block text-center text-[20rpx] text-gray-400">
+              请选择日期
             </text>
             <picker
               mode="selector"

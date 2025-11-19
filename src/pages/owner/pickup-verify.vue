@@ -57,7 +57,7 @@ const vehicleStatus = reactive({
 // 押金信息
 const depositInfo = reactive({
   type: 'wechat_pay', // alipay_credit | wechat_pay，默认选中微信支付
-  amount: 500,
+  amount: 0, // 初始为0，从API获取真实金额
   status: 'pending', // pending | paid | confirmed
   statusText: '待支付',
   statusType: 'pending' as 'pending' | 'paid' | 'failed',
@@ -112,14 +112,14 @@ async function loadOrderInfo() {
         endTime: orderData.end_time || '',
       }
 
-      // 初始化合同状态
-      await loadContractStatus()
-
-      // 初始化押金状态（包含金额和支付状态）
+      // 优先初始化押金状态（包含金额和支付状态）
       await refreshDepositStatus()
 
-      // 初始化微信支付二维码（默认选中微信支付）
+      // 初始化微信支付二维码（默认选中微信支付，会再次更新押金金额）
       await loadDepositQRCode()
+
+      // 初始化合同状态
+      await loadContractStatus()
     }
     else {
       throw new Error(response.msg || '获取订单详情失败')
@@ -263,7 +263,7 @@ async function loadDepositQRCode() {
 
     if (response.code === 200 && response.data) {
       depositInfo.qrCodeUrl = response.data.qrCodeUrl
-      depositInfo.amount = response.data.amount
+      // 不覆盖金额 - 使用 refreshDepositStatus() 获取的真实金额
     }
     else {
       throw new Error(response.msg || '获取二维码失败')
@@ -313,10 +313,6 @@ async function refreshDepositStatus() {
       }
       else {
         depositInfo.status = 'pending'
-        uni.showToast({
-          title: `当前状态：${depositData.statusText}`,
-          icon: 'none',
-        })
       }
     }
     else {
@@ -632,7 +628,7 @@ async function completePickupVerify() {
                 v-model="vehicleStatus.mileage"
                 type="number"
                 placeholder="请输入里程数（公里）"
-                class="w-full border border-gray-200 rounded-[12rpx] border-solid px-[24rpx] py-[16rpx] text-[26rpx]"
+                class="border border-gray-200 rounded-[12rpx] border-solid px-[24rpx] py-[16rpx] text-[26rpx]"
               >
             </view>
 
@@ -766,7 +762,8 @@ async function completePickupVerify() {
             </view>
             <view class="flex items-center space-x-[16rpx]">
               <text class="text-[24rpx] text-orange-600 font-bold">
-                ¥{{ depositInfo.amount }}
+                <text v-if="depositInfo.amount > 0">¥{{ depositInfo.amount }}</text>
+                <text v-else class="text-gray-400">获取中...</text>
               </text>
               <!-- 刷新状态按钮 - 仅微信支付时显示 -->
               <view
@@ -822,10 +819,11 @@ async function completePickupVerify() {
                 请用户扫码完成免押授权
               </text>
               <view class="mx-auto mb-[16rpx] h-[300rpx] w-[300rpx] flex items-center justify-center rounded-[12rpx] bg-white">
-                <!-- TODO: 这里应该显示支付宝免押的固定二维码图片 -->
-                <text class="text-[24rpx] text-gray-500">
-                  支付宝免押二维码
-                </text>
+                <image
+                  src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/contract/template/1758954194915_ri995g.jpg"
+                  mode="aspectFit"
+                  class="h-full w-full"
+                />
               </view>
               <text class="text-[20rpx] text-gray-500">
                 用户扫码完成授权即可继续下一步

@@ -34,7 +34,8 @@ function load() {
       // 加载订单数据
       break
     case 'revenue':
-      // 加载收益数据
+      // 加载收益数据 - 强制刷新以获取最新余额和提现记录
+      ownerStore.refreshRevenueData()
       break
   }
 }

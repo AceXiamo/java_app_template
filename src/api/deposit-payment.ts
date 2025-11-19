@@ -12,6 +12,7 @@ export function createDepositPayOrder(orderNo: string, openId: string): Promise<
   depositOrderNo: string
   amount: number
   orderId: string
+  orderNo: string
 }>> {
   return request.post({
     url: `${host}/api/wx/pay/deposit/create`,

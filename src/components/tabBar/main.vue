@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { ServiceAreaValidation } from '@/api/map'
 import DateRangePicker from '@/components/DateRangePicker.vue'
@@ -220,6 +220,32 @@ function handleAddressConfirm(data: {
 function handleShowCityDrawer() {
   showCityDrawer.value = true
 }
+
+// 监听 currentLocation 变化，自动更新 searchForm
+watch(
+  () => locationStore.currentLocation,
+  (newLocation) => {
+    if (newLocation) {
+      searchForm.value.city = newLocation.city
+      searchForm.value.address = newLocation.formattedAddress || newLocation.city
+      searchForm.value.latitude = newLocation.latitude
+      searchForm.value.longitude = newLocation.longitude
+    }
+  },
+  { immediate: true },
+)
+
+// 监听 displayAddress 变化（兜底逻辑）
+watch(
+  () => locationStore.displayAddress,
+  (newAddress) => {
+    // 只有在没有 currentLocation 时才使用 displayAddress
+    if (!locationStore.currentLocation && newAddress) {
+      searchForm.value.address = newAddress
+      searchForm.value.city = locationStore.displayCity
+    }
+  },
+)
 
 onMounted(() => {
   // 初始化搜索表单地址信息
