@@ -482,7 +482,7 @@ async function loadWithdrawalRecords() {
               <!-- 操作按钮 -->
               <view class="flex items-center justify-end space-x-[16rpx]">
                 <view
-                  class="border border-white/40 rounded-full bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm transition-all duration-200 active:scale-95"
+                  class="border flex border-white/40 rounded-full bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm transition-all duration-200 active:scale-95"
                   @tap="goToWithdrawalRecords"
                 >
                   <text class="text-[24rpx] text-white font-medium">
@@ -490,7 +490,7 @@ async function loadWithdrawalRecords() {
                   </text>
                 </view>
                 <view
-                  class="rounded-full bg-white px-[24rpx] py-[12rpx] transition-all duration-200 active:scale-95"
+                  class="rounded-full flex bg-white px-[24rpx] py-[12rpx] transition-all duration-200 active:scale-95"
                   @tap="goToWithdraw"
                 >
                   <text class="text-[24rpx] text-purple-600 font-medium">
