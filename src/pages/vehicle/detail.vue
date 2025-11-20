@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import dayjs from 'dayjs'
 // import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import { getSimilarVehicles, getVehicleDetail, getVehicleReviews } from '@/api/vehicle'
 import type { VehicleDetail } from '@/api/vehicle'
 import { getJumpData, setJumpData } from '@/utils/index'
 import PageVehicleHead from '@/components/page/vehicle/Head.vue'
-import dayjs from 'dayjs'
 
 // 页面参数
 const vehicleId = ref('')
@@ -98,52 +98,10 @@ async function loadVehicleDetail() {
   }
   catch (error) {
     console.error('加载车辆详情失败:', error)
-    // 如果API调用失败，使用占位数据以便开发调试
-    vehicleDetail.value = {
-      vehicleId: Number(vehicleId.value),
-      name: '特斯拉 Model 3',
-      brand: '特斯拉',
-      model: 'Model 3',
-      licensePlate: '沪A·123***',
-      carType: '轿车',
-      energyType: '纯电动',
-      seats: 5,
-      dailyPrice: 380,
-      monthlyPrice: 9120,
-      imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89',
-      images: [
-        'https://images.unsplash.com/photo-1560958089-b8a1929cea89',
-        'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2',
-        'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2',
-        'https://images.unsplash.com/photo-1583121274602-3e2820c69888',
-      ],
-      rangeKm: 556,
-      rating: 4.9,
-      ratingCount: 312,
-      isMonthlyRental: true,
-      tags: [
-        { tagName: '热门', tagType: 'hot', tagColor: '#FF6B35' },
-        { tagName: '新车', tagType: 'new', tagColor: '#28A745' },
-      ],
-      location: {
-        address: '上海市徐汇区肇嘉浜路101号',
-        city: '上海市',
-        district: '徐汇区',
-        latitude: 31.208847,
-        longitude: 121.445773,
-      },
-      deliveryEnabled: true,
-      deliveryBaseFee: 20,
-      deliveryFreeDistance: 5,
-      deliveryPricePerKm: 3,
-      maxDeliveryDistance: 20,
-      operationType: 'platform',
-    }
-
+    vehicleDetail.value = null
     uni.showToast({
-      title: '网络异常，显示示例数据',
-      icon: 'none',
-      duration: 2000,
+      title: '加载失败',
+      icon: 'error',
     })
   }
   finally {
