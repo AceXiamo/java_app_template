@@ -539,11 +539,20 @@ function calculatePriceLocally() {
 
   // 计算基础价格
   if (priceCalculation.value.isMonthlyRental) {
-    const months = Math.floor(days / 30)
-    const remainingDays = days % 30
-    priceCalculation.value.basePrice
-      = months * (vehicleInfo.value.monthlyPrice || 0)
-        + remainingDays * (vehicleInfo.value.dailyPrice || 0)
+    // If rental days is exactly a multiple of 30, use monthly price directly to avoid precision loss
+    if (days % 30 === 0) {
+      const months = Math.floor(days / 30)
+      priceCalculation.value.basePrice = months * (vehicleInfo.value.monthlyPrice || 0)
+    }
+    else {
+      // Otherwise, calculate full months + remaining days
+      const fullMonths = Math.floor(days / 30)
+      const remainingDays = days % 30
+      const fullMonthsPrice = fullMonths * (vehicleInfo.value.monthlyPrice || 0)
+      const dailyPrice = (vehicleInfo.value.monthlyPrice || 0) / 30
+      const remainingPrice = remainingDays * dailyPrice
+      priceCalculation.value.basePrice = fullMonthsPrice + remainingPrice
+    }
   }
   else {
     priceCalculation.value.basePrice = days * (vehicleInfo.value.dailyPrice || 0)

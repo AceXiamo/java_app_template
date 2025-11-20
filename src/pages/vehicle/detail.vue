@@ -417,26 +417,62 @@ function handleDateRangeConfirm(data: {
 
             <!-- 价格信息 -->
             <view class="mb-[24rpx]">
-              <view class="flex items-baseline">
-                <text class="text-[40rpx] text-purple-600 font-bold">
-                  ¥{{ vehicleDetail.dailyPrice }}
-                </text>
-                <text class="ml-[8rpx] text-[24rpx] text-gray-500">
-                  /天
-                </text>
-              </view>
+              <!-- 超值月租车辆 - 优先展示月租价格 -->
+              <template v-if="vehicleDetail.isMonthlyRental && vehicleDetail.monthlyPrice">
+                <view class="flex items-baseline">
+                  <text class="text-[40rpx] text-purple-600 font-bold">
+                    ¥{{ vehicleDetail.monthlyPrice }}
+                  </text>
+                  <text class="ml-[8rpx] text-[24rpx] text-gray-500">
+                    /月
+                  </text>
+                </view>
 
-              <view v-if="monthlyDiscount" class="mt-[8rpx] flex items-center">
-                <text class="mr-[12rpx] text-[24rpx] text-gray-400 line-through">
-                  ¥{{ (vehicleDetail.dailyPrice * 30).toFixed(0) }}
-                </text>
-                <text class="rounded-full bg-red-50 px-[12rpx] py-[4rpx] text-[22rpx] text-red-500 font-medium">
-                  月租{{ monthlyDiscount.discountPercent }}折
-                </text>
-                <text class="ml-[12rpx] text-[20rpx] text-green-600">
-                  省{{ monthlyDiscount.savings.toFixed(0) }}元
-                </text>
-              </view>
+                <!-- 显示月租折扣信息 -->
+                <view v-if="monthlyDiscount" class="mt-[8rpx] flex items-center">
+                  <text class="mr-[12rpx] text-[24rpx] text-gray-400 line-through">
+                    ¥{{ monthlyDiscount.originalPrice.toFixed(0) }}
+                  </text>
+                  <text class="rounded-full bg-red-50 px-[12rpx] py-[4rpx] text-[22rpx] text-red-500 font-medium">
+                    {{ monthlyDiscount.discountPercent }}折
+                  </text>
+                  <text class="ml-[12rpx] text-[20rpx] text-green-600">
+                    省{{ monthlyDiscount.savings.toFixed(0) }}元
+                  </text>
+                </view>
+
+                <!-- 显示日租参考价格 -->
+                <view class="mt-[8rpx]">
+                  <text class="text-[22rpx] text-gray-500">
+                    日租参考价：¥{{ vehicleDetail.dailyPrice }}/天
+                  </text>
+                </view>
+              </template>
+
+              <!-- 普通日租车辆 -->
+              <template v-else>
+                <view class="flex items-baseline">
+                  <text class="text-[40rpx] text-purple-600 font-bold">
+                    ¥{{ vehicleDetail.dailyPrice }}
+                  </text>
+                  <text class="ml-[8rpx] text-[24rpx] text-gray-500">
+                    /天
+                  </text>
+                </view>
+
+                <!-- 如果普通车辆也有月租价格，可以显示月租优惠 -->
+                <view v-if="monthlyDiscount" class="mt-[8rpx] flex items-center">
+                  <text class="mr-[12rpx] text-[24rpx] text-gray-400 line-through">
+                    ¥{{ (vehicleDetail.dailyPrice * 30).toFixed(0) }}
+                  </text>
+                  <text class="rounded-full bg-red-50 px-[12rpx] py-[4rpx] text-[22rpx] text-red-500 font-medium">
+                    月租{{ monthlyDiscount.discountPercent }}折
+                  </text>
+                  <text class="ml-[12rpx] text-[20rpx] text-green-600">
+                    省{{ monthlyDiscount.savings.toFixed(0) }}元
+                  </text>
+                </view>
+              </template>
             </view>
 
             <!-- 车辆特性 -->
@@ -673,17 +709,34 @@ function handleDateRangeConfirm(data: {
     <view v-if="vehicleDetail" class="border-t border-gray-100 bg-white p-[24rpx] pb-[40rpx]">
       <view class="flex items-center">
         <view class="flex-1">
-          <text class="text-[24rpx] text-gray-500">
-            日租价格
-          </text>
-          <view class="flex items-baseline">
-            <text class="text-[32rpx] text-purple-600 font-bold">
-              ¥{{ vehicleDetail.dailyPrice }}
+          <!-- 超值月租车辆 -->
+          <template v-if="vehicleDetail.isMonthlyRental && vehicleDetail.monthlyPrice">
+            <text class="text-[24rpx] text-gray-500">
+              月租价格
             </text>
-            <text class="ml-[4rpx] text-[22rpx] text-gray-500">
-              /天起
+            <view class="flex items-baseline">
+              <text class="text-[32rpx] text-purple-600 font-bold">
+                ¥{{ vehicleDetail.monthlyPrice }}
+              </text>
+              <text class="ml-[4rpx] text-[22rpx] text-gray-500">
+                /月起
+              </text>
+            </view>
+          </template>
+          <!-- 普通日租车辆 -->
+          <template v-else>
+            <text class="text-[24rpx] text-gray-500">
+              日租价格
             </text>
-          </view>
+            <view class="flex items-baseline">
+              <text class="text-[32rpx] text-purple-600 font-bold">
+                ¥{{ vehicleDetail.dailyPrice }}
+              </text>
+              <text class="ml-[4rpx] text-[22rpx] text-gray-500">
+                /天起
+              </text>
+            </view>
+          </template>
         </view>
         <view
           class="rounded-[20rpx] bg-purple-600 px-[48rpx] py-[24rpx] text-center text-[28rpx] text-white font-medium transition-colors active:bg-purple-700"

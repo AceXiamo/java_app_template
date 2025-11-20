@@ -236,13 +236,16 @@ function handleAddressConfirm(data: any) {
 // 点击车辆卡片
 function selectVehicle(vehicle: any) {
   // 生成默认时间参数
-  const today = new Date()
-  const startTime = new Date(today)
-  startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  const startTime = new Date(tomorrow)
+  startTime.setHours(9, 0, 0, 0) // 默认开始时间为明天9:00
 
-  const endTime = new Date(today)
-  endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
-  endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
+  // Calculate end time: start time + selected period days - 1 day
+  const endTime = new Date(startTime)
+  endTime.setDate(startTime.getDate() + selectedPeriod.value - 1)
+  endTime.setHours(18, 0, 0, 0) // 结束时间设为当天18:00
 
   // 传递时间参数到车辆详情页
   const vehicleDetailParams = {
@@ -257,27 +260,32 @@ function selectVehicle(vehicle: any) {
   })
 }
 
-// 快速预订 - 跳转到车辆详情页面
+// 快速预订 - 直接跳转到预订页面
 function quickBook(vehicleId: number) {
   // 生成默认时间参数
-  const today = new Date()
-  const startTime = new Date(today)
-  startTime.setHours(9, 0, 0, 0) // 默认开始时间为今天9:00
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  const startTime = new Date(tomorrow)
+  startTime.setHours(9, 0, 0, 0) // 默认开始时间为明天9:00
 
-  const endTime = new Date(today)
-  endTime.setDate(today.getDate() + selectedPeriod.value) // 加上选中的租期天数
-  endTime.setHours(18, 0, 0, 0) // 默认结束时间为18:00
+  // Calculate end time: start time + selected period days - 1 day
+  // For 30 days rental: tomorrow 9:00 + 29 days = 30th day 9:00, then set to 18:00 on same day
+  const endTime = new Date(startTime)
+  endTime.setDate(startTime.getDate() + selectedPeriod.value - 1)
+  endTime.setHours(18, 0, 0, 0) // 结束时间设为当天18:00
 
-  // 传递时间参数到车辆详情页
-  const vehicleDetailParams = {
+  // 传递预订参数到预订页面
+  const bookingParams = {
+    vehicleId: vehicleId.toString(),
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
   }
 
-  setJumpData('vehicleDetailParams', vehicleDetailParams)
+  setJumpData('bookingParams', bookingParams)
 
   uni.navigateTo({
-    url: `/pages/vehicle/detail?id=${vehicleId}`,
+    url: '/pages/booking/index',
   })
 }
 
