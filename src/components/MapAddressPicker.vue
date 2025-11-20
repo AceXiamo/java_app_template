@@ -386,11 +386,12 @@ const debouncedSearchAddress = debounce(async (keyword: string) => {
 
 // 搜索输入变化
 function onSearchInput(e: any) {
-  const value = e.detail?.value || e
+  // 修复：使用空值判断而不是逻辑或，避免空字符串被判定为false导致回退到事件对象
+  const value = (e && e.detail !== undefined) ? e.detail.value : e
   searchKeyword.value = value
   
   // 有输入内容时展开面板
-  if (value.trim()) {
+  if (typeof value === 'string' && value.trim()) {
     searchPanelExpanded.value = true
     // 立即设置为加载状态
     searchLoading.value = true
@@ -485,28 +486,6 @@ function clearSearch() {
   searchKeyword.value = ''
   searchResults.value = []
   showSearchResults.value = false
-}
-
-// 获取地理层级文本
-function getLevelText(level: string): string {
-  const levelMap: Record<string, string> = {
-    住宅区: '住宅区',
-    兴趣点: 'POI',
-    道路: '道路',
-    建筑物: '建筑',
-    公司企业: '企业',
-    政府机构: '机构',
-    商务住宅: '商住',
-    生活服务: '服务',
-    餐饮服务: '餐饮',
-    购物服务: '购物',
-    体育休闲服务: '休闲',
-    医疗保健服务: '医疗',
-    住宿服务: '住宿',
-    风景名胜: '景点',
-    交通设施服务: '交通',
-  }
-  return levelMap[level] || level
 }
 
 // 获取地址路径
@@ -674,17 +653,18 @@ function formatResultSubtitle(result: any) {
           }"
           @tap.stop
         >
-          <!-- 搜索加载中 -->
+          <!-- 搜索加载中 (骨架屏) -->
           <view
             v-show="searchLoading && searchKeyword.trim()"
-            class="flex flex-col items-center justify-center py-[100rpx]"
+            class="px-[30rpx] py-[20rpx]"
           >
-            <view
-              class="mb-[16rpx] h-[40rpx] w-[40rpx] animate-spin rounded-full border-4 border-gray-200 border-t-[#8b5cf6]"
-            />
-            <text class="text-[26rpx] text-gray-500">
-              搜索中...
-            </text>
+            <view v-for="i in 3" :key="i" class="mb-[32rpx] flex items-start">
+              <view class="mr-[12rpx] mt-[2rpx] h-[36rpx] w-[36rpx] flex-shrink-0 animate-pulse rounded-full bg-gray-200" />
+              <view class="flex-1">
+                <view class="h-[28rpx] w-[60%] animate-pulse rounded bg-gray-200" />
+                <view class="mt-[12rpx] h-[22rpx] w-[80%] animate-pulse rounded bg-gray-100" />
+              </view>
+            </view>
           </view>
 
           <!-- 搜索结果列表 -->
@@ -721,17 +701,7 @@ function formatResultSubtitle(result: any) {
                   </text>
 
                   <!-- 地理层级信息 -->
-                  <view class="mt-[4rpx] flex flex-wrap items-center gap-[8rpx]">
-                    <!-- 地点类型标签 -->
-                    <view
-                      v-if="result.level"
-                      class="flex rounded-[6rpx] bg-blue-50 px-[8rpx] py-[2rpx]"
-                    >
-                      <text class="text-[20rpx] text-blue-600">
-                        {{ getLevelText(result.level) }}
-                      </text>
-                    </view>
-
+                  <view class="mt-[4rpx]">
                     <!-- 地址路径 -->
                     <text class="text-[22rpx] text-gray-400">
                       {{ formatResultSubtitle(result) }}
@@ -800,13 +770,9 @@ function formatResultSubtitle(result: any) {
           <view
             class="box-border min-h-[128rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]"
           >
-            <view v-if="loading" class="flex items-center">
-              <view
-                class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin rounded-full border-2 border-gray-300 border-t-[#8b5cf6]"
-              />
-              <text class="text-[26rpx] text-gray-600">
-                正在获取地址...
-              </text>
+            <view v-if="loading" class="flex flex-col space-y-[12rpx]">
+              <view class="h-[28rpx] w-[70%] animate-pulse rounded bg-gray-200" />
+              <view class="h-[24rpx] w-[50%] animate-pulse rounded bg-gray-200" />
             </view>
 
             <view v-else>

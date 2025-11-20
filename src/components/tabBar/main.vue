@@ -94,10 +94,10 @@ function searchVehicles() {
         message = `${validation.cityName}服务即将开通，敬请期待！`
       }
       else if (validation.status === 'closed') {
-        message = `${validation.cityName}服务暂时关闭，请稍后再试或选择其他城市。`
+        message = `${validation.cityName}服务暂时关闭，请稍后再试。`
       }
       else {
-        message = `暂时无法在${validation.cityName}提供服务，请选择已开通服务的城市。`
+        message = '所选位置不在服务范围内'
       }
 
       uni.showModal({
@@ -316,9 +316,9 @@ onUnmounted(() => {
           </view>
 
           <view class="space-y-[16rpx]">
-            <view class="flex items-center rounded-[20rpx] border border-[#e5e7eb] bg-[#f8fafc] px-[20rpx] py-[18rpx]" @tap="showAddressPicker">
+            <view class="flex items-center gap-2 rounded-[20rpx] border border-[#e5e7eb] bg-[#f8fafc] px-[20rpx] py-[18rpx]" @tap="showAddressPicker">
               <view class="flex flex-1 min-w-0 items-center">
-                <view i-material-symbols:location-on class="text-[32rpx] text-[#8b5cf6]" />
+                <view i-material-symbols:location-on class="text-[32rpx] flex-none text-[#8b5cf6]" />
                 <view class="ml-[12rpx] min-w-0">
                   <text class="block text-[24rpx] text-[#6b7280]">取还车地点</text>
                   <text class="block truncate text-[30rpx] text-[#111827] font-semibold">{{ searchForm.address }}</text>
@@ -361,7 +361,7 @@ onUnmounted(() => {
               class="flex items-center rounded-[16rpx] bg-[#fff4ec] px-[16rpx] py-[12rpx] text-[22rpx] text-[#c2410c]"
             >
               <view class="i-material-symbols:info mr-[8rpx] text-[22rpx]" />
-              <text>{{ locationStore.getServiceStatus().text === '即将开通' ? '当前城市即将开通，可切换其他城市或联系客服' : '当前城市服务暂未开通，请切换已开通城市' }}</text>
+              <text>{{ locationStore.getServiceStatus().text === '即将开通' ? '当前城市即将开通，敬请期待' : '所选位置不在服务范围内' }}</text>
             </view>
           </view>
 
