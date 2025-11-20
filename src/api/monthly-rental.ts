@@ -13,6 +13,11 @@ export interface MonthlyRentalSearchParams {
   rentalPeriod: number
   page?: number
   size?: number
+  vehicleTypes?: string[]
+  energyTypes?: string[]
+  seats?: number[]
+  minPrice?: number
+  maxPrice?: number
 }
 
 // 价格计算参数
