@@ -136,6 +136,15 @@ const serviceStatusInfo = computed(() => {
   }
 })
 
+// 确认按钮可用性
+const confirmDisabled = computed(() => {
+  return confirming.value
+    || loading.value
+    || !currentLocation.value.latitude
+    || !addressInfo.value.formattedAddress
+    || addressInfo.value.formattedAddress.includes('失败')
+})
+
 // 监听props变化
 watch(
   () => props.visible,
@@ -143,6 +152,7 @@ watch(
     if (visible) {
       // 重置初始化状态
       addressInitialized.value = false
+      serviceAreaValidation.value = null
       // 重置搜索状态
       collapseSearchPanel()
 
@@ -275,8 +285,13 @@ function onMapMove(e: any) {
 
 // 确认选择
 function handleConfirm() {
-  if (confirming.value)
+  if (confirmDisabled.value) {
+    uni.showToast({
+      title: loading.value ? '正在获取地址...' : '地址信息不完整',
+      icon: 'none',
+    })
     return
+  }
 
   confirming.value = true
 
@@ -323,6 +338,11 @@ function backToCurrentLocation() {
       debouncedGetAddressFromLocation()
     },
     fail: () => {
+      currentLocation.value = {
+        latitude: 31.230416,
+        longitude: 121.473701,
+      }
+      addressInfo.value.formattedAddress = '定位失败，使用默认位置'
       uni.showToast({
         title: '获取位置失败',
         icon: 'none',
@@ -427,15 +447,26 @@ function selectSearchResult(result: any) {
     longitude,
   }
 
+  // 同步地图中心点
+  if (mapContext.value) {
+    mapContext.value.moveToLocation({
+      latitude,
+      longitude,
+    })
+  }
+
   // 更新地址信息
+  const formattedAddress = getFormattedAddressFromResult(result)
+  const poiName = getNameFromResult(result)
+
   addressInfo.value = {
-    formattedAddress: result.formatted_address,
-    address: result.formatted_address,
-    poiName: result.name || '',
+    formattedAddress: formattedAddress || poiName || '未识别地址',
+    address: formattedAddress || poiName || '',
+    poiName,
     province: result.province || '',
     city: result.city || '',
     district: result.district || '',
-    streetName: result.street?.join(',') || '',
+    streetName: formattedAddress || '',
   }
 
   console.log('地图中心点已更新:', currentLocation.value)
@@ -480,21 +511,78 @@ function getLevelText(level: string): string {
 
 // 获取地址路径
 function getLocationPath(result: any): string {
-  const pathParts = []
-
-  if (result.province && result.province !== result.city) {
-    pathParts.push(result.province)
+  const safe = (value: any) => {
+    if (typeof value === 'string')
+      return value
+    if (Array.isArray(value))
+      return value.filter(Boolean).join(' ')
+    if (value && typeof value === 'object') {
+      return value.name || value.adcode || value.city || ''
+    }
+    return ''
   }
 
-  if (result.city) {
-    pathParts.push(result.city)
+  const province = safe(result.province)
+  const city = safe(result.city)
+  const district = safe(result.district)
+  const parts = []
+
+  if (province && province !== city)
+    parts.push(province)
+  if (city)
+    parts.push(city)
+  if (district && district !== city)
+    parts.push(district)
+
+  return parts.join(' · ')
+}
+
+function getFormattedAddressFromResult(result: any): string {
+  const candidates = [
+    result.formattedAddress,
+    result.formatted_address,
+    result.address,
+    result.addr,
+    result.adDetail,
+  ]
+
+  for (const item of candidates) {
+    if (typeof item === 'string' && item.trim())
+      return item
+    if (item && typeof item === 'object') {
+      const nested = item.formattedAddress || item.name || item.address
+      if (typeof nested === 'string' && nested.trim())
+        return nested
+    }
   }
 
-  if (result.district && result.district !== result.city) {
-    pathParts.push(result.district)
-  }
+  return ''
+}
 
-  return pathParts.join(' · ')
+function getNameFromResult(result: any): string {
+  if (typeof result.name === 'string' && result.name.trim())
+    return result.name
+  const formatted = getFormattedAddressFromResult(result)
+  if (formatted)
+    return formatted
+  if (typeof result.title === 'string')
+    return result.title
+  return ''
+}
+
+function formatResultTitle(result: any) {
+  return getNameFromResult(result) || '未知地点'
+}
+
+function formatResultSubtitle(result: any) {
+  const formatted = getFormattedAddressFromResult(result)
+  const path = getLocationPath(result)
+  const parts = [path, formatted].filter(Boolean)
+  if (parts.length === 0)
+    return ''
+  if (parts.length > 1 && parts[0] === parts[1])
+    return parts[0]
+  return parts.join(' · ')
 }
 </script>
 
@@ -507,7 +595,7 @@ function getLocationPath(result: any): string {
           <input
             v-model="searchKeyword"
             class="w-full border border-gray-200 rounded-[16rpx] border-solid bg-white px-[48rpx] py-[24rpx] text-[28rpx] placeholder-gray-400 transition-all"
-            :class="searchPanelExpanded ? 'border-purple-600 shadow-sm' : ''"
+            :class="searchPanelExpanded ? 'border-[#8b5cf6] shadow-[0_10rpx_30rpx_-18rpx_rgba(139,92,246,0.45)]' : ''"
             placeholder="搜索地址、建筑或地标"
             @input="onSearchInput"
             @focus="onSearchFocus"
@@ -529,9 +617,9 @@ function getLocationPath(result: any): string {
           </view>
 
           <!-- 加载指示器 -->
-          <view v-if="searchLoading && !searchKeyword" class="absolute right-[16rpx]">
+          <view v-if="searchLoading" class="absolute right-[16rpx]">
             <view
-              class="h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full"
+              class="h-[24rpx] w-[24rpx] animate-spin rounded-full border-2 border-gray-300 border-t-[#8b5cf6]"
             />
           </view>
         </view>
@@ -555,11 +643,11 @@ function getLocationPath(result: any): string {
             <view class="relative flex justify-center -translate-y-full">
               <!-- 定位图标 -->
               <view
-                class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-purple-600 shadow-lg"
+                class="h-[48rpx] w-[48rpx] flex items-center justify-center rounded-full bg-[#8b5cf6] shadow-lg"
               />
               <!-- 定位线 -->
               <view
-                class="absolute top-[48rpx] h-[32rpx] w-[2rpx] transform bg-purple-600"
+                class="absolute top-[48rpx] h-[32rpx] w-[2rpx] transform bg-[#8b5cf6]"
               />
             </view>
           </view>
@@ -571,7 +659,7 @@ function getLocationPath(result: any): string {
               @tap="backToCurrentLocation"
             >
               <text
-                class="i-material-symbols-my-location translate-x-[1px] text-[32rpx] text-purple-600"
+                class="i-material-symbols-my-location translate-x-[1px] text-[32rpx] text-[#8b5cf6]"
               />
             </view>
           </view>
@@ -592,7 +680,7 @@ function getLocationPath(result: any): string {
             class="flex flex-col items-center justify-center py-[100rpx]"
           >
             <view
-              class="mb-[16rpx] h-[40rpx] w-[40rpx] animate-spin border-4 border-gray-200 border-t-purple-600 rounded-full"
+              class="mb-[16rpx] h-[40rpx] w-[40rpx] animate-spin rounded-full border-4 border-gray-200 border-t-[#8b5cf6]"
             />
             <text class="text-[26rpx] text-gray-500">
               搜索中...
@@ -615,10 +703,10 @@ function getLocationPath(result: any): string {
                 <!-- 位置图标 -->
                 <view class="mr-[12rpx] mt-[2rpx] flex-shrink-0">
                   <view
-                    class="h-[36rpx] w-[36rpx] flex items-center justify-center rounded-full bg-purple-50"
+                    class="h-[36rpx] w-[36rpx] flex items-center justify-center rounded-full bg-[#f4eefe]"
                   >
                     <text
-                      class="i-material-symbols-location-on text-[20rpx] text-purple-600"
+                      class="i-material-symbols-location-on text-[20rpx] text-[#8b5cf6]"
                     />
                   </view>
                 </view>
@@ -629,7 +717,7 @@ function getLocationPath(result: any): string {
                   <text
                     class="block text-[28rpx] text-black font-medium leading-[40rpx]"
                   >
-                    {{ result.formatted_address }}
+                    {{ formatResultTitle(result) }}
                   </text>
 
                   <!-- 地理层级信息 -->
@@ -646,7 +734,7 @@ function getLocationPath(result: any): string {
 
                     <!-- 地址路径 -->
                     <text class="text-[22rpx] text-gray-400">
-                      {{ getLocationPath(result) }}
+                      {{ formatResultSubtitle(result) }}
                     </text>
                   </view>
                 </view>
@@ -702,7 +790,7 @@ function getLocationPath(result: any): string {
         <view class="mb-[24rpx]">
           <view class="mb-[8rpx] flex items-center">
             <text
-              class="i-material-symbols-location-on mr-[8rpx] text-[24rpx] text-purple-600"
+              class="i-material-symbols-location-on mr-[8rpx] text-[24rpx] text-[#8b5cf6]"
             />
             <text class="text-[24rpx] text-gray-600">
               选中位置
@@ -710,11 +798,11 @@ function getLocationPath(result: any): string {
           </view>
 
           <view
-            class="box-border min-h-[120rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]"
+            class="box-border min-h-[128rpx] rounded-[16rpx] bg-gray-50 p-[16rpx]"
           >
             <view v-if="loading" class="flex items-center">
               <view
-                class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin border-2 border-gray-300 border-t-purple-600 rounded-full"
+                class="mr-[8rpx] h-[24rpx] w-[24rpx] animate-spin rounded-full border-2 border-gray-300 border-t-[#8b5cf6]"
               />
               <text class="text-[26rpx] text-gray-600">
                 正在获取地址...
@@ -728,13 +816,13 @@ function getLocationPath(result: any): string {
 
               <view
                 v-if="
-                  addressInfo.poiName
-                    && addressInfo.streetName !== addressInfo.poiName
+                  addressInfo.formattedAddress
+                    && addressInfo.formattedAddress !== addressInfo.poiName
                 "
                 class="mt-[8rpx]"
               >
                 <text class="text-[24rpx] text-gray-500 leading-[32rpx]">
-                  {{ addressInfo.streetName }}
+                  {{ addressInfo.formattedAddress }}
                 </text>
               </view>
             </view>
@@ -745,7 +833,7 @@ function getLocationPath(result: any): string {
         <view class="mb-[24rpx] flex items-center justify-between">
           <view class="flex items-center">
             <text
-              class="i-material-symbols:verified mr-[8rpx] text-[24rpx] text-purple-600"
+              class="i-material-symbols:verified mr-[8rpx] text-[24rpx] text-[#8b5cf6]"
             />
             <text class="text-[24rpx] text-gray-600">
               服务状态
@@ -769,15 +857,15 @@ function getLocationPath(result: any): string {
           </view>
         </view>
 
-        <!-- 确认按钮 -->
-        <view
-          class="w-full rounded-[16rpx] py-[24rpx] text-center text-[28rpx] font-medium"
-          :class="
-            loading || confirming
+      <!-- 确认按钮 -->
+      <view
+        class="w-full rounded-[16rpx] py-[24rpx] text-center text-[28rpx] font-medium"
+        :class="
+            confirmDisabled
               ? 'bg-gray-300 text-gray-500'
-              : 'bg-purple-600 text-white shadow-sm'
+              : 'bg-[#8b5cf6] text-white shadow-sm'
           "
-          :disabled="loading || confirming"
+          :disabled="confirmDisabled"
           @tap="handleConfirm"
         >
           <view v-if="confirming" class="flex items-center justify-center">
