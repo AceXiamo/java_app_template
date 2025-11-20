@@ -203,34 +203,31 @@ function handleLogout() {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-y-auto bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-y-auto bg-[#f6f7fb]">
     <!-- 顶部个人信息卡片 -->
-    <view class="relative from-[#8D30E0] to-[#F6F7F8] bg-gradient-to-b px-[40rpx] pb-[72rpx]">
-      <!-- 头部占位组件 -->
+    <view class="relative overflow-hidden from-[#f7f5ff] to-[#ede9fe] bg-gradient-to-b px-[40rpx] pb-[72rpx] table">
+      <!-- 撑开头部，保持原有占位 -->
       <HeadBar bg-color="transparent">
-        <!-- 空内容，仅作占位用途 -->
+      <!-- 空内容，仅作占位用途 -->
       </HeadBar>
-      <!-- 背景装饰 -->
-      <!-- <image
-        class="absolute left-0 top-0 z-0 h-full w-full object-cover"
-        src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/home-bg-1.png"
-        mode="aspectFill"
-        alt="顶部插画背景"
-      /> -->
+
+      <!-- 点缀背景元素 -->
+      <view class="pointer-events-none absolute h-[260rpx] w-[260rpx] rounded-full bg-[#8b5cf6]/12 blur-[60rpx] -right-[120rpx] -top-[60rpx]" />
+      <view class="pointer-events-none absolute left-[40rpx] top-[120rpx] h-[140rpx] w-[140rpx] rounded-full bg-[#8b5cf6]/10 blur-[50rpx]" />
+      <view class="pointer-events-none absolute right-[40rpx] top-[220rpx] h-[80rpx] w-[80rpx] border border-[#8b5cf6]/25 rounded-full" />
 
       <view class="relative z-10 mt-[32rpx]">
         <view v-if="profileData?.userInfo" class="flex items-center space-x-[32rpx]">
           <!-- 用户头像 -->
           <view class="relative" @tap="goToProfile">
-            <view class="h-[128rpx] w-[128rpx] overflow-hidden border-4 border-white/50 rounded-full bg-white/20">
+            <view class="h-[128rpx] w-[128rpx] overflow-hidden border-4 border-white rounded-full bg-gray-100">
               <image
                 :src="profileData.userInfo.avatar"
-                class="h-full w-full object-cover"
+                class="h-full w-full"
                 mode="aspectFill"
-                :alt="profileData.userInfo.nickname"
               />
             </view>
-            <view class="absolute h-[48rpx] w-[48rpx] flex items-center justify-center border-2 border-white rounded-full bg-purple-600 -bottom-[8rpx] -right-[8rpx]">
+            <view class="absolute h-[48rpx] w-[48rpx] flex items-center justify-center border-2 border-white rounded-full bg-[#8b5cf6] -bottom-[8rpx] -right-[8rpx]">
               <text class="i-material-symbols-edit text-[24rpx] text-white" />
             </view>
           </view>
@@ -238,11 +235,11 @@ function handleLogout() {
           <!-- 用户信息 -->
           <view class="flex-1">
             <view class="mb-[8rpx] flex items-center space-x-[16rpx]">
-              <text class="text-[36rpx] text-white font-semibold">
+              <text class="text-[36rpx] text-[#111827] font-semibold">
                 {{ profileData.userInfo.nickname }}
               </text>
             </view>
-            <text class="mb-[16rpx] block text-[24rpx] text-white/80">
+            <text class="mb-[16rpx] block text-[24rpx] text-[#475569]">
               手机号：{{ profileData.userInfo.phone }}
             </text>
           </view>
@@ -250,11 +247,11 @@ function handleLogout() {
           <!-- 设置按钮 -->
           <view class="flex flex-col items-center space-y-[24rpx]">
             <text
-              class="i-material-symbols-settings text-[32rpx] text-white/80"
+              class="i-material-symbols-settings text-[32rpx] text-[#8b5cf6]"
               @tap="goToSettings"
             />
             <text
-              class="i-material-symbols-qr-code-scanner text-[32rpx] text-white/80"
+              class="i-material-symbols-qr-code-scanner text-[32rpx] text-[#8b5cf6]"
               @tap="scanCode"
             />
           </view>
@@ -263,18 +260,18 @@ function handleLogout() {
         <!-- 未登录状态 -->
         <view v-else class="flex items-center justify-between">
           <view>
-            <text class="mb-[8rpx] block text-[36rpx] text-white font-semibold">
+            <text class="mb-[8rpx] block text-[36rpx] text-[#111827] font-semibold">
               欢迎使用窍启租车
             </text>
-            <text class="text-[24rpx] text-white/80">
+            <text class="text-[24rpx] text-[#475569]">
               登录后享受更多服务
             </text>
           </view>
           <view
-            class="border border-white/30 rounded-full bg-white/20 px-[48rpx] py-[16rpx] backdrop-blur-sm"
+            class="border border-[#8b5cf6]/40 rounded-full bg-white/80 px-[48rpx] py-[16rpx] backdrop-blur-sm"
             @tap="goToProfile"
           >
-            <text class="text-[24rpx] text-white font-medium">
+            <text class="text-[24rpx] text-[#8b5cf6] font-medium">
               立即登录
             </text>
           </view>
@@ -284,7 +281,7 @@ function handleLogout() {
 
     <!-- 快捷数据统计 -->
     <view class="relative z-10 mb-[48rpx] px-[40rpx] -mt-[32rpx]">
-      <view class="rounded-[32rpx] bg-white p-[40rpx] shadow-lg">
+      <view class="border border-[#e5e7eb] rounded-[32rpx] bg-white p-[40rpx] shadow-[0_16rpx_48rpx_-28rpx_rgba(15,23,42,0.35)]">
         <view v-if="profileData?.statistics" class="grid grid-cols-3 divide-x divide-gray-100">
           <view class="text-center">
             <text class="block text-[36rpx] text-black font-semibold">
@@ -343,7 +340,7 @@ function handleLogout() {
     <!-- 主要功能列表 -->
     <view class="flex-1 px-[40rpx] space-y-[32rpx]">
       <!-- 我的服务 -->
-      <view class="rounded-[32rpx] bg-white shadow-sm">
+      <view class="border border-[#e5e7eb] rounded-[32rpx] bg-white shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]">
         <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
           <text class="text-[32rpx] text-black font-semibold">
             我的服务
@@ -355,7 +352,7 @@ function handleLogout() {
           <view class="flex items-center justify-between" @tap="goToDocuments">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-badge text-[36rpx] text-purple-600" />
+                <text class="i-material-symbols-badge text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -447,7 +444,7 @@ function handleLogout() {
           <view v-if="isOwnerOrManager()" class="flex items-center justify-between" @tap="goToOwnerCenter">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-directions-car text-[36rpx] text-purple-600" />
+                <text class="i-material-symbols-directions-car text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -478,7 +475,7 @@ function handleLogout() {
             </view>
             <view class="w-max flex flex-none items-center space-x-[16rpx]">
               <text
-                class="rounded-full bg-purple-100 px-[16rpx] py-[8rpx] text-[20rpx] text-purple-600"
+                class="rounded-full bg-[#f4eefe] px-[16rpx] py-[8rpx] text-[20rpx] text-[#8b5cf6]"
               >
                 {{ profileData?.services.certification.ownerCertification.statusText || '立即申请' }}
               </text>
@@ -490,7 +487,7 @@ function handleLogout() {
           <!-- <view class="flex items-center justify-between" @tap="goToNotifications">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-notifications text-[36rpx] text-purple-600" />
+                <text class="i-material-symbols-notifications text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -504,7 +501,7 @@ function handleLogout() {
             <view class="flex items-center space-x-[16rpx]">
               <view
                 class="relative h-[40rpx] w-[64rpx] rounded-full transition-colors duration-200"
-                :class="profileData?.services.notifications.enabled ? 'bg-purple-600' : 'bg-gray-300'"
+                :class="profileData?.services.notifications.enabled ? 'bg-[#8b5cf6]' : 'bg-gray-300'"
               >
                 <view
                   class="absolute top-[8rpx] h-[24rpx] w-[24rpx] rounded-full bg-white transition-all duration-200"
@@ -518,7 +515,7 @@ function handleLogout() {
       </view>
 
       <!-- 设置 -->
-      <view class="mb-[48rpx] rounded-[32rpx] bg-white shadow-sm">
+      <view class="mb-[48rpx] border border-[#e5e7eb] rounded-[32rpx] bg-white shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]">
         <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
           <text class="text-[32rpx] text-black font-semibold">
             设置
@@ -551,7 +548,7 @@ function handleLogout() {
             </button>
             <view class="relative z-1 flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-support-agent text-[36rpx] text-purple-600" />
+                <text class="i-material-symbols-support-agent text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">

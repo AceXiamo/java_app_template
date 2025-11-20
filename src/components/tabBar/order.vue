@@ -489,19 +489,19 @@ function fallbackToAddressSearch(location: string) {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col bg-gray-50">
+  <view class="relative h-full flex flex-col bg-[#f6f7fb]">
     <!-- 头部导航 -->
     <PageOrderHead />
 
     <!-- 订单状态筛选 -->
-    <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[40rpx] py-[32rpx]">
-      <view class="relative flex rounded-[10rpx] bg-gray-50 p-[8rpx]">
+    <view class="flex-shrink-0 border-b border-[#e5e7eb] bg-white px-[32rpx] py-[28rpx] shadow-[0_10rpx_30rpx_-24rpx_rgba(15,23,42,0.28)]">
+      <view class="relative flex rounded-[14rpx] bg-[#f1f5f9] p-[10rpx]">
         <!-- Tabs -->
         <view
           v-for="tab in tabs"
           :key="tab.key"
-          class="flex-1 cursor-pointer rounded-[16rpx] px-[32rpx] py-[16rpx] text-center text-[28rpx] font-medium transition-colors duration-300"
-          :class="activeTab === tab.key ? 'text-purple-600' : 'text-gray-400'"
+          class="flex-1 cursor-pointer rounded-[16rpx] px-[28rpx] py-[14rpx] text-center text-[28rpx] font-semibold transition-colors duration-300"
+          :class="activeTab === tab.key ? 'text-[#8b5cf6]' : 'text-[#94a3b8]'"
           @tap="switchTab(tab.key as 'all' | 'ongoing' | 'cancelled')"
         >
           {{ tab.label }}
@@ -509,7 +509,7 @@ function fallbackToAddressSearch(location: string) {
 
         <!-- Moving Slider -->
         <view
-          class="absolute bottom-[8rpx] h-[6rpx] w-[40rpx] rounded-full bg-purple-600 transition-all duration-300 ease-out"
+          class="absolute bottom-[10rpx] h-[6rpx] w-[46rpx] rounded-full bg-[#8b5cf6] transition-all duration-300 ease-out"
           :style="sliderStyle"
         />
       </view>
@@ -528,11 +528,11 @@ function fallbackToAddressSearch(location: string) {
         <view class="p-[24rpx] space-y-[24rpx]">
           <!-- 初始加载状态 -->
           <view v-if="orderList.length === 0 && orderListStatus === 'loading'" class="flex flex-col items-center justify-center py-[120rpx]">
-            <text class="i-material-symbols-sync mb-[24rpx] animate-spin text-[32rpx] text-purple-400" />
-            <text class="mb-[16rpx] text-[28rpx] text-gray-500 font-medium">
+            <text class="i-material-symbols-sync mb-[24rpx] animate-spin text-[32rpx] text-[#8b5cf6]" />
+            <text class="mb-[16rpx] text-[28rpx] text-[#475569] font-medium">
               加载订单中
             </text>
-            <text class="text-[24rpx] text-gray-400">
+            <text class="text-[24rpx] text-[#94a3b8]">
               请稍候...
             </text>
           </view>
@@ -557,7 +557,7 @@ function fallbackToAddressSearch(location: string) {
           <view
             v-for="order in orderList"
             :key="order.id"
-            class="mb-[24rpx] overflow-hidden rounded-[20rpx] bg-white p-[32rpx] shadow-sm"
+            class="mb-[24rpx] overflow-hidden rounded-[22rpx] border border-[#e5e7eb] bg-white p-[32rpx] shadow-[0_18rpx_50rpx_-30rpx_rgba(15,23,42,0.35)]"
             @tap="viewDetail(order.orderNumber)"
           >
             <!-- 订单状态和订单号 -->
@@ -588,8 +588,8 @@ function fallbackToAddressSearch(location: string) {
                   </text>
                 </view>
                 <!-- 盲盒徽章 -->
-                <view v-if="order.orderType === 'mystery_box'" class="ml-[8rpx] flex items-center rounded-full bg-purple-100 px-[14rpx] py-[4rpx] text-[20rpx] text-purple-700 font-medium">
-                  <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx]" />
+                <view v-if="order.orderType === 'mystery_box'" class="ml-[8rpx] flex items-center rounded-full bg-[#f4eefe] px-[14rpx] py-[4rpx] text-[20rpx] text-[#8b5cf6] font-medium">
+                  <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[16rpx] text-[#8b5cf6]" />
                   神秘盲盒
                 </view>
                 <!-- 取车超时提示 (仅paid状态) -->
@@ -611,7 +611,7 @@ function fallbackToAddressSearch(location: string) {
             <view class="mb-[20rpx] flex">
               <!-- 盲盒订单未揭晓显示 -->
               <view v-if="order.orderType === 'mystery_box' && !isMysteryBoxRevealed(order)" class="h-[120rpx] w-[160rpx] flex-shrink-0">
-                <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-purple-50 to-purple-100 bg-gradient-to-br">
+                <view class="relative h-full w-full flex items-center justify-center overflow-hidden rounded-[12rpx] from-[#f4eefe] to-[#ede9fe] bg-gradient-to-br">
                   <image
                     src="https://xiamo-server.oss-cn-chengdu.aliyuncs.com/car_app/mystery-box.png"
                     class="h-[90rpx] w-[90rpx]"
@@ -646,13 +646,13 @@ function fallbackToAddressSearch(location: string) {
                     <text class="truncate">
                       {{ order.mysteryBox?.carTypeName || 'SUV' }}
                     </text>
-                    <text class="truncate text-purple-600 font-medium">
+                    <text class="truncate text-[#8b5cf6] font-medium">
                       取车揭晓
                     </text>
                   </view>
                   <view class="mt-[8rpx] flex items-center">
-                    <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[20rpx] text-purple-500" />
-                    <text class="truncate text-[20rpx] text-purple-600 font-medium">
+                    <text class="i-material-symbols-auto-awesome mr-[4rpx] text-[20rpx] text-[#8b5cf6]" />
+                    <text class="truncate text-[20rpx] text-[#8b5cf6] font-medium">
                       惊喜车型等你解锁
                     </text>
                   </view>
@@ -711,7 +711,7 @@ function fallbackToAddressSearch(location: string) {
               </view>
               <!-- 价格信息 -->
               <view class="ml-[16rpx] min-w-[80rpx] flex flex-col items-end justify-between text-right">
-                <text class="text-[32rpx] text-purple-600 font-bold">
+                <text class="text-[32rpx] text-[#8b5cf6] font-bold">
                   ¥{{ order.amount }}
                 </text>
                 <text class="mt-[4rpx] block text-[22rpx] text-gray-400">
@@ -719,7 +719,7 @@ function fallbackToAddressSearch(location: string) {
                 </text>
                 <!-- 盲盒标识 -->
                 <view v-if="order.orderType === 'mystery_box'" class="mt-[8rpx]">
-                  <text class="rounded-full bg-purple-50 px-[10rpx] py-[2rpx] text-[18rpx] text-purple-500">
+                  <text class="rounded-full bg-[#f4eefe] px-[10rpx] py-[2rpx] text-[18rpx] text-[#8b5cf6]">
                     盲盒
                   </text>
                 </view>
@@ -728,7 +728,7 @@ function fallbackToAddressSearch(location: string) {
             <!-- 用车时间地点区 -->
             <view class="mb-[20rpx] rounded-[14rpx] bg-gray-50 p-[20rpx]">
               <view class="mb-[10rpx] flex items-center">
-                <text class="i-material-symbols-schedule mr-[8rpx] text-[22rpx] text-purple-600" />
+                <text class="i-material-symbols-schedule mr-[8rpx] text-[22rpx] text-[#8b5cf6]" />
                 <text class="text-[24rpx] text-black font-medium">
                   用车时间
                 </text>
@@ -738,14 +738,14 @@ function fallbackToAddressSearch(location: string) {
               </text>
               <view class="flex items-center justify-between">
                 <view class="flex items-center">
-                  <text class="i-material-symbols-location-on mr-[8rpx] text-[22rpx] text-purple-600" />
+                  <text class="i-material-symbols-location-on mr-[8rpx] text-[22rpx] text-[#8b5cf6]" />
                   <text class="text-[24rpx] text-black font-medium">
                     取车地点
                   </text>
                 </view>
-                <view class="flex cursor-pointer items-center rounded-full bg-purple-100 px-[16rpx] py-[8rpx] transition-colors" @click.stop="openNavigation(order)">
-                  <text class="i-material-symbols-near-me mr-[8rpx] text-[22rpx] text-purple-600" />
-                  <text class="text-[22rpx] text-purple-600 font-medium">
+                <view class="flex cursor-pointer items-center rounded-full bg-[#f4eefe] px-[16rpx] py-[8rpx] transition-colors" @click.stop="openNavigation(order)">
+                  <text class="i-material-symbols-near-me mr-[8rpx] text-[22rpx] text-[#8b5cf6]" />
+                  <text class="text-[22rpx] text-[#8b5cf6] font-medium">
                     导航
                   </text>
                 </view>
@@ -786,15 +786,15 @@ function fallbackToAddressSearch(location: string) {
             <!-- 取车码/还车码区域 -->
             <view v-if="['paid', 'picked'].includes(order.originalStatus || order.status)" class="mb-[20rpx] space-y-[12rpx]">
               <!-- 取车码显示 (仅paid状态) -->
-              <view v-if="order.pickupCode && (order.originalStatus || order.status) === 'paid'" class="flex items-center rounded-[14rpx] bg-purple-50 p-[20rpx]">
-                <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-purple-600" />
+              <view v-if="order.pickupCode && (order.originalStatus || order.status) === 'paid'" class="flex items-center rounded-[14rpx] bg-[#f4eefe] p-[20rpx]">
+                <text class="i-material-symbols-qr-code-scanner mr-[16rpx] text-[40rpx] text-[#8b5cf6]" />
                 <view class="flex-1">
                   <view class="mb-[4rpx] flex items-center">
-                    <text class="text-[24rpx] text-purple-800 font-medium">
+                    <text class="text-[24rpx] text-[#2e1a4f] font-medium">
                       取车码
                     </text>
                   </view>
-                  <text class="text-[36rpx] text-purple-600 font-bold tracking-wider">
+                  <text class="text-[36rpx] text-[#8b5cf6] font-bold tracking-wider">
                     {{ order.pickupCode }}
                   </text>
                 </view>
@@ -857,9 +857,9 @@ function fallbackToAddressSearch(location: string) {
                 :key="action.type"
                 class="flex-1 rounded-full py-[20rpx] text-center text-[26rpx] font-medium transition-colors duration-200"
                 :class="{
-                  'bg-gray-100 text-gray-600': action.style === 'secondary',
-                  'bg-purple-600 text-white': action.style === 'primary',
-                  'bg-purple-50 text-purple-600 border border-purple-200': action.style === 'outline',
+                  'bg-[#eef2f7] text-[#111827]': action.style === 'secondary',
+                  'bg-[#8b5cf6] text-white': action.style === 'primary',
+                  'bg-[#f4eefe] text-[#8b5cf6] border border-[#e5d7ff]': action.style === 'outline',
                 }"
                 @tap.stop="handleOrderAction(action.type, order.id, order.orderNumber)"
               >
@@ -884,8 +884,8 @@ function fallbackToAddressSearch(location: string) {
         :style="{ transform: (orderListStatus === 'loading' && orderList.length > 0) ? 'translateY(0)' : 'translateY(100%)' }"
       >
         <view class="flex items-center justify-center py-[32rpx]">
-          <text class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />
-          <text class="text-[26rpx] text-gray-600 font-medium">
+          <text class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-[#8b5cf6]" />
+          <text class="text-[26rpx] text-[#475569] font-medium">
             加载更多订单中...
           </text>
         </view>

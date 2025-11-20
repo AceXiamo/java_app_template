@@ -49,12 +49,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col bg-gray-50">
+  <view class="relative h-full flex flex-col bg-[#f6f7fb]">
     <!-- 头部导航 -->
     <DiscoverHead />
 
     <!-- Tab切换栏 - 左对齐下划线式 -->
-    <view class="flex-shrink-0 bg-gray-50 px-[40rpx] pb-[16rpx] pt-[32rpx]">
+    <view class="flex-shrink-0 bg-[#f6f7fb] px-[40rpx] pb-[16rpx] pt-[32rpx]">
       <view class="min-h-[64rpx] flex items-end space-x-[48rpx]">
         <view
           v-for="tab in tabConfig"
@@ -193,7 +193,7 @@ onMounted(() => {
 
           <!-- 加载状态 -->
           <view v-if="discoverStore.newsStatus === 'loading'" class="flex justify-center py-[48rpx]">
-            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />
+            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-[#8b5cf6]" />
             <text class="text-[26rpx] text-gray-600">
               加载中...
             </text>
@@ -227,7 +227,7 @@ onMounted(() => {
           <view
             v-for="review in discoverStore.reviewsList"
             :key="review.reviewId"
-            class="border border-gray-100 rounded-[24rpx] bg-white p-[32rpx] shadow-sm"
+            class="border border-gray-100 rounded-[24rpx] bg-white p-[32rpx] shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]"
           >
             <!-- 用户信息和评分 -->
             <view class="mb-[24rpx] flex items-center">
@@ -259,9 +259,9 @@ onMounted(() => {
             </view>
 
             <!-- 车辆信息卡片 -->
-            <view class="mb-[24rpx] rounded-[16rpx] bg-gray-50 p-[24rpx]">
+            <view class="mb-[24rpx] rounded-[16rpx] bg-[#f6f7fb] p-[24rpx]">
               <view class="flex items-center">
-                <text class="i-material-symbols:directions-car mr-[12rpx] text-[32rpx] text-purple-600" />
+                <text class="i-material-symbols:directions-car mr-[12rpx] text-[32rpx] text-[#8b5cf6]" />
                 <view>
                   <text class="text-[26rpx] text-black font-medium">
                     {{ review.vehicleName }}
@@ -283,7 +283,7 @@ onMounted(() => {
               <view
                 v-for="tag in review.tags"
                 :key="tag"
-                class="rounded-[12rpx] bg-purple-50 px-[16rpx] py-[8rpx] text-[22rpx] text-purple-600 font-medium"
+                class="rounded-[12rpx] bg-[#f4eefe] px-[16rpx] py-[8rpx] text-[22rpx] text-[#8b5cf6] font-medium"
               >
                 {{ tag }}
               </view>
@@ -303,7 +303,7 @@ onMounted(() => {
 
           <!-- 加载状态 -->
           <view v-if="discoverStore.reviewsStatus === 'loading'" class="flex justify-center py-[48rpx]">
-            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />
+            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-[#8b5cf6]" />
             <text class="text-[26rpx] text-gray-600">
               加载中...
             </text>
@@ -364,7 +364,7 @@ onMounted(() => {
           <view
             v-for="feedback in discoverStore.feedbackList"
             :key="feedback.feedbackId"
-            class="overflow-hidden border border-gray-100 rounded-[24rpx] bg-white shadow-sm"
+            class="overflow-hidden border border-gray-100 rounded-[24rpx] bg-white shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]"
           >
             <!-- 建议头部 -->
             <view class="border-b border-green-100 bg-green-50 p-[32rpx]">
@@ -437,7 +437,7 @@ onMounted(() => {
 
           <!-- 加载状态 -->
           <view v-if="discoverStore.feedbackStatus === 'loading'" class="flex justify-center py-[48rpx]">
-            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600" />
+            <text class="i-material-symbols:sync mr-[12rpx] animate-spin text-[32rpx] text-[#8b5cf6]" />
             <text class="text-[26rpx] text-gray-600">
               加载中...
             </text>
