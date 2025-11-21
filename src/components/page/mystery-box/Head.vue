@@ -7,12 +7,13 @@ function goBack() {
 <template>
   <HeadBar bg-color="white">
     <view class="flex items-center px-[40rpx] py-[16rpx]">
-      <view class="flex items-center space-x-[24rpx]">
+      <view class="flex items-center space-x-[8rpx]">
         <text
-          class="i-material-symbols-arrow-back-ios cursor-pointer text-[24rpx] text-gray-700"
+          i-material-symbols:arrow-back-ios
+          class="text-[24rpx] text-gray-700"
           @tap="goBack"
         />
-        <text class="text-[28rpx] text-black font-semibold">
+        <text class="text-[32rpx] text-black font-bold">
           百元盲盒
         </text>
       </view>

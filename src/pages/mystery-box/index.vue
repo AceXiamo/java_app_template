@@ -14,7 +14,6 @@ import {
 import { queryPaymentStatus } from '@/api/booking'
 import { requestMysteryBoxPayment } from '@/api/mysteryBox'
 import DateTimePicker from '@/components/DateTimePicker.vue'
-import BottomDrawer from '@/components/BottomDrawer.vue'
 
 // 页面状态
 const loading = ref(false)
@@ -44,7 +43,6 @@ const rules = ref<string[]>([])
 const selectedEnergyType = ref<string>('')
 const selectedCarType = ref<string>('')
 
-
 const timeForm = ref({
   startDate: dayjs().format('YYYY-MM-DD'),
   startTime: '09:00',
@@ -53,13 +51,15 @@ const timeForm = ref({
 // 价格信息
 const priceInfo = ref<MysteryBoxPricing | null>(null)
 
+// 无车辆可用状态
+const noVehicleAvailable = ref(false)
+
 // 弹窗状态
 const showDatePicker = ref(false)
-const showRulesModal = ref(false)
 
 // 计算属性
 const canPurchase = computed(() => {
-  return selectedEnergyType.value && selectedCarType.value && priceInfo.value
+  return selectedEnergyType.value && selectedCarType.value && priceInfo.value && !noVehicleAvailable.value
 })
 
 // 计算显示的取车时间
@@ -84,11 +84,6 @@ const displayPickupTime = computed(() => {
   return `${formatDate(pickup)} ${pickup.format('HH:mm')}`
 })
 
-// 显示取车位置信息
-const displayPickupLocation = computed(() => {
-  return '完全随机分配，开奖后揭晓位置'
-})
-
 // 选择方法
 function selectEnergyType(type: string) {
   selectedEnergyType.value = type
@@ -105,7 +100,6 @@ function selectCarType(type: string) {
     loadPricing()
   }
 }
-
 
 // 显示取车时间选择器
 function showTimePicker() {
@@ -126,51 +120,34 @@ function handleDateTimeConfirm(data: {
   }
 }
 
-// 样式辅助函数
-function getIconBg(color: string) {
-  const colorMap: Record<string, string> = {
-    'green': 'bg-green-100',
-    'red': 'bg-red-100',
-    'orange': 'bg-orange-100',
-    'blue': 'bg-blue-100',
-    'tech-purple': 'bg-purple-100',
-  }
-  return colorMap[color] || 'bg-purple-100'
-}
+// 样式辅助函数 - 简化颜色映射，使用设计规范颜色
+function getIconColor(color: string, isActive: boolean) {
+  // 选中时使用主色，未选中时使用灰色
+  if (!isActive)
+    return 'rgb(156, 163, 175)' // text-gray-400
 
-function getIconColor(color: string) {
+  // 特殊颜色映射，保持品牌感但更克制
   const colorMap: Record<string, string> = {
-    'green': 'rgb(34 197 94)',
-    'red': 'rgb(239 68 68)',
-    'orange': 'rgb(234 88 12)',
-    'blue': 'rgb(37 99 235)',
-    'tech-purple': 'rgb(139 92 246)',
+    'green': 'rgb(16, 185, 129)', // success
+    'red': 'rgb(239, 68, 68)', // danger
+    'orange': 'rgb(245, 158, 11)', // warning
+    'blue': 'rgb(59, 130, 246)',
+    'tech-purple': 'rgb(139, 92, 246)', // primary
   }
-  return colorMap[color] || 'rgb(139 92 246)'
-}
-
-// 获取图标组件
-function getIconClass(icon: string) {
-  const iconMap: Record<string, string> = {
-    'bolt': 'i-material-symbols-bolt',
-    'electric-bolt': 'i-material-symbols-bolt',
-    'local-gas-station': 'i-material-symbols-local-gas-station',
-    'directions-car': 'i-material-symbols-directions-car',
-    'airport-shuttle': 'i-material-symbols-airport-shuttle',
-    'speed': 'i-material-symbols-speed',
-  }
-  return iconMap[icon] || 'i-material-symbols-directions-car'
+  return colorMap[color] || 'rgb(139, 92, 246)'
 }
 
 // 加载价格信息
 async function loadPricing() {
   if (!selectedEnergyType.value || !selectedCarType.value) {
     priceInfo.value = null
+    noVehicleAvailable.value = false
     return
   }
 
   try {
     priceLoading.value = true
+    noVehicleAvailable.value = false
 
     const result = await getMysteryBoxPricing({
       energyType: selectedEnergyType.value,
@@ -179,6 +156,12 @@ async function loadPricing() {
 
     if (result.code === 200 && result.data) {
       priceInfo.value = result.data
+      noVehicleAvailable.value = false
+    }
+    else if (result.code === 500 || (result.msg && result.msg.includes('该组合暂无可用车辆'))) {
+      // Handle no vehicle available case (500 error)
+      noVehicleAvailable.value = true
+      priceInfo.value = null
     }
     else {
       throw new Error(result.msg || '获取价格失败')
@@ -186,44 +169,8 @@ async function loadPricing() {
   }
   catch (error: any) {
     console.error('加载价格信息失败:', error)
-
-    // 显示具体的错误信息
-    if (error.message && error.message.includes('该组合暂无可用车辆')) {
-      uni.showToast({
-        title: '该组合暂无可用车辆',
-        icon: 'none',
-        duration: 2000,
-      })
-      priceInfo.value = null
-      return
-    }
-
-    // 显示网络错误提示
-    uni.showToast({
-      title: '获取价格失败，请检查网络',
-      icon: 'none',
-      duration: 2000,
-    })
-
-    // 使用默认价格信息作为备选
-    priceInfo.value = {
-      basePrice: 99,
-      finalPrice: 99,
-      availableCount: 5,
-      estimatedValue: { min: 150, max: 500 },
-      pricing: {
-        unit: '盒',
-        pricePerDay: 99,
-        rentalDays: 1,
-      },
-      preferences: {
-        energyType: selectedEnergyType.value,
-        energyTypeName: energyTypes.value.find(e => e.type === selectedEnergyType.value)?.name || selectedEnergyType.value,
-        carType: selectedCarType.value,
-        carTypeName: carTypes.value.find(c => c.type === selectedCarType.value)?.name || selectedCarType.value,
-      },
-      possibleBrands: ['特斯拉', '比亚迪', '小鹏', '蔚来'],
-    }
+    noVehicleAvailable.value = true
+    priceInfo.value = null
   }
   finally {
     priceLoading.value = false
@@ -373,7 +320,6 @@ async function verifyPaymentStatus(orderNo: string) {
   }
 }
 
-
 // 加载数据
 async function loadData() {
   try {
@@ -433,7 +379,7 @@ function useDefaultOptions() {
     {
       type: 'electric',
       name: '纯电动',
-      description: '环保节能，静音舒适',
+      description: '环保节能',
       icon: 'bolt',
       color: 'green',
       isRecommended: true,
@@ -441,7 +387,7 @@ function useDefaultOptions() {
     {
       type: 'hybrid',
       name: '混合动力',
-      description: '长续航，双重保障',
+      description: '长续航',
       icon: 'local-gas-station',
       color: 'tech-purple',
       isRecommended: false,
@@ -452,7 +398,7 @@ function useDefaultOptions() {
     {
       type: 'sedan',
       name: '轿车',
-      description: '商务出行，舒适优雅',
+      description: '商务舒适',
       icon: 'directions-car',
       color: 'tech-purple',
       isRecommended: true,
@@ -460,7 +406,7 @@ function useDefaultOptions() {
     {
       type: 'suv',
       name: 'SUV',
-      description: '空间宽敞，适合家庭',
+      description: '宽敞空间',
       icon: 'airport-shuttle',
       color: 'green',
       isRecommended: false,
@@ -468,7 +414,7 @@ function useDefaultOptions() {
     {
       type: 'sports',
       name: '跑车',
-      description: '激情驾驶，动感体验',
+      description: '动感体验',
       icon: 'speed',
       color: 'red',
       isRecommended: false,
@@ -490,7 +436,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <PageMysteryBoxHead />
 
@@ -498,9 +444,9 @@ onMounted(async () => {
     <view v-if="loading" class="flex flex-1 items-center justify-center">
       <view class="flex flex-col items-center">
         <text
-          class="i-material-symbols-sync mb-[24rpx] animate-spin text-[48rpx] text-purple-600"
+          class="i-lets-icons:ring-duotone mb-[24rpx] animate-spin text-[48rpx] text-[#8B5CF6]"
         />
-        <text class="text-[26rpx] text-gray-600">
+        <text class="text-[26rpx] text-[#6B7280]">
           加载中...
         </text>
       </view>
@@ -508,509 +454,307 @@ onMounted(async () => {
 
     <!-- 主要内容区域 -->
     <scroll-view v-else scroll-y class="h-0 flex-1">
-      <!-- 盲盒活动说明 -->
-      <view class="relative bg-purple-600 px-[24rpx] pb-[80rpx] pt-[32rpx]">
-        <!-- 背景装饰 -->
-        <view class="absolute inset-0 opacity-10">
-          <text
-            class="i-material-symbols-auto-awesome absolute right-[20rpx] top-[20rpx] text-[60rpx] text-white"
-          />
-          <text
-            class="i-material-symbols-card-giftcard absolute bottom-[40rpx] left-[40rpx] text-[40rpx] text-white"
-          />
+      <!-- 顶部 Hero 区域 - 优化版 -->
+      <view class="relative overflow-hidden from-[#2E1A4F] to-[#8B5CF6] bg-gradient-to-br pb-[100rpx] pt-[32rpx]">
+        <!-- 精致装饰背景 -->
+        <view class="absolute right-[-40rpx] top-[-40rpx] opacity-8">
+          <text class="i-lets-icons:box-duotone text-[240rpx] text-white/20" />
+        </view>
+        <view class="absolute bottom-[20rpx] left-[-20rpx] opacity-6">
+          <text class="i-lets-icons:sparkles-duotone text-[160rpx] text-white/15" />
         </view>
 
-        <view class="relative z-10">
-          <view class="mb-[24rpx] flex items-center justify-center">
-            <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-card-giftcard text-[40rpx] text-white" />
-              <text class="text-[36rpx] text-white font-bold">
-                {{ activityInfo.title }}
-              </text>
-              <view class="rounded-full bg-orange-500 px-[16rpx] py-[8rpx]">
-                <text class="text-[22rpx] text-white font-medium">
-                  {{ activityInfo.badgeText }}
+        <view class="relative z-10 px-[40rpx]">
+          <!-- 标题区 -->
+          <view class="flex items-start justify-between">
+            <view class="flex-1">
+              <view class="flex items-center">
+                <text class="text-[36rpx] text-white font-bold tracking-wide">
+                  {{ activityInfo.title }}
                 </text>
+                <view class="ml-[12rpx] flex items-center rounded-full bg-[#FF7A1A] px-[12rpx] py-[4rpx]">
+                  <text class="text-[20rpx] text-white font-bold">
+                    {{ activityInfo.badgeText }}
+                  </text>
+                </view>
               </view>
+              <text class="mt-[8rpx] block text-[22rpx] text-white/75 leading-relaxed">
+                {{ activityInfo.subtitle }}
+              </text>
             </view>
           </view>
 
-          <text class="mb-[32rpx] block text-center text-[28rpx] text-purple-100">
-            {{ activityInfo.subtitle }}
-          </text>
-
-          <view
-            class="flex items-center justify-center text-[24rpx] text-purple-100 space-x-[32rpx]"
-          >
+          <!-- 权益标签 - 更精致 -->
+          <view class="mt-[28rpx] flex flex-wrap gap-[12rpx]">
             <view
               v-for="benefit in activityInfo.benefits"
               :key="benefit"
-              class="flex items-center space-x-[8rpx]"
+              class="flex items-center rounded-full border border-white/20 bg-white/10 px-[16rpx] py-[6rpx] backdrop-blur-md"
             >
-              <text class="i-material-symbols-check-circle text-[24rpx] text-green-400" />
-              <text>{{ benefit }}</text>
+              <text class="i-lets-icons:check-ring-duotone mr-[6rpx] text-[20rpx] text-[#10B981]" />
+              <text class="text-[20rpx] text-white font-medium">
+                {{ benefit }}
+              </text>
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 海浪分割线 -->
-      <view class="relative h-[40rpx] bg-gray-50 -mt-[40rpx]">
-        <svg
-          class="absolute inset-0 h-full w-full"
-          viewBox="0 0 1200 120"
-          preserveAspectRatio="none"
-        >
-          <path d="M1200 120L0 16.48 0 0 1200 0 1200 120z" fill="rgb(139 92 246)" />
-        </svg>
-      </view>
-
-      <!-- 主要选择区域 -->
-      <view class="px-[24rpx] pb-[24rpx] space-y-[24rpx]">
-        <!-- 取车时间选择 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center">
-            <text
-              class="i-material-symbols-schedule mr-[12rpx] text-[28rpx] text-purple-600"
-            />
-            <text class="text-[28rpx] text-black font-semibold">
-              选择取车时间
+      <!-- 主要卡片区域 -->
+      <view class="relative z-20 px-[40rpx] pb-[40rpx] -mt-[60rpx] space-y-[24rpx]">
+        <!-- 取车时间卡片 - 优化版 -->
+        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+          <view class="mb-[20rpx] flex items-center justify-between">
+            <text class="text-[28rpx] text-[#0F172A] font-bold">
+              用车时间
             </text>
+            <view class="flex items-center rounded-full bg-[#F6F7FB] px-[12rpx] py-[4rpx]">
+              <text class="i-lets-icons:store-duotone mr-[4rpx] text-[16rpx] text-[#6B7280]" />
+              <text class="text-[20rpx] text-[#6B7280]">
+                到店取还
+              </text>
+            </view>
           </view>
 
-          <!-- 时间选择 -->
-          <view>
-            <text class="mb-[12rpx] block text-[24rpx] text-gray-600">
-              取车时间
-            </text>
-            <view
-              class="flex items-center justify-between border border-gray-200 rounded-[16rpx] bg-gray-50 px-[24rpx] py-[20rpx] transition-colors active:bg-gray-100"
-              @tap="showTimePicker"
-            >
-              <view class="flex items-center">
-                <text
-                  class="i-material-symbols-schedule mr-[12rpx] text-[24rpx] text-purple-600"
-                />
-                <text class="text-[26rpx] text-gray-700">
+          <view
+            class="flex items-center justify-between rounded-[20rpx] border border-[#E5E7EB] bg-[#FAFAFA] px-[20rpx] py-[20rpx] transition-all active:border-[#8B5CF6] active:bg-[#F9FAFB]"
+            @tap="showTimePicker"
+          >
+            <view class="flex items-center">
+              <view class="mr-[16rpx] flex flex-col items-center justify-center rounded-[16rpx] bg-white px-[14rpx] py-[10rpx] shadow-sm">
+                <text class="text-[20rpx] text-[#9CA3AF]">
+                  {{ dayjs(timeForm.startDate).format('MM月') }}
+                </text>
+                <text class="text-[28rpx] text-[#1F2937] font-bold leading-tight">
+                  {{ dayjs(timeForm.startDate).format('DD') }}
+                </text>
+              </view>
+              <view class="flex flex-col">
+                <text class="text-[26rpx] text-[#1F2937] font-semibold">
                   {{ displayPickupTime }}
                 </text>
-              </view>
-              <text
-                class="i-material-symbols-keyboard-arrow-right text-[28rpx] text-gray-400"
-              />
-            </view>
-            <text class="mt-[8rpx] text-[22rpx] text-orange-600">
-              时间可选，但车辆和位置都是惊喜
-            </text>
-          </view>
-        </view>
-
-        <!-- 选择能源类型 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center">
-            <text
-              class="i-material-symbols-bolt mr-[12rpx] text-[28rpx] text-purple-600"
-            />
-            <text class="text-[28rpx] text-black font-semibold">
-              第一步：选择能源类型
-            </text>
-          </view>
-
-          <view class="grid grid-cols-1 gap-[16rpx]">
-            <view
-              v-for="energy in energyTypes"
-              :key="energy.type"
-              class="relative border-2 rounded-[20rpx] p-[20rpx] transition-all active:scale-[0.98]"
-              :class="[
-                selectedEnergyType === energy.type
-                  ? 'border-purple-600 bg-purple-50'
-                  : 'border-gray-200 bg-white active:bg-gray-50',
-              ]"
-              @tap="selectEnergyType(energy.type)"
-            >
-              <!-- 推荐标签 -->
-              <view
-                v-if="energy.isRecommended"
-                class="absolute rounded-[12rpx] bg-orange-500 px-[12rpx] py-[4rpx] text-[20rpx] text-white font-medium -right-[8rpx] -top-[8rpx]"
-              >
-                推荐
-              </view>
-
-              <view class="flex items-center justify-between">
-                <view class="flex items-center space-x-[20rpx]">
-                  <view
-                    class="h-[64rpx] w-[64rpx] flex items-center justify-center rounded-[16rpx]"
-                    :class="getIconBg(energy.color)"
-                  >
-                    <text
-                      :class="getIconClass(energy.icon)"
-                      class="text-[32rpx]"
-                      :style="{ color: getIconColor(energy.color) }"
-                    />
-                  </view>
-                  <view class="flex-1">
-                    <text class="block text-[28rpx] text-black font-semibold">
-                      {{ energy.name }}
-                    </text>
-                    <text class="text-[24rpx] text-gray-600 leading-[32rpx]">
-                      {{ energy.description }}
-                    </text>
-                  </view>
-                </view>
-                <view
-                  class="h-[32rpx] w-[32rpx] flex items-center justify-center border-2 rounded-full"
-                  :class="
-                    selectedEnergyType === energy.type
-                      ? 'border-purple-600'
-                      : 'border-gray-300'
-                  "
-                >
-                  <view
-                    v-if="selectedEnergyType === energy.type"
-                    class="h-[16rpx] w-[16rpx] rounded-full bg-purple-600"
-                  />
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 选择车型类型 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center">
-            <text
-              class="i-material-symbols-directions-car mr-[12rpx] text-[28rpx] text-purple-600"
-            />
-            <text class="text-[28rpx] text-black font-semibold">
-              第二步：选择车型类别
-            </text>
-          </view>
-
-          <view class="grid grid-cols-1 gap-[16rpx]">
-            <view
-              v-for="carType in carTypes"
-              :key="carType.type"
-              class="relative border-2 rounded-[20rpx] p-[20rpx] transition-all active:scale-[0.98]"
-              :class="[
-                selectedCarType === carType.type
-                  ? 'border-purple-600 bg-purple-50'
-                  : 'border-gray-200 bg-white active:bg-gray-50',
-              ]"
-              @tap="selectCarType(carType.type)"
-            >
-              <!-- 推荐标签 -->
-              <view
-                v-if="carType.isRecommended"
-                class="absolute rounded-[12rpx] bg-orange-500 px-[12rpx] py-[4rpx] text-[20rpx] text-white font-medium -right-[8rpx] -top-[8rpx]"
-              >
-                推荐
-              </view>
-
-              <view class="flex items-center justify-between">
-                <view class="flex items-center space-x-[20rpx]">
-                  <view
-                    class="h-[64rpx] w-[64rpx] flex items-center justify-center rounded-[16rpx]"
-                    :class="getIconBg(carType.color)"
-                  >
-                    <text
-                      :class="getIconClass(carType.icon)"
-                      class="text-[32rpx]"
-                      :style="{ color: getIconColor(carType.color) }"
-                    />
-                  </view>
-                  <view class="flex-1">
-                    <text class="block text-[28rpx] text-black font-semibold">
-                      {{ carType.name }}
-                    </text>
-                    <text class="text-[24rpx] text-gray-600 leading-[32rpx]">
-                      {{ carType.description }}
-                    </text>
-                  </view>
-                </view>
-                <view
-                  class="h-[32rpx] w-[32rpx] flex items-center justify-center border-2 rounded-full"
-                  :class="
-                    selectedCarType === carType.type
-                      ? 'border-purple-600'
-                      : 'border-gray-300'
-                  "
-                >
-                  <view
-                    v-if="selectedCarType === carType.type"
-                    class="h-[16rpx] w-[16rpx] rounded-full bg-purple-600"
-                  />
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 盲盒价格信息 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center">
-            <text
-              class="i-material-symbols-confirmation-number mr-[12rpx] text-[28rpx] text-purple-600"
-            />
-            <text class="text-[28rpx] text-black font-semibold">
-              盲盒价格
-            </text>
-          </view>
-
-          <!-- 价格加载状态 -->
-          <view v-if="priceLoading" class="flex items-center justify-center py-[40rpx]">
-            <text
-              class="i-material-symbols-sync mr-[12rpx] animate-spin text-[32rpx] text-purple-600"
-            />
-            <text class="text-[24rpx] text-gray-600">
-              计算价格中...
-            </text>
-          </view>
-
-          <!-- 价格信息 -->
-          <view v-else-if="priceInfo" class="space-y-[20rpx]">
-            <!-- 价格展示 -->
-            <view
-              class="relative rounded-[20rpx] from-purple-500 to-purple-600 bg-gradient-to-r p-[24rpx] text-white"
-            >
-              <view class="absolute right-[16rpx] top-[16rpx] opacity-20">
-                <text class="i-material-symbols-auto-awesome text-[40rpx]" />
-              </view>
-
-              <view class="relative z-10 text-center">
-                <view class="mb-[8rpx] text-[48rpx] font-bold">
-                  ¥{{ priceInfo.finalPrice }}
-                </view>
-                <view class="mb-[16rpx] text-[24rpx] text-purple-100">
-                  神秘盲盒体验 · 取车时揭晓
-                </view>
-
-                <!-- 预估价值 -->
-                <view
-                  class="flex items-center justify-center text-[20rpx] text-purple-100 space-x-[16rpx]"
-                >
-                  <text>
-                    预估价值：¥{{ priceInfo.estimatedValue.min }}-{{
-                      priceInfo.estimatedValue.max
-                    }}
-                  </text>
-                  <view
-                    class="rounded-[8rpx] bg-green-500 px-[8rpx] py-[2rpx] text-white"
-                  >
-                    超值
-                  </view>
-                </view>
-              </view>
-            </view>
-
-            <!-- 可选品牌 -->
-            <view
-              v-if="priceInfo.possibleBrands?.length"
-              class="rounded-[16rpx] bg-gray-50 p-[20rpx]"
-            >
-              <text class="mb-[12rpx] block text-[24rpx] text-gray-700 font-medium">
-                可能品牌：
-              </text>
-              <view class="flex flex-wrap gap-[8rpx]">
-                <view
-                  v-for="brand in priceInfo.possibleBrands"
-                  :key="brand"
-                  class="border border-gray-200 rounded-[12rpx] bg-white px-[12rpx] py-[6rpx]"
-                >
-                  <text class="text-[22rpx] text-gray-700">
-                    {{ brand }}
-                  </text>
-                </view>
-              </view>
-            </view>
-
-            <!-- 库存信息 -->
-            <view
-              v-if="priceInfo.availableCount"
-              class="flex items-center justify-center text-[22rpx] space-x-[8rpx]"
-            >
-              <text class="i-material-symbols-inventory text-orange-600" />
-              <text class="text-gray-600">
-                剩余
-              </text>
-              <text class="text-orange-600 font-medium">
-                {{
-                  priceInfo.availableCount
-                }}
-              </text>
-              <text class="text-gray-600">
-                个盲盒
-              </text>
-            </view>
-          </view>
-
-          <!-- 请先选择偏好 -->
-          <view v-else class="py-[40rpx] text-center text-gray-500">
-            <text class="i-material-symbols-touch-app mb-[16rpx] block text-[40rpx]" />
-            <text class="text-[24rpx]">
-              请先选择能源类型和车型类别
-            </text>
-          </view>
-
-          <!-- 服务特性 -->
-          <view
-            class="mt-[24rpx] flex items-center justify-center text-[22rpx] space-x-[32rpx]"
-          >
-            <view
-              v-for="feature in activityInfo.features"
-              :key="feature"
-              class="flex items-center space-x-[8rpx]"
-            >
-              <text class="i-material-symbols-check-circle text-[24rpx] text-green-600" />
-              <text class="text-gray-600">
-                {{ feature }}
-              </text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 盲盒规则 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
-          <view class="mb-[24rpx] flex items-center justify-between">
-            <view class="flex items-center">
-              <text
-                class="i-material-symbols-rule mr-[12rpx] text-[28rpx] text-purple-600"
-              />
-              <text class="text-[28rpx] text-black font-semibold">
-                盲盒规则
-              </text>
-            </view>
-            <view
-              class="text-[24rpx] text-purple-600 active:opacity-70"
-              @tap="showRulesModal = true"
-            >
-              查看详情
-            </view>
-          </view>
-
-          <view class="text-[24rpx] text-gray-600 space-y-[16rpx]">
-            <view
-              v-for="(rule, index) in rules.slice(0, 3)"
-              :key="rule"
-              class="flex items-start leading-[32rpx] space-x-[12rpx]"
-            >
-              <view
-                class="mr-[8rpx] mt-[4rpx] h-[24rpx] w-[24rpx] flex flex-shrink-0 items-center justify-center rounded-full bg-purple-100"
-              >
-                <text class="text-[16rpx] text-purple-600 font-medium">
-                  {{
-                    index + 1
-                  }}
+                <text class="mt-[2rpx] text-[20rpx] text-[#9CA3AF]">
+                  点击修改取车时间
                 </text>
               </view>
-              <text class="flex-1">
+            </view>
+            <text class="i-lets-icons:arrow-right-duotone text-[28rpx] text-[#D1D5DB]" />
+          </view>
+        </view>
+
+        <!-- 选项卡片 - 优化版 -->
+        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+          <view class="mb-[28rpx]">
+            <text class="text-[28rpx] text-[#0F172A] font-bold">
+              偏好选择
+            </text>
+            <text class="mt-[4rpx] block text-[20rpx] text-[#9CA3AF]">
+              选择后随机分配，惊喜翻倍
+            </text>
+          </view>
+
+          <!-- 能源类型 -->
+          <view class="mb-[32rpx]">
+            <text class="mb-[16rpx] block text-[22rpx] text-[#6B7280] font-semibold">
+              能源类型
+            </text>
+            <view class="grid grid-cols-2 gap-[12rpx]">
+              <view
+                v-for="energy in energyTypes"
+                :key="energy.type"
+                class="relative flex flex-col items-center justify-center border-2 rounded-[20rpx] py-[20rpx] transition-all duration-200 active:scale-98"
+                :class="[
+                  selectedEnergyType === energy.type
+                    ? 'border-[#8B5CF6] bg-[#8B5CF6]/8 shadow-sm'
+                    : 'border-[#E5E7EB] bg-[#FAFAFA]',
+                ]"
+                @tap="selectEnergyType(energy.type)"
+              >
+                <!-- 推荐角标 -->
+                <view v-if="energy.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[12rpx] rounded-tr-[18rpx] bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[10rpx] py-[3rpx]">
+                  <text class="text-[18rpx] text-white font-bold">
+                    推荐
+                  </text>
+                </view>
+
+                <text
+                  class="mb-[6rpx] text-[36rpx]"
+                  :class="[
+                    energy.icon === 'bolt' ? 'i-lets-icons:lightning-duotone' : 'i-lets-icons:fire-duotone',
+                  ]"
+                  :style="{ color: getIconColor(energy.color, selectedEnergyType === energy.type) }"
+                />
+                <text
+                  class="text-[24rpx] font-semibold"
+                  :class="selectedEnergyType === energy.type ? 'text-[#8B5CF6]' : 'text-[#1F2937]'"
+                >
+                  {{ energy.name }}
+                </text>
+                <text class="mt-[2rpx] text-[18rpx] text-[#9CA3AF]">
+                  {{ energy.description }}
+                </text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 车型选择 -->
+          <view>
+            <text class="mb-[16rpx] block text-[22rpx] text-[#6B7280] font-semibold">
+              车型偏好
+            </text>
+            <view class="grid grid-cols-3 gap-[12rpx]">
+              <view
+                v-for="carType in carTypes"
+                :key="carType.type"
+                class="relative flex flex-col items-center justify-center border-2 rounded-[20rpx] py-[20rpx] transition-all duration-200 active:scale-98"
+                :class="[
+                  selectedCarType === carType.type
+                    ? 'border-[#8B5CF6] bg-[#8B5CF6]/8 shadow-sm'
+                    : 'border-[#E5E7EB] bg-[#FAFAFA]',
+                ]"
+                @tap="selectCarType(carType.type)"
+              >
+                <!-- 推荐角标 -->
+                <view v-if="carType.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[10rpx] rounded-tr-[18rpx] bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[8rpx] py-[2rpx]">
+                  <text class="text-[16rpx] text-white font-bold">
+                    推荐
+                  </text>
+                </view>
+
+                <text
+                  class="mb-[6rpx] text-[32rpx]"
+                  :class="[
+                    carType.icon === 'directions-car' ? 'i-lets-icons:car-duotone'
+                    : carType.icon === 'airport-shuttle' ? 'i-lets-icons:car-duotone' : 'i-lets-icons:speed-duotone',
+                  ]"
+                  :style="{ color: getIconColor(carType.color, selectedCarType === carType.type) }"
+                />
+                <text
+                  class="text-[22rpx] font-semibold"
+                  :class="selectedCarType === carType.type ? 'text-[#8B5CF6]' : 'text-[#1F2937]'"
+                >
+                  {{ carType.name }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 库存提示或无车辆提示 - 优化版 -->
+        <view class="rounded-[28rpx] border border-white/50 bg-white p-[24rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+          <!-- 加载骨架 -->
+          <view v-if="priceLoading" class="flex items-center">
+            <view class="h-[48rpx] w-[48rpx] animate-pulse rounded-full bg-gray-200" />
+            <view class="ml-[16rpx] flex-1">
+              <view class="h-[28rpx] w-[140rpx] animate-pulse rounded-[8rpx] bg-gray-200" />
+              <view class="mt-[10rpx] h-[22rpx] w-[220rpx] animate-pulse rounded-[8rpx] bg-gray-100" />
+            </view>
+          </view>
+
+          <!-- 实际内容 -->
+          <view v-else class="flex items-center">
+            <view
+              class="flex h-[48rpx] w-[48rpx] flex-shrink-0 items-center justify-center rounded-full"
+              :class="noVehicleAvailable ? 'bg-[#FEE2E2]' : 'bg-[#EDE9FE]'"
+            >
+              <text
+                class="text-[28rpx]"
+                :class="noVehicleAvailable ? 'i-lets-icons:close-ring-duotone text-[#EF4444]' : 'i-lets-icons:box-duotone text-[#8B5CF6]'"
+              />
+            </view>
+            <view class="ml-[16rpx] flex-1">
+              <text class="text-[26rpx] font-bold" :class="noVehicleAvailable ? 'text-[#EF4444]' : 'text-[#1F2937]'">
+                {{ noVehicleAvailable ? '暂无可用车辆' : '库存提示' }}
+              </text>
+              <view v-if="noVehicleAvailable" class="mt-[4rpx] text-[20rpx] text-[#9CA3AF] leading-relaxed">
+                <text>该组合暂无车辆，请选择其他偏好</text>
+              </view>
+              <view v-else-if="priceInfo" class="mt-[4rpx] flex items-center text-[20rpx] text-[#6B7280]">
+                <text>当前仅剩</text>
+                <text class="mx-[6rpx] text-[26rpx] text-[#FF7A1A] font-bold">
+                  {{ priceInfo.availableCount }}
+                </text>
+                <text>盒，售完即止</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 盲盒服务规则 - 优化版 -->
+        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+          <view class="mb-[20rpx] flex items-center">
+            <view class="flex h-[40rpx] w-[40rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+              <text class="i-lets-icons:alarm-light text-[24rpx] text-[#8B5CF6]" />
+            </view>
+            <text class="ml-[12rpx] text-[28rpx] text-[#0F172A] font-bold">
+              服务规则与说明
+            </text>
+          </view>
+          <view class="space-y-[16rpx]">
+            <view v-for="(rule, index) in rules" :key="index" class="flex items-start">
+              <view class="mr-[12rpx] mt-[2rpx] flex h-[32rpx] w-[32rpx] flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFB] text-[20rpx] text-[#9CA3AF] font-bold">
+                {{ index + 1 }}
+              </view>
+              <text class="flex-1 text-[22rpx] text-[#6B7280] leading-relaxed">
                 {{ rule }}
               </text>
             </view>
-
-            <view v-if="rules.length > 3" class="pt-[16rpx] text-center">
-              <text class="text-[22rpx] text-gray-500">
-                ••• 共{{ rules.length }}条规则 •••
-              </text>
-            </view>
+          </view>
+          <view class="mt-[24rpx] border-t border-[#F3F4F6] pt-[20rpx] text-center">
+            <text class="text-[20rpx] text-[#D1D5DB]">
+              最终解释权归平台所有
+            </text>
           </view>
         </view>
       </view>
+
+      <!-- 底部占位 -->
+      <view class="h-[200rpx]" />
     </scroll-view>
 
-    <!-- 底部购买按钮 -->
-    <view class="flex-shrink-0 border-t border-gray-100 bg-white p-[24rpx] pb-[40rpx]">
-      <!-- 价格信息 -->
-      <view v-if="priceInfo" class="mb-[16rpx] flex items-center justify-between">
-        <view>
-          <text class="text-[24rpx] text-gray-500">
-            盲盒价格
-          </text>
-          <view class="flex items-baseline">
-            <text class="text-[36rpx] text-purple-600 font-bold">
-              ¥{{ priceInfo.finalPrice }}
+    <!-- 底部购买栏 - 优化版 -->
+    <view class="absolute bottom-0 left-0 right-0 z-30 border-t border-[#E5E7EB]/80 bg-white/95 px-[40rpx] pb-[calc(24rpx+env(safe-area-inset-bottom))] pt-[20rpx] shadow-[0_-8rpx_32rpx_rgba(0,0,0,0.08)] backdrop-blur-xl">
+      <view class="flex items-center justify-between">
+        <view class="flex-1">
+          <view v-if="noVehicleAvailable" class="flex flex-col">
+            <text class="text-[22rpx] text-[#EF4444] font-semibold">
+              该组合暂无车辆
             </text>
-            <text class="ml-[8rpx] text-[22rpx] text-gray-500">
-              神秘体验
+            <text class="mt-[2rpx] text-[20rpx] text-[#D1D5DB]">
+              请选择其他偏好
+            </text>
+          </view>
+          <view v-else class="flex items-baseline">
+            <text class="text-[24rpx] text-[#FF7A1A] font-bold">
+              ¥
+            </text>
+            <text class="mx-[4rpx] text-[44rpx] text-[#FF7A1A] font-bold leading-none">
+              {{ priceInfo ? priceInfo.finalPrice : activityInfo.startPrice }}
+            </text>
+            <text class="text-[20rpx] text-[#9CA3AF]">
+              /天
             </text>
           </view>
         </view>
-        <view class="text-right">
-          <text class="block text-[20rpx] text-gray-400 line-through">
-            预估最低¥{{ priceInfo.estimatedValue.min }}
-          </text>
-          <text class="text-[22rpx] text-green-600 font-medium">
-            节省至少¥{{ priceInfo.estimatedValue.min - priceInfo.finalPrice }}
-          </text>
-        </view>
-      </view>
 
-      <!-- 购买按钮 -->
-      <view
-        class="w-full rounded-[24rpx] py-[24rpx] text-center text-[32rpx] font-semibold transition-all active:scale-[0.98]"
-        :class="[
-          canPurchase && !orderLoading
-            ? 'bg-purple-600 text-white shadow-lg'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed',
-        ]"
-        @tap="purchaseMysteryBox"
-      >
-        <text
-          v-if="orderLoading"
-          class="i-material-symbols-sync mr-[8rpx] animate-spin"
-        />
-        <text>
-          {{
-            orderLoading
-              ? "处理中..."
-              : `立即购买盲盒${priceInfo ? ` ¥${priceInfo.finalPrice}` : ""}`
-          }}
-        </text>
+        <button
+          class="m-0 h-[88rpx] w-[360rpx] flex items-center justify-center rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-[28rpx] text-white font-bold shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98 active:shadow-[0_4rpx_16rpx_-4rpx_rgba(139,92,246,0.4)] disabled:from-[#E5E7EB] disabled:to-[#E5E7EB] disabled:shadow-none disabled:text-[#9CA3AF]"
+          :disabled="!canPurchase || orderLoading"
+          @tap="purchaseMysteryBox"
+        >
+          <text v-if="orderLoading" class="i-lets-icons:ring-duotone mr-[10rpx] animate-spin text-[28rpx]" />
+          <text>{{ orderLoading ? '处理中...' : noVehicleAvailable ? '暂无车辆' : '立即购买' }}</text>
+        </button>
       </view>
-
-      <text class="mt-[12rpx] block text-center text-[22rpx] text-gray-500">
-        {{ canPurchase ? "立即抽奖，解锁神秘车辆！" : "请先完成所有选择" }}
-      </text>
     </view>
 
-    <!-- 取车时间选择器 -->
+    <!-- 弹窗组件 -->
     <DateTimePicker
       v-model:visible="showDatePicker"
       :start-date="timeForm.startDate"
       :start-time="timeForm.startTime"
       @confirm="handleDateTimeConfirm"
     />
-
-    <!-- 规则详情弹窗 -->
-    <BottomDrawer v-model:visible="showRulesModal" title="盲盒规则详情">
-      <view class="px-[24rpx] pb-[40rpx]">
-        <view class="text-[26rpx] text-gray-700 leading-[40rpx] space-y-[20rpx]">
-          <view
-            v-for="(rule, index) in rules"
-            :key="rule"
-            class="flex items-start space-x-[16rpx]"
-          >
-            <view
-              class="mt-[6rpx] h-[28rpx] w-[28rpx] flex flex-shrink-0 items-center justify-center rounded-full bg-purple-100"
-            >
-              <text class="text-[18rpx] text-purple-600 font-semibold">
-                {{
-                  index + 1
-                }}
-              </text>
-            </view>
-            <text class="flex-1">
-              {{ rule }}
-            </text>
-          </view>
-        </view>
-
-        <view class="mt-[40rpx] border-t border-gray-100 pt-[24rpx]">
-          <text class="block text-center text-[24rpx] text-gray-600">
-            以上规则解释权归窘启租车所有
-          </text>
-        </view>
-      </view>
-    </BottomDrawer>
   </view>
 </template>
 
