@@ -175,7 +175,7 @@ function getMonthlyDiscount(dailyPrice: number, monthlyPrice?: number) {
 async function getLocation() {
   try {
     const location = await uni.getLocation({
-      type: 'wgs84',
+      type: 'gcj02',
     })
 
     const response = await getCurrentLocation({

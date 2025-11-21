@@ -179,6 +179,9 @@ async function loadPricing() {
 
 // 购买盲盒
 async function purchaseMysteryBox() {
+  if (!canPurchase.value || orderLoading.value)
+    return
+
   if (!canPurchase.value) {
     uni.showToast({
       title: '请先完成所有选择',
@@ -380,7 +383,7 @@ function useDefaultOptions() {
       type: 'electric',
       name: '纯电动',
       description: '环保节能',
-      icon: 'bolt',
+      icon: 'electric-bolt',
       color: 'green',
       isRecommended: true,
     },
@@ -489,7 +492,7 @@ onMounted(async () => {
             <view
               v-for="benefit in activityInfo.benefits"
               :key="benefit"
-              class="flex items-center rounded-full border border-white/20 bg-white/10 px-[16rpx] py-[6rpx] backdrop-blur-md"
+              class="flex items-center border border-white/20 rounded-full border-solid bg-white/10 px-[16rpx] py-[6rpx] backdrop-blur-md"
             >
               <text class="i-lets-icons:check-ring-duotone mr-[6rpx] text-[20rpx] text-[#10B981]" />
               <text class="text-[20rpx] text-white font-medium">
@@ -503,7 +506,7 @@ onMounted(async () => {
       <!-- 主要卡片区域 -->
       <view class="relative z-20 px-[40rpx] pb-[40rpx] -mt-[60rpx] space-y-[24rpx]">
         <!-- 取车时间卡片 - 优化版 -->
-        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+        <view class="border border-white/50 rounded-[28rpx] border-solid bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[20rpx] flex items-center justify-between">
             <text class="text-[28rpx] text-[#0F172A] font-bold">
               用车时间
@@ -517,7 +520,7 @@ onMounted(async () => {
           </view>
 
           <view
-            class="flex items-center justify-between rounded-[20rpx] border border-[#E5E7EB] bg-[#FAFAFA] px-[20rpx] py-[20rpx] transition-all active:border-[#8B5CF6] active:bg-[#F9FAFB]"
+            class="flex items-center justify-between border border-[#E5E7EB] rounded-[20rpx] border-solid bg-[#FAFAFA] px-[20rpx] py-[20rpx] transition-all active:border-[#8B5CF6] active:bg-[#F9FAFB]"
             @tap="showTimePicker"
           >
             <view class="flex items-center">
@@ -543,7 +546,7 @@ onMounted(async () => {
         </view>
 
         <!-- 选项卡片 - 优化版 -->
-        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+        <view class="border border-white/50 rounded-[28rpx] border-solid bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[28rpx]">
             <text class="text-[28rpx] text-[#0F172A] font-bold">
               偏好选择
@@ -562,7 +565,7 @@ onMounted(async () => {
               <view
                 v-for="energy in energyTypes"
                 :key="energy.type"
-                class="relative flex flex-col items-center justify-center border-2 rounded-[20rpx] py-[20rpx] transition-all duration-200 active:scale-98"
+                class="relative flex flex-col items-center justify-center border rounded-[20rpx] border-solid py-[20rpx] transition-all duration-200 active:scale-98"
                 :class="[
                   selectedEnergyType === energy.type
                     ? 'border-[#8B5CF6] bg-[#8B5CF6]/8 shadow-sm'
@@ -571,7 +574,7 @@ onMounted(async () => {
                 @tap="selectEnergyType(energy.type)"
               >
                 <!-- 推荐角标 -->
-                <view v-if="energy.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[12rpx] rounded-tr-[18rpx] bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[10rpx] py-[3rpx]">
+                <view v-if="energy.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[12rpx] rounded-tr-[18rpx] from-[#FF7A1A] to-[#FF9A4A] bg-gradient-to-r px-[10rpx] py-[3rpx]">
                   <text class="text-[18rpx] text-white font-bold">
                     推荐
                   </text>
@@ -579,9 +582,7 @@ onMounted(async () => {
 
                 <text
                   class="mb-[6rpx] text-[36rpx]"
-                  :class="[
-                    energy.icon === 'bolt' ? 'i-lets-icons:lightning-duotone' : 'i-lets-icons:fire-duotone',
-                  ]"
+                  :class="`${energy.icon === 'electric-bolt' ? 'i-streamline-plump-color:electric-charging-station' : 'i-streamline-plump-color:leaf-protect'}`"
                   :style="{ color: getIconColor(energy.color, selectedEnergyType === energy.type) }"
                 />
                 <text
@@ -606,7 +607,7 @@ onMounted(async () => {
               <view
                 v-for="carType in carTypes"
                 :key="carType.type"
-                class="relative flex flex-col items-center justify-center border-2 rounded-[20rpx] py-[20rpx] transition-all duration-200 active:scale-98"
+                class="relative flex flex-col items-center justify-center border rounded-[20rpx] border-solid py-[20rpx] transition-all duration-200 active:scale-98"
                 :class="[
                   selectedCarType === carType.type
                     ? 'border-[#8B5CF6] bg-[#8B5CF6]/8 shadow-sm'
@@ -615,7 +616,7 @@ onMounted(async () => {
                 @tap="selectCarType(carType.type)"
               >
                 <!-- 推荐角标 -->
-                <view v-if="carType.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[10rpx] rounded-tr-[18rpx] bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[8rpx] py-[2rpx]">
+                <view v-if="carType.isRecommended" class="absolute right-0 top-0 flex rounded-bl-[10rpx] rounded-tr-[18rpx] from-[#FF7A1A] to-[#FF9A4A] bg-gradient-to-r px-[8rpx] py-[2rpx]">
                   <text class="text-[16rpx] text-white font-bold">
                     推荐
                   </text>
@@ -623,10 +624,7 @@ onMounted(async () => {
 
                 <text
                   class="mb-[6rpx] text-[32rpx]"
-                  :class="[
-                    carType.icon === 'directions-car' ? 'i-lets-icons:car-duotone'
-                    : carType.icon === 'airport-shuttle' ? 'i-lets-icons:car-duotone' : 'i-lets-icons:speed-duotone',
-                  ]"
+                  :class="`${carType.icon === 'directions-car' ? 'i-streamline-cyber-color:car-4' : carType.icon === 'airport-shuttle' ? 'i-streamline-cyber-color:cloud' : 'i-streamline-cyber-color:campfire'}`"
                   :style="{ color: getIconColor(carType.color, selectedCarType === carType.type) }"
                 />
                 <text
@@ -641,35 +639,35 @@ onMounted(async () => {
         </view>
 
         <!-- 库存提示或无车辆提示 - 优化版 -->
-        <view class="rounded-[28rpx] border border-white/50 bg-white p-[24rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+        <view class="box-border h-[132rpx] border border-white/50 rounded-[28rpx] border-solid bg-white p-[24rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <!-- 加载骨架 -->
-          <view v-if="priceLoading" class="flex items-center">
+          <!-- <view v-if="priceLoading" class="flex items-center">
             <view class="h-[48rpx] w-[48rpx] animate-pulse rounded-full bg-gray-200" />
             <view class="ml-[16rpx] flex-1">
               <view class="h-[28rpx] w-[140rpx] animate-pulse rounded-[8rpx] bg-gray-200" />
               <view class="mt-[10rpx] h-[22rpx] w-[220rpx] animate-pulse rounded-[8rpx] bg-gray-100" />
             </view>
-          </view>
+          </view> -->
 
-          <!-- 实际内容 -->
-          <view v-else class="flex items-center">
+          <!-- 实际内容 v-else -->
+          <view class="flex items-center h-[84rpx]">
             <view
-              class="flex h-[48rpx] w-[48rpx] flex-shrink-0 items-center justify-center rounded-full"
+              class="h-[48rpx] w-[48rpx] flex flex-shrink-0 items-center justify-center rounded-full"
               :class="noVehicleAvailable ? 'bg-[#FEE2E2]' : 'bg-[#EDE9FE]'"
             >
               <text
                 class="text-[28rpx]"
-                :class="noVehicleAvailable ? 'i-lets-icons:close-ring-duotone text-[#EF4444]' : 'i-lets-icons:box-duotone text-[#8B5CF6]'"
+                :class="noVehicleAvailable ? 'i-lets-icons:close-ring-duotone text-[#EF4444]' : 'i-lets-icons:box-alt-light text-[#8B5CF6]'"
               />
             </view>
-            <view class="ml-[16rpx] flex-1">
-              <text class="text-[26rpx] font-bold" :class="noVehicleAvailable ? 'text-[#EF4444]' : 'text-[#1F2937]'">
+            <view class="ml-[16rpx] flex-1 grid grid-rows-2">
+              <text class="text-[26rpx] font-bold mb-[4rpx] " :class="noVehicleAvailable ? 'text-[#EF4444]' : 'text-[#1F2937]'">
                 {{ noVehicleAvailable ? '暂无可用车辆' : '库存提示' }}
               </text>
-              <view v-if="noVehicleAvailable" class="mt-[4rpx] text-[20rpx] text-[#9CA3AF] leading-relaxed">
+              <view v-if="noVehicleAvailable" class="text-[20rpx] text-[#9CA3AF] leading-relaxed">
                 <text>该组合暂无车辆，请选择其他偏好</text>
               </view>
-              <view v-else-if="priceInfo" class="mt-[4rpx] flex items-center text-[20rpx] text-[#6B7280]">
+              <view v-else-if="priceInfo" class="flex items-center text-[20rpx] text-[#6B7280]">
                 <text>当前仅剩</text>
                 <text class="mx-[6rpx] text-[26rpx] text-[#FF7A1A] font-bold">
                   {{ priceInfo.availableCount }}
@@ -681,9 +679,9 @@ onMounted(async () => {
         </view>
 
         <!-- 盲盒服务规则 - 优化版 -->
-        <view class="rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+        <view class="border border-white/50 rounded-[28rpx] border-solid bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[20rpx] flex items-center">
-            <view class="flex h-[40rpx] w-[40rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+            <view class="h-[40rpx] w-[40rpx] flex items-center justify-center rounded-full bg-[#EDE9FE]">
               <text class="i-lets-icons:alarm-light text-[24rpx] text-[#8B5CF6]" />
             </view>
             <text class="ml-[12rpx] text-[28rpx] text-[#0F172A] font-bold">
@@ -692,7 +690,7 @@ onMounted(async () => {
           </view>
           <view class="space-y-[16rpx]">
             <view v-for="(rule, index) in rules" :key="index" class="flex items-start">
-              <view class="mr-[12rpx] mt-[2rpx] flex h-[32rpx] w-[32rpx] flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFB] text-[20rpx] text-[#9CA3AF] font-bold">
+              <view class="mr-[12rpx] mt-[2rpx] h-[32rpx] w-[32rpx] flex flex-shrink-0 items-center justify-center rounded-full bg-[#F9FAFB] text-[20rpx] text-[#9CA3AF] font-bold">
                 {{ index + 1 }}
               </view>
               <text class="flex-1 text-[22rpx] text-[#6B7280] leading-relaxed">
@@ -700,7 +698,7 @@ onMounted(async () => {
               </text>
             </view>
           </view>
-          <view class="mt-[24rpx] border-t border-[#F3F4F6] pt-[20rpx] text-center">
+          <view class="mt-[24rpx] border-t border-[#F3F4F6] border-t-solid pt-[20rpx] text-center">
             <text class="text-[20rpx] text-[#D1D5DB]">
               最终解释权归平台所有
             </text>
@@ -713,7 +711,7 @@ onMounted(async () => {
     </scroll-view>
 
     <!-- 底部购买栏 - 优化版 -->
-    <view class="absolute bottom-0 left-0 right-0 z-30 border-t border-[#E5E7EB]/80 bg-white/95 px-[40rpx] pb-[calc(24rpx+env(safe-area-inset-bottom))] pt-[20rpx] shadow-[0_-8rpx_32rpx_rgba(0,0,0,0.08)] backdrop-blur-xl">
+    <view class="absolute bottom-0 left-0 right-0 z-30 border-t border-[#E5E7EB]/80 border-t-solid bg-white px-[40rpx] pb-[55rpx] pt-[20rpx] shadow-[0_-8rpx_32rpx_rgba(0,0,0,0.08)] backdrop-blur-xl">
       <view class="flex items-center justify-between">
         <view class="flex-1">
           <view v-if="noVehicleAvailable" class="flex flex-col">
@@ -738,8 +736,8 @@ onMounted(async () => {
         </view>
 
         <button
-          class="m-0 h-[88rpx] w-[360rpx] flex items-center justify-center rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-[28rpx] text-white font-bold shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98 active:shadow-[0_4rpx_16rpx_-4rpx_rgba(139,92,246,0.4)] disabled:from-[#E5E7EB] disabled:to-[#E5E7EB] disabled:shadow-none disabled:text-[#9CA3AF]"
-          :disabled="!canPurchase || orderLoading"
+          class="m-0 h-[88rpx] w-[360rpx] flex items-center justify-center rounded-full text-[28rpx] text-white font-bold shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98 active:shadow-[0_4rpx_16rpx_-4rpx_rgba(139,92,246,0.4)]"
+          :class="!canPurchase || orderLoading ? 'bg-[#BA9DFB]' : 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA]'"
           @tap="purchaseMysteryBox"
         >
           <text v-if="orderLoading" class="i-lets-icons:ring-duotone mr-[10rpx] animate-spin text-[28rpx]" />

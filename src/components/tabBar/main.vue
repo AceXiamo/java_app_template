@@ -346,13 +346,13 @@ onUnmounted(() => {
               </view>
             </view>
 
-            <view class="relative flex items-center rounded-[20rpx] border border-[#e5e7eb] bg-white">
+            <view class="relative flex items-center rounded-[20rpx] border border-solid border-[#e5e7eb] bg-white">
               <view i-lucide:search class="absolute left-[24rpx] text-[26rpx] text-[#94a3b8]" />
               <input
                 v-model="searchForm.keywords"
                 type="text"
                 placeholder="输入品牌/车系，快速定位车型"
-                class="w-full rounded-[20rpx] py-[26rpx] pl-[72rpx] pr-[24rpx] text-[26rpx] text-[#111827] placeholder:text-[#94a3b8]"
+                class="w-full rounded-[20rpx] py-[20rpx] pl-[72rpx] pr-[24rpx] text-[26rpx] text-[#111827] placeholder:text-[#94a3b8]"
               >
             </view>
 
@@ -439,7 +439,7 @@ onUnmounted(() => {
             @tap="goToMysteryBox"
           >
             <view class="flex items-center justify-between">
-              <view i-lets-icons:box-duotone class="text-[48rpx] text-[#8b5cf6]" />
+              <view i-duo-icons:box-2 class="text-[48rpx] text-[#8b5cf6]" />
               <text class="rounded-full bg-[#f4eefe] px-[14rpx] py-[6rpx] text-[22rpx] text-[#8b5cf6]">
                 NEW
               </text>

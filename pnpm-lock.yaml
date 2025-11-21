@@ -111,6 +111,9 @@ importers:
       '@iconify-json/carbon':
         specifier: ^1.1.27
         version: 1.2.13
+      '@iconify-json/duo-icons':
+        specifier: ^1.2.2
+        version: 1.2.2
       '@iconify-json/heroicons':
         specifier: ^1.1.21
         version: 1.2.2
@@ -123,12 +126,27 @@ importers:
       '@iconify-json/meteocons':
         specifier: ^1.1.4
         version: 1.2.4
+      '@iconify-json/streamline-color':
+        specifier: ^1.2.2
+        version: 1.2.2
+      '@iconify-json/streamline-cyber-color':
+        specifier: ^1.2.2
+        version: 1.2.2
+      '@iconify-json/streamline-plump-color':
+        specifier: ^1.2.2
+        version: 1.2.2
+      '@iconify-json/streamline-stickies-color':
+        specifier: ^1.2.2
+        version: 1.2.2
       '@iconify-json/tabler':
         specifier: ^1.2.19
         version: 1.2.22
       '@iconify-json/twemoji':
         specifier: ^1.1.15
         version: 1.2.4
+      '@iconify-json/vscode-icons':
+        specifier: ^1.2.36
+        version: 1.2.36
       '@types/crypto-js':
         specifier: ^4.2.2
         version: 4.2.2
@@ -1762,6 +1780,9 @@ packages:
   '@iconify-json/carbon@1.2.13':
     resolution: {integrity: sha512-vXrFFKkfYaZSwf4WfnRQJQMnpEzxlPlupwZZlS1WvOAuNnWahsUudHycaMpoBzDqBfniH4KQ2b5qnw0VMKoJug==}
 
+  '@iconify-json/duo-icons@1.2.2':
+    resolution: {integrity: sha512-XA2HWgiQE7s5CPpn6P9VFeRx3Y99hnscQsqPiZKdocdTGmYViKoQLhQEQfPgoU2trI1twdwiT/xkq7N9OY1rbg==}
+
   '@iconify-json/heroicons@1.2.2':
     resolution: {integrity: sha512-qoW4pXr5kTTL6juEjgTs83OJIwpePu7q1tdtKVEdj+i0zyyVHgg/dd9grsXJQnpTpBt6/VwNjrXBvFjRsKPENg==}
 
@@ -1780,11 +1801,26 @@ packages:
   '@iconify-json/meteocons@1.2.4':
     resolution: {integrity: sha512-E7YV02ql5WmJgAOpXU/hoF9Mdshq73KjwR6fBxZ5SrqMJghMa3CIcRG6NQGwP4I1uBOhIjOFlAikYoPAKuT56A==}
 
+  '@iconify-json/streamline-color@1.2.2':
+    resolution: {integrity: sha512-+ypc4kzeKTFbHVM2uNWFqt1iR7E4XeMTI3Wa3LcmeHLPjyk6u6e9NJqqOHUU02rpA8GaN80XHySXzX+4DuZbzA==}
+
+  '@iconify-json/streamline-cyber-color@1.2.2':
+    resolution: {integrity: sha512-Q7Lx72uUlMGY0+nKqxAal6N3aVRRKipH/R3BEGNLuxG3A2t0N6Mh8sYX+6puJaDPcj37pEFgjM+G3n+FwM7QYw==}
+
+  '@iconify-json/streamline-plump-color@1.2.2':
+    resolution: {integrity: sha512-nMLbsfwKt/IJCUDpndY7sW5aZsFUOhQGS2Jdeap+CAfbQMDIzsyEHqe8m3u65wM23q1jBlWoblE7oUXukcvTvw==}
+
+  '@iconify-json/streamline-stickies-color@1.2.2':
+    resolution: {integrity: sha512-OisPU3Q/VMAHTtJbzRa2lmK8UN+n7D5US0txeL488yrEmoALvRerzIOS8zTNiojNDghJ2/6cp0eh5IK4ezukpA==}
+
   '@iconify-json/tabler@1.2.22':
     resolution: {integrity: sha512-KmCtTzZyz7dtszdQGJ5wbWqko6exhI38e4aCQqWZE1Z2wGUqBsMXrRWawXkAp6/XNBebt54h0lcxFCaTYBwFJg==}
 
   '@iconify-json/twemoji@1.2.4':
     resolution: {integrity: sha512-REYJeXhzaLktNe32DxJJf3t65sYC5KO9K0Jh+RApXRBAo1/IB+jBqd8rny2sXci+wtQLBEfD4z4AGCLBrTMGWA==}
+
+  '@iconify-json/vscode-icons@1.2.36':
+    resolution: {integrity: sha512-hs17ocmWK5pGnF5KgFRgHBZVRnMVAIpwPDDvLWSwRiM/uHwIS0Jo0y93DvcHXEsP+d3sqogTGhgkgj3on3eabQ==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -8073,6 +8109,10 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
+  '@iconify-json/duo-icons@1.2.2':
+    dependencies:
+      '@iconify/types': 2.0.0
+
   '@iconify-json/heroicons@1.2.2':
     dependencies:
       '@iconify/types': 2.0.0
@@ -8097,11 +8137,31 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
+  '@iconify-json/streamline-color@1.2.2':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/streamline-cyber-color@1.2.2':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/streamline-plump-color@1.2.2':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/streamline-stickies-color@1.2.2':
+    dependencies:
+      '@iconify/types': 2.0.0
+
   '@iconify-json/tabler@1.2.22':
     dependencies:
       '@iconify/types': 2.0.0
 
   '@iconify-json/twemoji@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/vscode-icons@1.2.36':
     dependencies:
       '@iconify/types': 2.0.0
 

@@ -151,8 +151,8 @@ watch(
   (visible) => {
     if (visible) {
       // 重置初始化状态
-      addressInitialized.value = false
-      serviceAreaValidation.value = null
+      // addressInitialized.value = false
+      // serviceAreaValidation.value = null
       // 重置搜索状态
       collapseSearchPanel()
 
@@ -163,7 +163,7 @@ watch(
           longitude: props.longitude,
         }
         // 重置地址信息
-        addressInfo.value.formattedAddress = '正在获取地址...'
+        // addressInfo.value.formattedAddress = '正在获取地址...'
       }
       else {
         // 如果没有传入坐标，自动获取当前位置
@@ -232,7 +232,10 @@ async function getAddressFromLocation() {
         }
 
         if (validationData) {
-          serviceAreaValidation.value = validationData
+          serviceAreaValidation.value = {
+            ...validationData,
+            cityName: addressData.province || addressData.city || '',
+          }
         }
       }
     }

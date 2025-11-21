@@ -50,7 +50,7 @@ watch(() => props.modelValue, (newValue) => {
 
 function getLocation() {
   uni.getLocation({
-    type: 'wgs84',
+    type: 'gcj02',
     success: (res) => {
       result.value.latitude = res.latitude.toString()
       result.value.longitude = res.longitude.toString()
