@@ -13,6 +13,7 @@ export interface MonthlyRentalSearchParams {
   rentalPeriod: number
   page?: number
   size?: number
+  sortBy?: string // 排序方式: distance-距离, price-价格, rating-评分, hot-综合
   vehicleTypes?: string[]
   energyTypes?: string[]
   seats?: number[]

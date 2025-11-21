@@ -375,6 +375,8 @@ async function fetchVehicles() {
       rentalPeriod: selectedPeriod.value,
       page: currentPage.value,
       size: pageSize.value,
+      // 添加排序参数
+      sortBy: sortBy.value,
       // 添加筛选参数
       vehicleTypes: filters.value.vehicleTypes.map(mapCarType),
       energyTypes: filters.value.energyTypes.map(mapEnergyType),
