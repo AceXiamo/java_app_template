@@ -143,25 +143,27 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <RankingHead />
 
-    <!-- 榜单切换栏 -->
-    <view class="flex-shrink-0 bg-white px-[24rpx] py-[20rpx]">
-      <view class="flex rounded-[16rpx] bg-gray-100 p-[6rpx]">
+    <!-- 榜单切换栏 - 优化版 -->
+    <view class="flex-shrink-0 bg-white/95 px-[40rpx] pb-[20rpx] pt-[16rpx] backdrop-blur-sm">
+      <view class="flex rounded-full border border-[#E5E7EB] bg-[#F9FAFB] p-[4rpx]">
         <view
-          class="flex-1 rounded-[12rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-150"
-          :class="activeTab === 'daily' ? 'bg-purple-600 text-white' : 'text-gray-600'"
+          class="relative flex-1 rounded-full py-[14rpx] text-center text-[26rpx] font-semibold transition-all duration-200 active:scale-98"
+          :class="activeTab === 'daily' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white shadow-[0_4rpx_12rpx_-2rpx_rgba(139,92,246,0.3)]' : 'text-[#6B7280]'"
           @tap="switchTab('daily')"
         >
+          <text v-if="activeTab === 'daily'" class="i-lets-icons:trophy-light mr-[6rpx] text-[24rpx]" />
           日租排行
         </view>
         <view
-          class="flex-1 rounded-[12rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-150"
-          :class="activeTab === 'monthly' ? 'bg-purple-600 text-white' : 'text-gray-600'"
+          class="relative flex-1 rounded-full py-[14rpx] text-center text-[26rpx] font-semibold transition-all duration-200 active:scale-98"
+          :class="activeTab === 'monthly' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] text-white shadow-[0_4rpx_12rpx_-2rpx_rgba(139,92,246,0.3)]' : 'text-[#6B7280]'"
           @tap="switchTab('monthly')"
         >
+          <text v-if="activeTab === 'monthly'" class="i-lets-icons:calendar-duotone mr-[6rpx] text-[24rpx]" />
           月租排行
         </view>
       </view>
@@ -170,28 +172,66 @@ onUnmounted(() => {
     <!-- 主要内容区域 -->
     <scroll-view scroll-y class="h-0 flex-1">
       <!-- 日租排行内容 -->
-      <view v-if="activeTab === 'daily'" class="p-[20rpx]">
-        <!-- 排行榜列表 -->
-        <view v-if="dailyRanking" class="space-y-[12rpx]">
+      <view v-if="activeTab === 'daily'" class="px-[40rpx] py-[24rpx]">
+        <!-- 榜单说明卡片 -->
+        <view class="mb-[24rpx] overflow-hidden rounded-[28rpx] border border-white/50 bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] from-opacity-5 to-opacity-5 p-[24rpx]">
+          <view class="mb-[16rpx] flex items-center">
+            <view class="flex h-[40rpx] w-[40rpx] items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA]">
+              <text class="i-lets-icons:trophy-light text-[20rpx] text-[#8B5CF6]" />
+            </view>
+            <text class="ml-[12rpx] text-[26rpx] font-bold text-[#1F2937]">
+              日租热门榜单
+            </text>
+            <view class="ml-auto flex items-center rounded-full bg-white/80 px-[12rpx] py-[4rpx]">
+              <text class="i-lets-icons:clock-duotone mr-[4rpx] text-[16rpx] text-[#8B5CF6]" />
+              <text class="text-[18rpx] text-[#6B7280]">
+                实时更新
+              </text>
+            </view>
+          </view>
+          <view class="flex items-start">
+            <text class="i-lets-icons:info-duotone mr-[8rpx] mt-[2rpx] text-[20rpx] text-[#8B5CF6]" />
+            <text class="flex-1 text-[20rpx] text-[#6B7280] leading-relaxed">
+              基于用户租用次数、评分等综合数据排序，每日动态更新
+            </text>
+          </view>
+        </view>
+
+        <!-- 排行榜列表 - 优化版 -->
+        <view v-if="dailyRanking" class="space-y-[16rpx]">
           <view
             v-for="vehicle in dailyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="rounded-[16rpx] bg-white p-[20rpx] transition-all duration-150 active:scale-[0.98]"
+            class="relative overflow-hidden rounded-[24rpx] border border-white/50 bg-white p-[20rpx] shadow-[0_8rpx_24rpx_-8rpx_rgba(15,23,42,0.15)] transition-all duration-200 active:scale-98"
+            :class="vehicle.rank <= 3 ? 'ring-2 ring-offset-2' : ''"
+            :style="vehicle.rank === 1 ? 'ring-color: #F59E0B' : vehicle.rank === 2 ? 'ring-color: #9CA3AF' : vehicle.rank === 3 ? 'ring-color: #F97316' : ''"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
-            <view class="flex items-center space-x-[16rpx]">
-              <!-- 排名 -->
-              <view
-                class="h-[44rpx] w-[44rpx] flex flex-shrink-0 items-center justify-center rounded-full"
-                :class="getRankStyle(vehicle.rank)"
-              >
-                <text class="text-[20rpx] font-bold">
-                  {{ vehicle.rank }}
-                </text>
+            <!-- 前三名装饰角标 -->
+            <view v-if="vehicle.rank <= 3" class="absolute right-[-20rpx] top-[-20rpx] h-[80rpx] w-[80rpx] rotate-45 opacity-5" :class="vehicle.rank === 1 ? 'bg-[#F59E0B]' : vehicle.rank === 2 ? 'bg-[#9CA3AF]' : 'bg-[#F97316]'" />
+
+            <view class="relative z-10 flex items-center">
+              <!-- 排名徽章 - 增强版 -->
+              <view class="relative mr-[16rpx] flex-shrink-0">
+                <view
+                  class="flex h-[56rpx] w-[56rpx] items-center justify-center rounded-full shadow-sm"
+                  :class="vehicle.rank === 1 ? 'bg-gradient-to-br from-[#FCD34D] to-[#F59E0B]' : vehicle.rank === 2 ? 'bg-gradient-to-br from-[#E5E7EB] to-[#9CA3AF]' : vehicle.rank === 3 ? 'bg-gradient-to-br from-[#FDBA74] to-[#F97316]' : 'bg-[#EDE9FE]'"
+                >
+                  <text v-if="vehicle.rank <= 3" class="i-lets-icons:crown-duotone text-[24rpx]" :class="vehicle.rank <= 3 ? 'text-white' : 'text-[#8B5CF6]'" />
+                  <text v-else class="text-[22rpx] font-bold text-[#8B5CF6]">
+                    {{ vehicle.rank }}
+                  </text>
+                </view>
+                <!-- 排名数字（前三名） -->
+                <view v-if="vehicle.rank <= 3" class="absolute bottom-[-4rpx] right-[-4rpx] flex h-[24rpx] w-[24rpx] items-center justify-center rounded-full bg-white shadow-sm">
+                  <text class="text-[16rpx] font-bold" :class="vehicle.rank === 1 ? 'text-[#F59E0B]' : vehicle.rank === 2 ? 'text-[#6B7280]' : 'text-[#F97316]'">
+                    {{ vehicle.rank }}
+                  </text>
+                </view>
               </view>
 
-              <!-- 车辆图片 -->
-              <view class="h-[60rpx] w-[80rpx] flex-shrink-0 overflow-hidden rounded-[8rpx] bg-gray-100">
+              <!-- 车辆图片 - 优化版 -->
+              <view class="mr-[16rpx] h-[80rpx] w-[100rpx] flex-shrink-0 overflow-hidden rounded-[16rpx] border border-[#F3F4F6] bg-[#FAFAFA] shadow-sm">
                 <image
                   :src="vehicle.imageUrl"
                   class="h-full w-full object-cover"
@@ -201,21 +241,34 @@ onUnmounted(() => {
                 />
               </view>
 
-              <!-- 车辆信息 -->
+              <!-- 车辆信息 - 优化版 -->
               <view class="min-w-0 flex-1">
-                <view class="mb-[8rpx]">
-                  <text class="text-[28rpx] text-gray-900 font-semibold">
+                <view class="mb-[8rpx] flex items-center">
+                  <text class="flex-1 truncate text-[26rpx] font-bold text-[#1F2937]">
                     {{ vehicle.name }}
                   </text>
                 </view>
 
-                <view class="flex items-center justify-between text-[22rpx]">
-                  <text class="mr-[12rpx] flex-1 truncate text-gray-600">
-                    {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
-                  </text>
-                  <view class="flex flex-shrink-0 items-center space-x-[4rpx]">
-                    <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
-                    <text class="text-gray-600">
+                <view class="mb-[6rpx] flex items-center text-[20rpx]">
+                  <view class="flex items-center rounded-full bg-[#F3F4F6] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:bolt-duotone mr-[4rpx] text-[16rpx] text-[#10B981]" />
+                    <text class="text-[#6B7280]">
+                      {{ getEnergyTypeText(vehicle.energyType) }}
+                    </text>
+                  </view>
+                  <text class="mx-[8rpx] text-[#D1D5DB]">·</text>
+                  <view class="flex items-center rounded-full bg-[#F3F4F6] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:car-duotone mr-[4rpx] text-[16rpx] text-[#8B5CF6]" />
+                    <text class="text-[#6B7280]">
+                      {{ getCarTypeText(vehicle.carType) }}
+                    </text>
+                  </view>
+                </view>
+
+                <view class="flex items-center">
+                  <view class="flex items-center rounded-full bg-[#FEF3C7] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:star-duotone mr-[4rpx] text-[16rpx] text-[#F59E0B]" />
+                    <text class="text-[20rpx] font-semibold text-[#F59E0B]">
                       {{ vehicle.rating }}
                     </text>
                   </view>
@@ -227,28 +280,66 @@ onUnmounted(() => {
       </view>
 
       <!-- 月租排行内容 -->
-      <view v-if="activeTab === 'monthly'" class="p-[20rpx]">
-        <!-- 排行榜列表 -->
-        <view v-if="monthlyRanking" class="space-y-[12rpx]">
+      <view v-if="activeTab === 'monthly'" class="px-[40rpx] py-[24rpx]">
+        <!-- 榜单说明卡片 -->
+        <view class="mb-[24rpx] overflow-hidden rounded-[28rpx] border border-white/50 bg-gradient-to-br from-[#10B981] to-[#34D399] from-opacity-5 to-opacity-5 p-[24rpx]">
+          <view class="mb-[16rpx] flex items-center">
+            <view class="flex h-[40rpx] w-[40rpx] items-center justify-center rounded-full bg-gradient-to-br from-[#10B981] to-[#34D399]">
+              <text class="i-lets-icons:calendar-duotone text-[20rpx] text-[#10B981]" />
+            </view>
+            <text class="ml-[12rpx] text-[26rpx] font-bold text-[#1F2937]">
+              月租热门榜单
+            </text>
+            <view class="ml-auto flex items-center rounded-full bg-white/80 px-[12rpx] py-[4rpx]">
+              <text class="i-lets-icons:clock-duotone mr-[4rpx] text-[16rpx] text-[#10B981]" />
+              <text class="text-[18rpx] text-[#6B7280]">
+                每月更新
+              </text>
+            </view>
+          </view>
+          <view class="flex items-start">
+            <text class="i-lets-icons:info-duotone mr-[8rpx] mt-[2rpx] text-[20rpx] text-[#10B981]" />
+            <text class="flex-1 text-[20rpx] text-[#6B7280] leading-relaxed">
+              基于用户租用时长、满意度等综合数据排序，每月定期更新
+            </text>
+          </view>
+        </view>
+
+        <!-- 排行榜列表 - 优化版 -->
+        <view v-if="monthlyRanking" class="space-y-[16rpx]">
           <view
             v-for="vehicle in monthlyRanking.rankings.slice(0, 10)"
             :key="vehicle.vehicleId"
-            class="rounded-[16rpx] bg-white p-[20rpx] transition-all duration-150 active:scale-[0.98]"
+            class="relative overflow-hidden rounded-[24rpx] border border-white/50 bg-white p-[20rpx] shadow-[0_8rpx_24rpx_-8rpx_rgba(15,23,42,0.15)] transition-all duration-200 active:scale-98"
+            :class="vehicle.rank <= 3 ? 'ring-2 ring-offset-2' : ''"
+            :style="vehicle.rank === 1 ? 'ring-color: #F59E0B' : vehicle.rank === 2 ? 'ring-color: #9CA3AF' : vehicle.rank === 3 ? 'ring-color: #F97316' : ''"
             @tap="goToVehicleDetail(vehicle.vehicleId)"
           >
-            <view class="flex items-center space-x-[16rpx]">
-              <!-- 排名 -->
-              <view
-                class="h-[44rpx] w-[44rpx] flex flex-shrink-0 items-center justify-center rounded-full"
-                :class="getRankStyle(vehicle.rank)"
-              >
-                <text class="text-[20rpx] font-bold">
-                  {{ vehicle.rank }}
-                </text>
+            <!-- 前三名装饰角标 -->
+            <view v-if="vehicle.rank <= 3" class="absolute right-[-20rpx] top-[-20rpx] h-[80rpx] w-[80rpx] rotate-45 opacity-5" :class="vehicle.rank === 1 ? 'bg-[#F59E0B]' : vehicle.rank === 2 ? 'bg-[#9CA3AF]' : 'bg-[#F97316]'" />
+
+            <view class="relative z-10 flex items-center">
+              <!-- 排名徽章 - 增强版 -->
+              <view class="relative mr-[16rpx] flex-shrink-0">
+                <view
+                  class="flex h-[56rpx] w-[56rpx] items-center justify-center rounded-full shadow-sm"
+                  :class="vehicle.rank === 1 ? 'bg-gradient-to-br from-[#FCD34D] to-[#F59E0B]' : vehicle.rank === 2 ? 'bg-gradient-to-br from-[#E5E7EB] to-[#9CA3AF]' : vehicle.rank === 3 ? 'bg-gradient-to-br from-[#FDBA74] to-[#F97316]' : 'bg-[#EDE9FE]'"
+                >
+                  <text v-if="vehicle.rank <= 3" class="i-lets-icons:crown-duotone text-[24rpx]" :class="vehicle.rank <= 3 ? 'text-white' : 'text-[#8B5CF6]'" />
+                  <text v-else class="text-[22rpx] font-bold text-[#8B5CF6]">
+                    {{ vehicle.rank }}
+                  </text>
+                </view>
+                <!-- 排名数字（前三名） -->
+                <view v-if="vehicle.rank <= 3" class="absolute bottom-[-4rpx] right-[-4rpx] flex h-[24rpx] w-[24rpx] items-center justify-center rounded-full bg-white shadow-sm">
+                  <text class="text-[16rpx] font-bold" :class="vehicle.rank === 1 ? 'text-[#F59E0B]' : vehicle.rank === 2 ? 'text-[#6B7280]' : 'text-[#F97316]'">
+                    {{ vehicle.rank }}
+                  </text>
+                </view>
               </view>
 
-              <!-- 车辆图片 -->
-              <view class="h-[60rpx] w-[80rpx] flex-shrink-0 overflow-hidden rounded-[8rpx] bg-gray-100">
+              <!-- 车辆图片 - 优化版 -->
+              <view class="mr-[16rpx] h-[80rpx] w-[100rpx] flex-shrink-0 overflow-hidden rounded-[16rpx] border border-[#F3F4F6] bg-[#FAFAFA] shadow-sm">
                 <image
                   :src="vehicle.imageUrl"
                   class="h-full w-full object-cover"
@@ -258,21 +349,34 @@ onUnmounted(() => {
                 />
               </view>
 
-              <!-- 车辆信息 -->
+              <!-- 车辆信息 - 优化版 -->
               <view class="min-w-0 flex-1">
-                <view class="mb-[8rpx]">
-                  <text class="text-[28rpx] text-gray-900 font-semibold">
+                <view class="mb-[8rpx] flex items-center">
+                  <text class="flex-1 truncate text-[26rpx] font-bold text-[#1F2937]">
                     {{ vehicle.name }}
                   </text>
                 </view>
 
-                <view class="flex items-center justify-between text-[22rpx]">
-                  <text class="mr-[12rpx] flex-1 truncate text-gray-600">
-                    {{ getEnergyTypeText(vehicle.energyType) }} · {{ getCarTypeText(vehicle.carType) }}
-                  </text>
-                  <view class="flex flex-shrink-0 items-center space-x-[4rpx]">
-                    <text class="i-material-symbols-star text-[18rpx] text-orange-500" />
-                    <text class="text-gray-600">
+                <view class="mb-[6rpx] flex items-center text-[20rpx]">
+                  <view class="flex items-center rounded-full bg-[#F3F4F6] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:bolt-duotone mr-[4rpx] text-[16rpx] text-[#10B981]" />
+                    <text class="text-[#6B7280]">
+                      {{ getEnergyTypeText(vehicle.energyType) }}
+                    </text>
+                  </view>
+                  <text class="mx-[8rpx] text-[#D1D5DB]">·</text>
+                  <view class="flex items-center rounded-full bg-[#F3F4F6] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:car-duotone mr-[4rpx] text-[16rpx] text-[#8B5CF6]" />
+                    <text class="text-[#6B7280]">
+                      {{ getCarTypeText(vehicle.carType) }}
+                    </text>
+                  </view>
+                </view>
+
+                <view class="flex items-center">
+                  <view class="flex items-center rounded-full bg-[#FEF3C7] px-[10rpx] py-[3rpx]">
+                    <text class="i-lets-icons:star-duotone mr-[4rpx] text-[16rpx] text-[#F59E0B]" />
+                    <text class="text-[20rpx] font-semibold text-[#F59E0B]">
                       {{ vehicle.rating }}
                     </text>
                   </view>
@@ -283,33 +387,39 @@ onUnmounted(() => {
         </view>
       </view>
 
-      <!-- 加载状态 -->
-      <view v-if="loading" class="flex items-center justify-center py-[100rpx]">
-        <view class="flex flex-col items-center space-y-[16rpx]">
-          <text class="i-material-symbols-sync animate-spin text-[48rpx] text-purple-600" />
-          <text class="text-[24rpx] text-gray-500">
+      <!-- 加载状态 - 优化版 -->
+      <view v-if="loading" class="flex items-center justify-center py-[120rpx]">
+        <view class="flex flex-col items-center">
+          <view class="mb-[24rpx] flex h-[80rpx] w-[80rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+            <text class="i-lets-icons:ring-duotone animate-spin text-[40rpx] text-[#8B5CF6]" />
+          </view>
+          <text class="text-[24rpx] text-[#6B7280] font-medium">
             加载中...
           </text>
         </view>
       </view>
 
-      <!-- 空状态 -->
-      <view v-if="!loading && activeTab === 'daily' && !dailyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[120rpx]">
-        <text class="i-material-symbols-trending-up mb-[20rpx] text-[80rpx] text-gray-300" />
-        <text class="mb-[8rpx] text-[26rpx] text-gray-500 font-medium">
+      <!-- 空状态 - 优化版 -->
+      <view v-if="!loading && activeTab === 'daily' && !dailyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[140rpx]">
+        <view class="mb-[28rpx] flex h-[120rpx] w-[120rpx] items-center justify-center rounded-full bg-[#F9FAFB]">
+          <text class="i-lets-icons:chart-up-duotone text-[64rpx] text-[#D1D5DB]" />
+        </view>
+        <text class="mb-[8rpx] text-[28rpx] text-[#1F2937] font-bold">
           暂无排行数据
         </text>
-        <text class="text-center text-[22rpx] text-gray-400">
+        <text class="text-center text-[22rpx] text-[#9CA3AF] leading-relaxed">
           当前暂无日租车辆排行信息
         </text>
       </view>
 
-      <view v-if="!loading && activeTab === 'monthly' && !monthlyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[120rpx]">
-        <text class="i-material-symbols-calendar-month mb-[20rpx] text-[80rpx] text-gray-300" />
-        <text class="mb-[8rpx] text-[26rpx] text-gray-500 font-medium">
+      <view v-if="!loading && activeTab === 'monthly' && !monthlyRanking?.rankings?.length" class="flex flex-col items-center justify-center px-[40rpx] py-[140rpx]">
+        <view class="mb-[28rpx] flex h-[120rpx] w-[120rpx] items-center justify-center rounded-full bg-[#F9FAFB]">
+          <text class="i-lets-icons:calendar-duotone text-[64rpx] text-[#D1D5DB]" />
+        </view>
+        <text class="mb-[8rpx] text-[28rpx] text-[#1F2937] font-bold">
           暂无排行数据
         </text>
-        <text class="text-center text-[22rpx] text-gray-400">
+        <text class="text-center text-[22rpx] text-[#9CA3AF] leading-relaxed">
           当前暂无月租车辆排行信息
         </text>
       </view>
