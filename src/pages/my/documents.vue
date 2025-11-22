@@ -432,8 +432,15 @@ onUnmounted(() => {
 
           <view class="p-[32rpx] space-y-[32rpx]">
             <!-- 真实姓名 -->
-            <view class="flex items-center justify-between">
-              <view>
+            <view class="relative flex items-center justify-between">
+              <input
+                v-model="realNameInput"
+                class="w-full border border-gray-300 rounded bg-transparent px-[16rpx] py-[32rpx] text-right text-[26rpx]"
+                placeholder="请输入真实姓名"
+                maxlength="20"
+                :disabled="userDocuments.certificationStatus === 'certified'"
+              />
+              <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
                 <text class="block text-[28rpx] text-black font-medium">
                   真实姓名
                 </text>
@@ -441,20 +448,11 @@ onUnmounted(() => {
                   用于实名认证验证
                 </text>
               </view>
-              <view class="flex items-center space-x-[16rpx]">
-                <input
-                  v-model="realNameInput"
-                  class="min-w-[200rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
-                  placeholder="请输入真实姓名"
-                  maxlength="20"
-                  :disabled="userDocuments.certificationStatus === 'certified'"
-                >
-              </view>
             </view>
 
             <!-- 手机号 -->
-            <view class="flex items-center justify-between">
-              <view>
+            <view class="relative flex items-center justify-between py-[16rpx]">
+              <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
                 <text class="block text-[28rpx] text-black font-medium">
                   手机号码
                 </text>
@@ -462,7 +460,7 @@ onUnmounted(() => {
                   已验证的手机号
                 </text>
               </view>
-              <view class="flex items-center space-x-[16rpx]">
+              <view class="ml-auto flex items-center space-x-[16rpx] py-[20rpx]">
                 <text class="text-[26rpx] text-gray-700">
                   {{ userDocuments.phone || '未设置' }}
                 </text>
@@ -477,7 +475,7 @@ onUnmounted(() => {
                     未验证
                   </text>
                   <button
-                    class="rounded-full bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
+                    class="m-0 rounded-full border-0 bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
                     open-type="getPhoneNumber"
                     :disabled="gettingPhone"
                     @getphonenumber="onGetPhoneNumber"
@@ -517,26 +515,22 @@ onUnmounted(() => {
 
           <view class="p-[32rpx]">
             <!-- 身份证号码 -->
-            <view class="mb-[24rpx]">
-              <view class="flex items-center justify-between">
-                <view>
-                  <text class="block text-[28rpx] text-black font-medium">
-                    身份证号码
-                  </text>
-                  <text class="text-[24rpx] text-gray-500">
-                    请输入18位身份证号码
-                  </text>
-                </view>
-                <view class="flex items-center space-x-[16rpx]">
-                  <input
-                    v-model="idCardNumberInput"
-                    class="min-w-[300rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
-                    placeholder="请输入身份证号码"
-                    maxlength="18"
-                    type="idcard"
-                    :disabled="userDocuments.certificationStatus === 'certified'"
-                  >
-                </view>
+            <view class="relative mb-[24rpx]">
+              <input
+                v-model="idCardNumberInput"
+                class="w-full border border-gray-300 rounded bg-transparent px-[16rpx] py-[32rpx] text-right text-[26rpx]"
+                placeholder="请输入身份证号码"
+                maxlength="18"
+                type="idcard"
+                :disabled="userDocuments.certificationStatus === 'certified'"
+              />
+              <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
+                <text class="block text-[28rpx] text-black font-medium">
+                  身份证号码
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  请输入18位身份证号码
+                </text>
               </view>
             </view>
 
@@ -548,14 +542,14 @@ onUnmounted(() => {
                   身份证正面
                 </text>
                 <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border-2 border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
+                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
                   :class="{ 'border-purple-300 bg-purple-50': getImageUrl('idCardFront') }"
                   @tap="getImageUrl('idCardFront') ? previewImage(getImageUrl('idCardFront')) : uploadImage('idCard', 'front')"
                 >
                   <image
                     v-if="getImageUrl('idCardFront')"
                     :src="getImageUrl('idCardFront')"
-                    class="h-full w-full rounded-[10rpx] object-cover"
+                    class="h-full w-full rounded-[10rpx]"
                     mode="aspectFill"
                   />
                   <template v-else>
@@ -573,14 +567,14 @@ onUnmounted(() => {
                   身份证反面
                 </text>
                 <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border-2 border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
+                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
                   :class="{ 'border-purple-300 bg-purple-50': getImageUrl('idCardBack') }"
                   @tap="getImageUrl('idCardBack') ? previewImage(getImageUrl('idCardBack')) : uploadImage('idCard', 'back')"
                 >
                   <image
                     v-if="getImageUrl('idCardBack')"
                     :src="getImageUrl('idCardBack')"
-                    class="h-full w-full rounded-[10rpx] object-cover"
+                    class="h-full w-full rounded-[10rpx]"
                     mode="aspectFill"
                   />
                   <template v-else>
@@ -616,25 +610,21 @@ onUnmounted(() => {
 
           <view class="p-[32rpx]">
             <!-- 驾驶证号码 -->
-            <view class="mb-[24rpx]">
-              <view class="flex items-center justify-between">
-                <view>
-                  <text class="block text-[28rpx] text-black font-medium">
-                    驾驶证号码
-                  </text>
-                  <text class="text-[24rpx] text-gray-500">
-                    请输入驾驶证号码
-                  </text>
-                </view>
-                <view class="flex items-center space-x-[16rpx]">
-                  <input
-                    v-model="drivingLicenseNumberInput"
-                    class="min-w-[300rpx] flex-1 border border-gray-300 rounded bg-transparent px-[16rpx] py-[8rpx] text-right text-[26rpx]"
-                    placeholder="请输入驾驶证号码"
-                    maxlength="20"
-                    :disabled="userDocuments.certificationStatus === 'certified'"
-                  >
-                </view>
+            <view class="relative mb-[24rpx]">
+              <input
+                v-model="drivingLicenseNumberInput"
+                class="w-full border border-gray-300 rounded bg-transparent px-[16rpx] py-[32rpx] text-right text-[26rpx]"
+                placeholder="请输入驾驶证号码"
+                maxlength="20"
+                :disabled="userDocuments.certificationStatus === 'certified'"
+              />
+              <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
+                <text class="block text-[28rpx] text-black font-medium">
+                  驾驶证号码
+                </text>
+                <text class="text-[24rpx] text-gray-500">
+                  请输入驾驶证号码
+                </text>
               </view>
             </view>
 
@@ -646,14 +636,14 @@ onUnmounted(() => {
                   驾驶证正面
                 </text>
                 <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border-2 border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
+                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
                   :class="{ 'border-purple-300 bg-purple-50': getImageUrl('drivingLicenseFront') }"
                   @tap="getImageUrl('drivingLicenseFront') ? previewImage(getImageUrl('drivingLicenseFront')) : uploadImage('drivingLicense', 'front')"
                 >
                   <image
                     v-if="getImageUrl('drivingLicenseFront')"
                     :src="getImageUrl('drivingLicenseFront')"
-                    class="h-full w-full rounded-[10rpx] object-cover"
+                    class="h-full w-full rounded-[10rpx]"
                     mode="aspectFill"
                   />
                   <template v-else>
@@ -671,14 +661,14 @@ onUnmounted(() => {
                   驾驶证副页
                 </text>
                 <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border-2 border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
+                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
                   :class="{ 'border-purple-300 bg-purple-50': getImageUrl('drivingLicenseBack') }"
                   @tap="getImageUrl('drivingLicenseBack') ? previewImage(getImageUrl('drivingLicenseBack')) : uploadImage('drivingLicense', 'back')"
                 >
                   <image
                     v-if="getImageUrl('drivingLicenseBack')"
                     :src="getImageUrl('drivingLicenseBack')"
-                    class="h-full w-full rounded-[10rpx] object-cover"
+                    class="h-full w-full rounded-[10rpx]"
                     mode="aspectFill"
                   />
                   <template v-else>

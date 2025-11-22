@@ -216,7 +216,7 @@ function goBack() {
             class="h-[60rpx] w-[60rpx] flex items-center justify-center rounded-full bg-gray-100 transition-colors active:bg-gray-200"
             @tap="goBack"
           >
-            <text class="i-material-symbols-arrow-back text-[32rpx] text-gray-700" />
+            <text class="i-material-symbols:arrow-back-ios text-[32rpx] text-gray-700" />
           </view>
           <text class="ml-[24rpx] text-[32rpx] text-black font-semibold">
             用户评价

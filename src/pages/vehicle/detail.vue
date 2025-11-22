@@ -356,7 +356,7 @@ function handleDateRangeConfirm(data: {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <PageVehicleHead
       @favorite="toggleFavorite"
@@ -365,11 +365,16 @@ function handleDateRangeConfirm(data: {
 
     <!-- 主要内容区域 -->
     <scroll-view scroll-y class="h-0 flex-1">
-      <!-- 加载状态 -->
+      <!-- 加载状态 - 优化版 -->
       <view v-if="loading" class="flex items-center justify-center py-[200rpx]">
-        <text class="text-[28rpx] text-gray-500">
-          加载中...
-        </text>
+        <view class="flex flex-col items-center">
+          <view class="mb-[24rpx] flex h-[80rpx] w-[80rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+            <text class="i-lets-icons:ring-duotone animate-spin text-[40rpx] text-[#8B5CF6]" />
+          </view>
+          <text class="text-[24rpx] text-[#6B7280] font-medium">
+            加载中...
+          </text>
+        </view>
       </view>
 
       <!-- 车辆详情内容 -->
@@ -401,50 +406,60 @@ function handleDateRangeConfirm(data: {
           </view>
         </view>
 
-        <view class="p-[24rpx] space-y-[24rpx]">
-          <!-- 基本信息 -->
-          <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
+        <view class="px-[24rpx] py-[24rpx] space-y-[24rpx]">
+          <!-- 基本信息 - 优化版 -->
+          <view class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
             <view class="mb-[24rpx]">
-              <text class="block text-[36rpx] text-black font-bold leading-[48rpx]">
+              <text class="block text-[32rpx] text-[#0F172A] font-bold leading-tight">
                 {{ vehicleDetail.name }}
               </text>
-              <view class="mt-[8rpx] flex items-center text-[24rpx] text-gray-600 space-x-[16rpx]">
-                <text>{{ vehicleDetail.licensePlate }}</text>
-                <text>{{ vehicleDetail.seats }}座</text>
-                <text>{{ vehicleDetail.energyType }}</text>
+              <view class="mt-[12rpx] flex items-center gap-[12rpx]">
+                <view class="flex items-center rounded-full bg-[#F3F4F6] px-[12rpx] py-[4rpx]">
+                  <text class="i-lets-icons:document-duotone mr-[4rpx] text-[16rpx] text-[#6B7280]" />
+                  <text class="text-[20rpx] text-[#6B7280]">{{ vehicleDetail.licensePlate }}</text>
+                </view>
+                <view class="flex items-center rounded-full bg-[#F3F4F6] px-[12rpx] py-[4rpx]">
+                  <text class="i-lets-icons:users-duotone mr-[4rpx] text-[16rpx] text-[#6B7280]" />
+                  <text class="text-[20rpx] text-[#6B7280]">{{ vehicleDetail.seats }}座</text>
+                </view>
+                <view class="flex items-center rounded-full bg-[#F3F4F6] px-[12rpx] py-[4rpx]">
+                  <text class="i-lets-icons:bolt-duotone mr-[4rpx] text-[16rpx] text-[#10B981]" />
+                  <text class="text-[20rpx] text-[#6B7280]">{{ vehicleDetail.energyType }}</text>
+                </view>
               </view>
             </view>
 
-            <!-- 价格信息 -->
-            <view class="mb-[24rpx]">
+            <!-- 价格信息 - 优化版 -->
+            <view class="rounded-[20rpx] bg-gradient-to-br from-[#8B5CF6]/5 to-[#A78BFA]/5 p-[20rpx]">
               <!-- 超值月租车辆 - 优先展示月租价格 -->
               <template v-if="vehicleDetail.isMonthlyRental && vehicleDetail.monthlyPrice">
                 <view class="flex items-baseline">
-                  <text class="text-[40rpx] text-purple-600 font-bold">
+                  <text class="text-[20rpx] text-[#6B7280]">月租价</text>
+                  <text class="mx-[8rpx] text-[40rpx] text-[#8B5CF6] font-bold leading-none">
                     ¥{{ vehicleDetail.monthlyPrice }}
                   </text>
-                  <text class="ml-[8rpx] text-[24rpx] text-gray-500">
-                    /月
-                  </text>
+                  <text class="text-[20rpx] text-[#9CA3AF]">/月</text>
                 </view>
 
                 <!-- 显示月租折扣信息 -->
-                <view v-if="monthlyDiscount" class="mt-[8rpx] flex items-center">
-                  <text class="mr-[12rpx] text-[24rpx] text-gray-400 line-through">
+                <view v-if="monthlyDiscount" class="mt-[12rpx] flex items-center gap-[8rpx]">
+                  <text class="text-[22rpx] text-[#9CA3AF] line-through">
                     ¥{{ monthlyDiscount.originalPrice.toFixed(0) }}
                   </text>
-                  <text class="rounded-full bg-red-50 px-[12rpx] py-[4rpx] text-[22rpx] text-red-500 font-medium">
-                    {{ monthlyDiscount.discountPercent }}折
-                  </text>
-                  <text class="ml-[12rpx] text-[20rpx] text-green-600">
-                    省{{ monthlyDiscount.savings.toFixed(0) }}元
+                  <view class="flex items-center rounded-full bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[12rpx] py-[3rpx]">
+                    <text class="text-[20rpx] text-white font-bold">
+                      {{ monthlyDiscount.discountPercent }}折
+                    </text>
+                  </view>
+                  <text class="text-[20rpx] text-[#10B981] font-medium">
+                    省¥{{ monthlyDiscount.savings.toFixed(0) }}
                   </text>
                 </view>
 
                 <!-- 显示日租参考价格 -->
                 <view class="mt-[8rpx]">
-                  <text class="text-[22rpx] text-gray-500">
-                    日租参考价：¥{{ vehicleDetail.dailyPrice }}/天
+                  <text class="text-[20rpx] text-[#9CA3AF]">
+                    日租参考：¥{{ vehicleDetail.dailyPrice }}/天
                   </text>
                 </view>
               </template>
@@ -452,153 +467,197 @@ function handleDateRangeConfirm(data: {
               <!-- 普通日租车辆 -->
               <template v-else>
                 <view class="flex items-baseline">
-                  <text class="text-[40rpx] text-purple-600 font-bold">
+                  <text class="text-[20rpx] text-[#6B7280]">日租价</text>
+                  <text class="mx-[8rpx] text-[40rpx] text-[#8B5CF6] font-bold leading-none">
                     ¥{{ vehicleDetail.dailyPrice }}
                   </text>
-                  <text class="ml-[8rpx] text-[24rpx] text-gray-500">
-                    /天
-                  </text>
+                  <text class="text-[20rpx] text-[#9CA3AF]">/天</text>
                 </view>
 
                 <!-- 如果普通车辆也有月租价格，可以显示月租优惠 -->
-                <view v-if="monthlyDiscount" class="mt-[8rpx] flex items-center">
-                  <text class="mr-[12rpx] text-[24rpx] text-gray-400 line-through">
+                <view v-if="monthlyDiscount" class="mt-[12rpx] flex items-center gap-[8rpx]">
+                  <text class="text-[22rpx] text-[#9CA3AF] line-through">
                     ¥{{ (vehicleDetail.dailyPrice * 30).toFixed(0) }}
                   </text>
-                  <text class="rounded-full bg-red-50 px-[12rpx] py-[4rpx] text-[22rpx] text-red-500 font-medium">
-                    月租{{ monthlyDiscount.discountPercent }}折
-                  </text>
-                  <text class="ml-[12rpx] text-[20rpx] text-green-600">
-                    省{{ monthlyDiscount.savings.toFixed(0) }}元
+                  <view class="flex items-center rounded-full bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[12rpx] py-[3rpx]">
+                    <text class="text-[20rpx] text-white font-bold">
+                      月租{{ monthlyDiscount.discountPercent }}折
+                    </text>
+                  </view>
+                  <text class="text-[20rpx] text-[#10B981] font-medium">
+                    省¥{{ monthlyDiscount.savings.toFixed(0) }}
                   </text>
                 </view>
               </template>
             </view>
 
-            <!-- 车辆特性 -->
-            <view class="grid grid-cols-4 gap-[24rpx]">
-              <view class="flex flex-col items-center">
-                <text class="i-material-symbols-airline-seat-recline-normal block text-[32rpx] text-purple-600" />
-                <text class="mt-[8rpx] block text-[22rpx] text-gray-600">
+            <!-- 车辆特性 - 优化版 -->
+            <view class="mt-[24rpx] grid grid-cols-4 gap-[16rpx]">
+              <view class="flex flex-col items-center rounded-[16rpx] bg-[#F9FAFB] py-[16rpx]">
+                <view class="mb-[8rpx] flex h-[44rpx] w-[44rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+                  <text class="i-solar:armchair-bold-duotone text-[24rpx] text-[#8B5CF6]" />
+                </view>
+                <text class="text-[20rpx] text-[#6B7280]">
                   {{ vehicleDetail.seats }}座
                 </text>
               </view>
-              <view class="flex flex-col items-center">
-                <text class="i-material-symbols-local-gas-station block text-[32rpx] text-purple-600" />
-                <text class="mt-[8rpx] block text-[22rpx] text-gray-600">
+              <view class="flex flex-col items-center rounded-[16rpx] bg-[#F9FAFB] py-[16rpx]">
+                <view class="mb-[8rpx] flex h-[44rpx] w-[44rpx] items-center justify-center rounded-full bg-[#D1FAE5]">
+                  <text class="i-solar:widget-6-bold-duotone text-[24rpx] text-[#10B981]" />
+                </view>
+                <text class="text-[20rpx] text-[#6B7280]">
                   {{ vehicleDetail.energyType }}
                 </text>
               </view>
-              <view v-if="vehicleDetail.rangeKm" class="flex flex-col items-center">
-                <text class="i-material-symbols-battery-charging-full block text-[32rpx] text-purple-600" />
-                <text class="mt-[8rpx] block text-[22rpx] text-gray-600">
+              <view v-if="vehicleDetail.rangeKm" class="flex flex-col items-center rounded-[16rpx] bg-[#F9FAFB] py-[16rpx]">
+                <view class="mb-[8rpx] flex h-[44rpx] w-[44rpx] items-center justify-center rounded-full bg-[#DBEAFE]">
+                  <text class="i-solar:gas-station-bold-duotone text-[24rpx] text-[#3B82F6]" />
+                </view>
+                <text class="text-[20rpx] text-[#6B7280]">
                   {{ vehicleDetail.rangeKm }}km
                 </text>
               </view>
-              <view class="flex flex-col items-center">
-                <text class="i-material-symbols-star block text-[32rpx] text-purple-600" />
-                <text class="mt-[8rpx] block text-[22rpx] text-gray-600">
+              <view class="flex flex-col items-center rounded-[16rpx] bg-[#F9FAFB] py-[16rpx]">
+                <view class="mb-[8rpx] flex h-[44rpx] w-[44rpx] items-center justify-center rounded-full bg-[#FEF3C7]">
+                  <text class="i-lets-icons:star-duotone text-[24rpx] text-[#F59E0B]" />
+                </view>
+                <text class="text-[20rpx] text-[#6B7280]">
                   {{ vehicleDetail.rating }}分
                 </text>
               </view>
             </view>
           </view>
 
-          <!-- 运营信息 -->
-          <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
-            <view class="mb-[24rpx] flex items-center">
-              <text class="i-material-symbols-business mr-[12rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-semibold">
+          <!-- 运营信息 - 优化版 -->
+          <view class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+            <view class="mb-[20rpx] flex items-center">
+              <view class="flex h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+                <text class="i-solar:buildings-bold-duotone text-[20rpx] text-[#8B5CF6]" />
+              </view>
+              <text class="ml-[12rpx] text-[26rpx] text-[#0F172A] font-bold">
                 运营信息
               </text>
             </view>
 
             <view class="flex items-center justify-between">
-              <view class="flex items-center">
-                <view class="h-[80rpx] w-[80rpx] flex items-center justify-center rounded-full bg-purple-100">
-                  <text class="i-material-symbols-corporate-fare text-[40rpx] text-purple-600" />
+              <view class="flex items-center flex-1">
+                <view class="flex h-[72rpx] w-[72rpx] items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6]/10 to-[#A78BFA]/10">
+                  <text class="i-solar:buildings-3-bold-duotone text-[36rpx] text-[#8B5CF6]" />
                 </view>
-                <view class="ml-[24rpx]">
-                  <text class="block text-[26rpx] text-black font-medium">
+                <view class="ml-[20rpx] flex-1">
+                  <text class="block text-[24rpx] text-[#1F2937] font-semibold">
                     {{ vehicleDetail.operationType === 'platform' ? '平台自营' : '车主自运营' }}
                   </text>
-                  <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
+                  <text class="mt-[4rpx] block text-[20rpx] text-[#9CA3AF]">
                     {{ vehicleDetail.operationType === 'platform' ? '专业运营，服务保障' : '车主直租，沟通便利' }}
                   </text>
                 </view>
               </view>
+              <!-- 平台运营：使用微信客服 -->
+              <button
+                v-if="vehicleDetail.operationType === 'platform'"
+                open-type="contact"
+                class="m-0 flex items-center rounded-full border-0 bg-transparent px-[20rpx] py-[10rpx] text-[22rpx] text-[#8B5CF6] font-medium transition-all active:bg-[#8B5CF6]/5"
+              >
+                <text class="i-lets-icons:chat-duotone mr-[6rpx] text-[20rpx] text-[#8B5CF6]" />
+                联系客服
+              </button>
+              <!-- 车主运营：拨打电话 -->
               <view
-                class="border border-purple-600 rounded-[20rpx] px-[24rpx] py-[12rpx] text-center text-[24rpx] text-purple-600 transition-colors active:bg-purple-50"
+                v-else
+                class="flex items-center rounded-full border-0 px-[20rpx] py-[10rpx] transition-all active:bg-[#8B5CF6]/5"
                 @tap="contactOwner"
               >
-                {{ vehicleDetail.operationType === 'platform' ? '联系客服' : '联系车主' }}
+                <text class="i-lets-icons:chat-duotone mr-[6rpx] text-[20rpx] text-[#8B5CF6]" />
+                <text class="text-[22rpx] text-[#8B5CF6] font-medium">
+                  联系车主
+                </text>
               </view>
             </view>
           </view>
 
-          <!-- 车辆位置 -->
-          <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
-            <view class="mb-[24rpx] flex items-center">
-              <text class="i-material-symbols-location-on mr-[12rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-semibold">
+          <!-- 车辆位置 - 优化版 -->
+          <view class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+            <view class="mb-[20rpx] flex items-center">
+              <view class="flex h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-[#FEE2E2]">
+                <text class="i-lets-icons:pin-duotone text-[20rpx] text-[#EF4444]" />
+              </view>
+              <text class="ml-[12rpx] text-[26rpx] text-[#0F172A] font-bold">
                 车辆位置
               </text>
             </view>
 
-            <view class="flex items-center justify-between" @tap="openNavigation">
+            <view class="flex items-center justify-between transition-all active:opacity-70" @tap="openNavigation">
               <view class="flex-1">
-                <text class="block text-[26rpx] text-black">
+                <text class="block text-[24rpx] text-[#1F2937]">
                   {{ vehicleDetail.location.address }}
                 </text>
-                <text v-if="vehicleDetail.distance" class="mt-[4rpx] block text-[22rpx] text-gray-600">
-                  距离您 {{ formatDistance(vehicleDetail.distance) }}
-                </text>
+                <view v-if="vehicleDetail.distance" class="mt-[6rpx] flex items-center">
+                  <text class="i-lets-icons:navigation-duotone mr-[4rpx] text-[16rpx] text-[#6B7280]" />
+                  <text class="text-[20rpx] text-[#9CA3AF]">
+                    距离您 {{ formatDistance(vehicleDetail.distance) }}
+                  </text>
+                </view>
               </view>
-              <text class="i-material-symbols-chevron-right text-[28rpx] text-gray-400" />
+              <text class="i-lets-icons:arrow-right-duotone ml-[12rpx] text-[24rpx] text-[#D1D5DB]" />
             </view>
           </view>
 
-          <!-- 送车服务 -->
-          <view v-if="vehicleDetail.deliveryEnabled" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
-            <view class="mb-[24rpx] flex items-center">
-              <text class="i-material-symbols-local-shipping mr-[12rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-semibold">
+          <!-- 送车服务 - 优化版 -->
+          <view v-if="vehicleDetail.deliveryEnabled" class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+            <view class="mb-[20rpx] flex items-center">
+              <view class="flex h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-[#DBEAFE]">
+                <text class="i-solar:map-arrow-square-bold-duotone text-[20rpx] text-[#3B82F6]" />
+              </view>
+              <text class="ml-[12rpx] text-[26rpx] text-[#0F172A] font-bold">
                 送车服务
               </text>
             </view>
 
-            <view>
-              <text class="block text-[26rpx] text-black">
-                支持送车上门
-              </text>
-              <text class="mt-[4rpx] block text-[22rpx] text-gray-600">
-                {{ vehicleDetail.deliveryFreeDistance }}公里内¥{{ vehicleDetail.deliveryBaseFee }}，超出¥{{ vehicleDetail.deliveryPricePerKm }}/公里
-              </text>
-              <text class="mt-[4rpx] block text-[22rpx] text-gray-500">
-                最远送车距离：{{ vehicleDetail.maxDeliveryDistance }}公里
-              </text>
+            <view class="space-y-[12rpx]">
+              <view class="flex items-center">
+                <text class="i-lets-icons:check-ring-duotone mr-[8rpx] text-[20rpx] text-[#10B981]" />
+                <text class="text-[24rpx] text-[#1F2937] font-medium">
+                  支持送车上门
+                </text>
+              </view>
+              <view class="rounded-[12rpx] bg-[#F9FAFB] p-[16rpx]">
+                <text class="block text-[22rpx] text-[#6B7280] leading-relaxed">
+                  {{ vehicleDetail.deliveryFreeDistance }}公里内 <text class="font-bold text-[#8B5CF6]">¥{{ vehicleDetail.deliveryBaseFee }}</text>，超出 <text class="font-bold text-[#8B5CF6]">¥{{ vehicleDetail.deliveryPricePerKm }}/公里</text>
+                </text>
+                <text class="mt-[4rpx] block text-[20rpx] text-[#9CA3AF]">
+                  最远送车距离：{{ vehicleDetail.maxDeliveryDistance }}公里
+                </text>
+              </view>
             </view>
           </view>
 
-          <!-- 用户评价 -->
-          <view class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
-            <view class="mb-[24rpx] flex items-center justify-between">
+          <!-- 用户评价 - 优化版 -->
+          <view class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+            <view class="mb-[20rpx] flex items-center justify-between">
               <view class="flex items-center">
-                <text class="i-material-symbols-reviews mr-[12rpx] text-[28rpx] text-purple-600" />
-                <text class="text-[28rpx] text-black font-semibold">
+                <view class="flex h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-[#FEF3C7]">
+                  <text class="i-solar:chat-round-dots-bold-duotone text-[20rpx] text-[#F59E0B]" />
+                </view>
+                <text class="ml-[12rpx] text-[26rpx] text-[#0F172A] font-bold">
                   用户评价
                 </text>
-                <text class="ml-[12rpx] text-[24rpx] text-gray-600">
-                  ({{ reviewsTotal }})
-                </text>
+                <view class="ml-[8rpx] flex items-center rounded-full bg-[#F3F4F6] px-[10rpx] py-[3rpx]">
+                  <text class="text-[18rpx] text-[#6B7280]">
+                    {{ reviewsTotal }}
+                  </text>
+                </view>
               </view>
-              <text
+              <view
                 v-if="reviewsTotal > 5"
-                class="text-[24rpx] text-purple-600"
+                class="flex items-center transition-opacity active:opacity-70"
                 @tap="viewAllReviews"
               >
-                查看全部
-              </text>
+                <text class="text-[22rpx] text-[#8B5CF6] font-medium">
+                  查看全部
+                </text>
+                <text class="i-lets-icons:arrow-right-duotone ml-[4rpx] text-[20rpx] text-[#8B5CF6]" />
+              </view>
             </view>
 
             <!-- 评价列表 -->
@@ -622,8 +681,8 @@ function handleDateRangeConfirm(data: {
                         <text
                           v-for="i in 5"
                           :key="i"
-                          class="i-material-symbols-star text-[20rpx]"
-                          :class="i <= review.rating ? 'text-yellow-500' : 'text-gray-300'"
+                          class="i-lets-icons:star-duotone text-[20rpx]"
+                          :class="i <= review.rating ? 'text-[#F59E0B]' : 'text-[#E5E7EB]'"
                         />
                       </view>
                       <text class="text-[20rpx] text-gray-500">
@@ -649,100 +708,121 @@ function handleDateRangeConfirm(data: {
             </view>
           </view>
 
-          <!-- 相似车辆推荐 -->
-          <view v-if="similarVehicles.length > 0" class="overflow-hidden rounded-[24rpx] bg-white p-[32rpx]">
-            <view class="mb-[24rpx] flex items-center">
-              <text class="i-material-symbols-recommend mr-[12rpx] text-[28rpx] text-purple-600" />
-              <text class="text-[28rpx] text-black font-semibold">
+          <!-- 相似车辆推荐 - 优化版 -->
+          <view v-if="similarVehicles.length > 0" class="overflow-hidden rounded-[28rpx] border border-white/50 bg-white p-[28rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
+            <view class="mb-[20rpx] flex items-center">
+              <view class="flex h-[36rpx] w-[36rpx] items-center justify-center rounded-full bg-[#EDE9FE]">
+                <text class="i-solar:menu-dots-circle-bold-duotone text-[20rpx] text-[#8B5CF6]" />
+              </view>
+              <text class="ml-[12rpx] text-[26rpx] text-[#0F172A] font-bold">
                 相似推荐
               </text>
             </view>
 
-            <view class="space-y-[16rpx]">
+            <view class="space-y-[12rpx]">
               <view
                 v-for="vehicle in similarVehicles"
                 :key="vehicle.vehicleId"
-                class="flex items-center rounded-[16rpx] bg-gray-50 p-[16rpx]"
+                class="flex items-center rounded-[20rpx] border border-[#F3F4F6] bg-[#FAFAFA] p-[16rpx] transition-all active:scale-98"
                 @tap="viewSimilarVehicle(vehicle)"
               >
                 <image
                   :src="vehicle.imageUrl"
                   mode="aspectFill"
-                  class="h-[80rpx] w-[120rpx] flex-shrink-0 rounded-[8rpx]"
+                  class="h-[80rpx] w-[120rpx] flex-shrink-0 rounded-[12rpx] border border-[#E5E7EB]"
                 />
                 <view class="ml-[16rpx] flex-1">
-                  <text class="block text-[24rpx] text-black font-medium">
+                  <text class="block text-[24rpx] text-[#1F2937] font-semibold">
                     {{ vehicle.name }}
                   </text>
-                  <view class="mt-[4rpx] flex items-center justify-between">
-                    <text class="text-[22rpx] text-purple-600 font-medium">
-                      ¥{{ vehicle.dailyPrice }}/天
-                    </text>
-                    <text class="text-[20rpx] text-gray-500">
-                      {{ formatDistance(vehicle.distance) }}
-                    </text>
+                  <view class="mt-[6rpx] flex items-center justify-between">
+                    <view class="flex items-baseline">
+                      <text class="text-[24rpx] text-[#8B5CF6] font-bold">
+                        ¥{{ vehicle.dailyPrice }}
+                      </text>
+                      <text class="ml-[4rpx] text-[18rpx] text-[#9CA3AF]">
+                        /天
+                      </text>
+                    </view>
+                    <view class="flex items-center">
+                      <text class="i-lets-icons:navigation-duotone mr-[4rpx] text-[16rpx] text-[#9CA3AF]" />
+                      <text class="text-[20rpx] text-[#9CA3AF]">
+                        {{ formatDistance(vehicle.distance) }}
+                      </text>
+                    </view>
                   </view>
                 </view>
-                <text class="i-material-symbols-chevron-right ml-[12rpx] text-[24rpx] text-gray-400" />
+                <text class="i-lets-icons:arrow-right-duotone ml-[12rpx] text-[24rpx] text-[#D1D5DB]" />
               </view>
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 错误状态 -->
-      <view v-else class="flex flex-col items-center justify-center py-[200rpx]">
-        <text class="i-material-symbols-error text-[80rpx] text-gray-300" />
-        <text class="mt-[24rpx] text-[28rpx] text-gray-500">
+      <!-- 错误状态 - 优化版 -->
+      <view v-else class="flex flex-col items-center justify-center px-[40rpx] py-[200rpx]">
+        <view class="mb-[28rpx] flex h-[120rpx] w-[120rpx] items-center justify-center rounded-full bg-[#FEE2E2]">
+          <text class="i-lets-icons:close-ring-duotone text-[64rpx] text-[#EF4444]" />
+        </view>
+        <text class="mb-[8rpx] text-[28rpx] text-[#1F2937] font-bold">
           车辆信息加载失败
         </text>
+        <text class="mb-[32rpx] text-[22rpx] text-[#9CA3AF]">
+          请检查网络后重试
+        </text>
         <view
-          class="mt-[32rpx] rounded-[20rpx] bg-purple-600 px-[32rpx] py-[16rpx] text-center text-[24rpx] text-white transition-colors active:bg-purple-700"
+          class="flex items-center rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] px-[40rpx] py-[16rpx] shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98"
           @tap="loadVehicleDetail"
         >
-          重新加载
+          <text class="i-lets-icons:refresh-duotone mr-[8rpx] text-[24rpx] text-white" />
+          <text class="text-[24rpx] text-white font-medium">
+            重新加载
+          </text>
         </view>
       </view>
     </scroll-view>
 
-    <!-- 底部预订按钮 -->
-    <view v-if="vehicleDetail" class="border-t border-gray-100 bg-white p-[24rpx] pb-[40rpx]">
-      <view class="flex items-center">
+    <!-- 底部预订按钮 - 优化版 -->
+    <view v-if="vehicleDetail" class="border-t border-[#E5E7EB]/80 bg-white/95 px-[40rpx] pb-[40rpx] pt-[20rpx] shadow-[0_-8rpx_32rpx_rgba(0,0,0,0.08)] backdrop-blur-xl">
+      <view class="flex items-center justify-between">
         <view class="flex-1">
           <!-- 超值月租车辆 -->
           <template v-if="vehicleDetail.isMonthlyRental && vehicleDetail.monthlyPrice">
-            <text class="text-[24rpx] text-gray-500">
+            <text class="text-[20rpx] text-[#9CA3AF]">
               月租价格
             </text>
             <view class="flex items-baseline">
-              <text class="text-[32rpx] text-purple-600 font-bold">
+              <text class="text-[36rpx] text-[#8B5CF6] font-bold leading-none">
                 ¥{{ vehicleDetail.monthlyPrice }}
               </text>
-              <text class="ml-[4rpx] text-[22rpx] text-gray-500">
+              <text class="ml-[4rpx] text-[20rpx] text-[#9CA3AF]">
                 /月起
               </text>
             </view>
           </template>
           <!-- 普通日租车辆 -->
           <template v-else>
-            <text class="text-[24rpx] text-gray-500">
+            <text class="text-[20rpx] text-[#9CA3AF]">
               日租价格
             </text>
             <view class="flex items-baseline">
-              <text class="text-[32rpx] text-purple-600 font-bold">
+              <text class="text-[36rpx] text-[#8B5CF6] font-bold leading-none">
                 ¥{{ vehicleDetail.dailyPrice }}
               </text>
-              <text class="ml-[4rpx] text-[22rpx] text-gray-500">
+              <text class="ml-[4rpx] text-[20rpx] text-[#9CA3AF]">
                 /天起
               </text>
             </view>
           </template>
         </view>
         <view
-          class="rounded-[20rpx] bg-purple-600 px-[48rpx] py-[24rpx] text-center text-[28rpx] text-white font-medium transition-colors active:bg-purple-700"
+          class="flex h-[88rpx] w-[320rpx] items-center justify-center rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98"
           @tap="bookNow"
         >
-          立即预订
+          <text class="i-lets-icons:calendar-check-duotone mr-[8rpx] text-[28rpx] text-white" />
+          <text class="text-[28rpx] text-white font-bold">
+            立即预订
+          </text>
         </view>
       </view>
     </view>
@@ -779,12 +859,14 @@ function handleDateRangeConfirm(data: {
         </swiper-item>
       </swiper>
 
-      <!-- 关闭按钮 -->
+      <!-- 关闭按钮 - 优化版 -->
       <view class="absolute right-[32rpx] top-[60rpx] z-10">
-        <text
-          class="i-material-symbols-close text-[48rpx] text-white"
+        <view
+          class="flex h-[72rpx] w-[72rpx] items-center justify-center rounded-full bg-black/30 backdrop-blur-sm transition-all active:scale-90"
           @tap.stop="showImageViewer = false"
-        />
+        >
+          <text class="i-lets-icons:close-duotone text-[36rpx] text-white" />
+        </view>
       </view>
 
       <!-- 图片指示器 -->

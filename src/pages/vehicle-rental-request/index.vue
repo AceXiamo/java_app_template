@@ -290,7 +290,7 @@ onMounted(async () => {
     <!-- 头部导航 -->
     <view class="flex-shrink-0 border-b border-gray-100 bg-white px-[32rpx] py-[24rpx]">
       <view class="flex items-center space-x-[24rpx]">
-        <text class="i-material-symbols-arrow-back text-[48rpx] text-gray-600" @tap="uni.navigateBack()" />
+        <text class="i-material-symbols:arrow-back-ios text-[48rpx] text-gray-600" @tap="uni.navigateBack()" />
         <text class="text-[36rpx] text-black font-semibold">
           车辆出租申请
         </text>

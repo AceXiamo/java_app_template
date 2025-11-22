@@ -65,4 +65,8 @@ onLaunch(async () => {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+button::after {
+  box-shadow: unset !important;
+  border: none !important;
+}
 </style>

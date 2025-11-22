@@ -304,7 +304,7 @@ function goBack() {
     <HeadBar bg-color="white">
       <view class="relative h-full flex items-center">
         <view class="absolute left-[20rpx] flex items-center" @tap="goBack">
-          <text class="i-material-symbols-arrow-back text-[32rpx] text-gray-700" />
+          <text class="i-material-symbols:arrow-back-ios text-[32rpx] text-gray-700" />
         </view>
         <text class="pointer-events-none absolute left-0 right-0 z-0 text-center text-[32rpx] text-black font-semibold">
           签署合同

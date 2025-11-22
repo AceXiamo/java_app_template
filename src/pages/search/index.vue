@@ -472,6 +472,21 @@ function formatRentalEndTime(endTime: string): string {
   const minute = end.getMinutes().toString().padStart(2, '0')
   return `${month}月${day}日 ${hour}:${minute}`
 }
+
+// 跳转到车辆详情页
+function goToVehicleDetail(vehicleId: number) {
+  // 使用 setJumpData 传递时间参数
+  if (searchParams.value.startTime && searchParams.value.endTime) {
+    setJumpData('vehicleDetailParams', {
+      startTime: searchParams.value.startTime,
+      endTime: searchParams.value.endTime,
+    })
+  }
+
+  uni.navigateTo({
+    url: `/pages/vehicle/detail?id=${vehicleId}`,
+  })
+}
 </script>
 
 <template>
@@ -595,7 +610,7 @@ function formatRentalEndTime(endTime: string): string {
           :style="{ 'animation-delay': `${index * 50}ms` }"
         >
           <!-- 上半部分：图片和车辆信息 -->
-          <view class="relative flex">
+          <view class="relative flex transition-opacity active:opacity-70" @tap="goToVehicleDetail(vehicle.vehicleId)">
             <!-- 车辆图片 -->
             <view class="relative h-[180rpx] w-[240rpx] flex-shrink-0">
               <image :src="vehicle.imageUrl" mode="aspectFill" class="h-full w-full rounded-tl-[28rpx]" />
@@ -657,7 +672,11 @@ function formatRentalEndTime(endTime: string): string {
             </view>
           </view>
           <!-- 标签栏（图片和价格栏之间，换行展示） -->
-          <view v-if="(vehicle.tags && vehicle.tags.length) || vehicle.rentalInfo" class="flex flex-row flex-wrap gap-[8rpx] px-[20rpx] pt-[16rpx]">
+          <view
+            v-if="(vehicle.tags && vehicle.tags.length) || vehicle.rentalInfo"
+            class="flex flex-row flex-wrap gap-[8rpx] px-[20rpx] pt-[16rpx] transition-opacity active:opacity-70"
+            @tap="goToVehicleDetail(vehicle.vehicleId)"
+          >
             <!-- 租期信息标签 -->
             <view
               v-if="vehicle.rentalInfo"
@@ -699,7 +718,7 @@ function formatRentalEndTime(endTime: string): string {
 
           <!-- 下半部分：价格信息和预订按钮 -->
           <view class="flex items-center justify-between border-t border-gray-100 px-[20rpx] py-[16rpx]">
-            <view>
+            <view class="transition-opacity active:opacity-70" @tap="goToVehicleDetail(vehicle.vehicleId)">
               <view class="flex items-baseline">
                 <text class="text-[32rpx] text-purple-600 font-bold">
                   ¥{{ vehicle.dailyPrice }}
@@ -732,7 +751,7 @@ function formatRentalEndTime(endTime: string): string {
               :class="vehicle.rentalInfo
                 ? 'bg-gray-300'
                 : 'from-purple-500 to-purple-400 bg-gradient-to-r'"
-              @tap="vehicle.rentalInfo ? null : quickBook(vehicle.vehicleId)"
+              @tap.stop="vehicle.rentalInfo ? null : quickBook(vehicle.vehicleId)"
             >
               <text
                 :class="vehicle.rentalInfo ? 'i-material-symbols-block' : 'i-material-symbols-bolt'"

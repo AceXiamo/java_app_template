@@ -249,7 +249,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <ProfileHead />
 
@@ -257,9 +257,9 @@ onMounted(async () => {
     <view class="flex-1 overflow-y-auto">
       <view class="p-[32rpx] space-y-[32rpx]">
         <!-- 头像设置 -->
-        <view class="rounded-[32rpx] bg-white p-[32rpx] shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[32rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols-account-circle text-[40rpx] text-purple-600" />
+            <text class="i-solar:user-circle-bold text-[40rpx] text-[#8b5cf6]" />
             <text class="text-[32rpx] text-black font-semibold">
               头像设置
             </text>
@@ -275,10 +275,10 @@ onMounted(async () => {
                 />
               </view>
               <view
-                class="absolute h-[48rpx] w-[48rpx] flex items-center justify-center border-2 border-white rounded-full bg-purple-600 -bottom-[8rpx] -right-[8rpx]"
+                class="absolute h-[48rpx] w-[48rpx] flex items-center justify-center border border-white rounded-full bg-[#8b5cf6] -bottom-[8rpx] -right-[8rpx]"
                 @tap="uploadAvatar"
               >
-                <text class="i-material-symbols-camera-alt text-[24rpx] text-white" />
+                <text class="i-solar:camera-bold text-[24rpx] text-white" />
               </view>
             </view>
 
@@ -290,7 +290,7 @@ onMounted(async () => {
                 支持jpg、png格式，大小不超过5MB
               </text>
               <view
-                class="border border-purple-600 rounded-[16rpx] px-[24rpx] py-[12rpx] text-center text-[24rpx] text-purple-600"
+                class="border border-[#8b5cf6] rounded-[16rpx] px-[24rpx] py-[12rpx] text-center text-[24rpx] text-[#8b5cf6] transition-all active:scale-98"
                 @tap="uploadAvatar"
               >
                 选择图片
@@ -300,10 +300,10 @@ onMounted(async () => {
         </view>
 
         <!-- 基本信息 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-person text-[40rpx] text-purple-600" />
+              <text class="i-solar:user-bold text-[40rpx] text-[#8b5cf6]" />
               <text class="text-[32rpx] text-black font-semibold">
                 基本信息
               </text>
@@ -356,13 +356,13 @@ onMounted(async () => {
                     未验证
                   </text>
                   <button
-                    class="rounded-full bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
+                    class="rounded-full bg-[#8b5cf6] px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:scale-95"
                     open-type="getPhoneNumber"
                     :disabled="gettingPhone"
                     @getphonenumber="onGetPhoneNumber"
                   >
                     <text v-if="gettingPhone" class="flex items-center space-x-[4rpx]">
-                      <text class="i-material-symbols-sync animate-spin text-[16rpx]" />
+                      <text class="i-solar:refresh-bold animate-spin text-[16rpx]" />
                       <text>获取中</text>
                     </text>
                     <text v-else>
@@ -415,7 +415,7 @@ onMounted(async () => {
                     <text class="text-[26rpx] text-gray-700">
                       {{ getGenderText(userInfo.sex || '2') }}
                     </text>
-                    <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+                    <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
                   </view>
                 </picker>
               </view>
@@ -424,16 +424,16 @@ onMounted(async () => {
         </view>
 
         <!-- 实名信息 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
               <text
                 class="text-[40rpx]"
                 :class="{
-                  'i-material-symbols-verified text-green-600': profileData?.userInfo?.certificationStatus === 'certified',
-                  'i-material-symbols-pending text-orange-600': profileData?.userInfo?.certificationStatus === 'pending',
-                  'i-material-symbols-error text-red-600': profileData?.userInfo?.certificationStatus === 'rejected',
-                  'i-material-symbols-verified-user text-gray-500': !profileData?.userInfo?.certificationStatus || profileData?.userInfo?.certificationStatus === 'none',
+                  'i-solar:verified-check-bold text-green-600': profileData?.userInfo?.certificationStatus === 'certified',
+                  'i-solar:clock-circle-bold text-orange-600': profileData?.userInfo?.certificationStatus === 'pending',
+                  'i-solar:close-circle-bold text-red-600': profileData?.userInfo?.certificationStatus === 'rejected',
+                  'i-solar:shield-user-bold text-gray-500': !profileData?.userInfo?.certificationStatus || profileData?.userInfo?.certificationStatus === 'none',
                 }"
               />
               <text class="text-[32rpx] text-black font-semibold">
@@ -516,7 +516,7 @@ onMounted(async () => {
             <!-- 拒绝原因 -->
             <view v-if="profileData?.userInfo?.certificationStatus === 'rejected' && profileData?.userInfo?.certificationRejectReason" class="rounded-[12rpx] bg-red-50 p-[16rpx]">
               <view class="mb-[8rpx] flex items-center space-x-[8rpx]">
-                <text class="i-material-symbols-error text-[20rpx] text-red-600" />
+                <text class="i-solar:danger-circle-bold text-[20rpx] text-red-600" />
                 <text class="text-[24rpx] text-red-600 font-medium">
                   审核未通过原因
                 </text>
@@ -531,7 +531,7 @@ onMounted(async () => {
               <view class="flex items-center space-x-[8rpx]">
                 <text
                   class="text-[20rpx]"
-                  :class="profileData?.userInfo?.idCardVerified ? 'i-material-symbols-check-circle text-green-600' : 'i-material-symbols-cancel text-gray-400'"
+                  :class="profileData?.userInfo?.idCardVerified ? 'i-solar:check-circle-bold text-green-600' : 'i-solar:close-circle-bold text-gray-400'"
                 />
                 <text class="text-[24rpx] text-gray-700">
                   身份证认证
@@ -540,7 +540,7 @@ onMounted(async () => {
               <view class="flex items-center space-x-[8rpx]">
                 <text
                   class="text-[20rpx]"
-                  :class="profileData?.userInfo?.drivingLicenseVerified ? 'i-material-symbols-check-circle text-green-600' : 'i-material-symbols-cancel text-gray-400'"
+                  :class="profileData?.userInfo?.drivingLicenseVerified ? 'i-solar:check-circle-bold text-green-600' : 'i-solar:close-circle-bold text-gray-400'"
                 />
                 <text class="text-[24rpx] text-gray-700">
                   驾驶证认证
@@ -551,10 +551,10 @@ onMounted(async () => {
         </view>
 
         <!-- 隐私设置 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="hidden border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-security text-[40rpx] text-purple-600" />
+              <text class="i-solar:shield-keyhole-bold text-[40rpx] text-[#8b5cf6]" />
               <text class="text-[32rpx] text-black font-semibold">
                 隐私设置
               </text>
@@ -574,7 +574,7 @@ onMounted(async () => {
               </view>
               <view
                 class="relative h-[40rpx] w-[64rpx] rounded-full transition-colors duration-200"
-                :class="userInfo.allowFindByPhone ? 'bg-purple-600' : 'bg-gray-300'"
+                :class="userInfo.allowFindByPhone ? 'bg-[#8b5cf6]' : 'bg-gray-300'"
                 @tap="togglePreference('allowFindByPhone')"
               >
                 <view
@@ -596,7 +596,7 @@ onMounted(async () => {
               </view>
               <view
                 class="relative h-[40rpx] w-[64rpx] rounded-full transition-colors duration-200"
-                :class="userInfo.showOnlineStatus ? 'bg-purple-600' : 'bg-gray-300'"
+                :class="userInfo.showOnlineStatus ? 'bg-[#8b5cf6]' : 'bg-gray-300'"
                 @tap="togglePreference('showOnlineStatus')"
               >
                 <view
@@ -609,10 +609,10 @@ onMounted(async () => {
         </view>
 
         <!-- 通知设置 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="hidden border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-notifications text-[40rpx] text-purple-600" />
+              <text class="i-solar:bell-bold text-[40rpx] text-[#8b5cf6]" />
               <text class="text-[32rpx] text-black font-semibold">
                 通知设置
               </text>
@@ -632,7 +632,7 @@ onMounted(async () => {
               </view>
               <view
                 class="relative h-[40rpx] w-[64rpx] rounded-full transition-colors duration-200"
-                :class="userInfo.notifications ? 'bg-purple-600' : 'bg-gray-300'"
+                :class="userInfo.notifications ? 'bg-[#8b5cf6]' : 'bg-gray-300'"
                 @tap="togglePreference('notifications')"
               >
                 <view
@@ -654,7 +654,7 @@ onMounted(async () => {
               </view>
               <view
                 class="relative h-[40rpx] w-[64rpx] rounded-full transition-colors duration-200"
-                :class="userInfo.allowRecommendation ? 'bg-purple-600' : 'bg-gray-300'"
+                :class="userInfo.allowRecommendation ? 'bg-[#8b5cf6]' : 'bg-gray-300'"
                 @tap="togglePreference('allowRecommendation')"
               >
                 <view
@@ -672,9 +672,9 @@ onMounted(async () => {
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="flex-shrink-0 border-t border-gray-100 bg-white p-[32rpx] pb-[calc(32rpx+env(safe-area-inset-bottom))]">
+    <view class="flex-shrink-0 border-t border-gray-100 bg-white/95 p-[32rpx] pb-[calc(32rpx+env(safe-area-inset-bottom))] shadow-[0_-8rpx_32rpx_rgba(0,0,0,0.08)] backdrop-blur-xl">
       <view
-        class="w-full rounded-[16rpx] bg-purple-600 py-[24rpx] text-center text-[28rpx] text-white font-semibold"
+        class="w-full rounded-[16rpx] bg-gradient-to-r from-[#8b5cf6] to-[#A78BFA] py-[24rpx] text-center text-[28rpx] text-white font-semibold shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)] transition-all active:scale-98"
         @tap="saveProfile"
       >
         保存资料

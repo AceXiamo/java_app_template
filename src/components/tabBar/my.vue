@@ -211,10 +211,10 @@ function handleLogout() {
       <!-- 空内容，仅作占位用途 -->
       </HeadBar>
 
-      <!-- 点缀背景元素 -->
-      <view class="pointer-events-none absolute h-[260rpx] w-[260rpx] rounded-full bg-[#8b5cf6]/12 blur-[60rpx] -right-[120rpx] -top-[60rpx]" />
-      <view class="pointer-events-none absolute left-[40rpx] top-[120rpx] h-[140rpx] w-[140rpx] rounded-full bg-[#8b5cf6]/10 blur-[50rpx]" />
-      <view class="pointer-events-none absolute right-[40rpx] top-[220rpx] h-[80rpx] w-[80rpx] border border-[#8b5cf6]/25 rounded-full" />
+      <!-- 点缀背景元素 - 优化后更加微妙 -->
+      <view class="pointer-events-none absolute h-[180rpx] w-[180rpx] rounded-full bg-[#8b5cf6]/6 blur-[40rpx] -right-[80rpx] -top-[40rpx]" />
+      <view class="pointer-events-none absolute left-[20rpx] top-[160rpx] h-[100rpx] w-[100rpx] rounded-full bg-[#A78BFA]/5 blur-[35rpx]" />
+      <view class="pointer-events-none absolute right-[60rpx] top-[240rpx] h-[60rpx] w-[60rpx] border border-[#8b5cf6]/12 rounded-full" />
 
       <view class="relative z-10 mt-[32rpx]">
         <view v-if="profileData?.userInfo" class="flex items-center space-x-[32rpx]">
@@ -228,7 +228,7 @@ function handleLogout() {
               />
             </view>
             <view class="absolute h-[48rpx] w-[48rpx] flex items-center justify-center border-2 border-white rounded-full bg-[#8b5cf6] -bottom-[8rpx] -right-[8rpx]">
-              <text class="i-material-symbols-edit text-[24rpx] text-white" />
+              <text class="i-solar:pen-new-square-bold text-[24rpx] text-white" />
             </view>
           </view>
 
@@ -247,11 +247,11 @@ function handleLogout() {
           <!-- 设置按钮 -->
           <view class="flex flex-col items-center space-y-[24rpx]">
             <text
-              class="i-material-symbols-settings text-[32rpx] text-[#8b5cf6]"
+              class="i-solar:settings-bold text-[32rpx] text-[#8b5cf6]"
               @tap="goToSettings"
             />
             <text
-              class="i-material-symbols-qr-code-scanner text-[32rpx] text-[#8b5cf6]"
+              class="i-solar:qr-code-bold text-[32rpx] text-[#8b5cf6]"
               @tap="scanCode"
             />
           </view>
@@ -281,7 +281,7 @@ function handleLogout() {
 
     <!-- 快捷数据统计 -->
     <view class="relative z-10 mb-[48rpx] px-[40rpx] -mt-[32rpx]">
-      <view class="border border-[#e5e7eb] rounded-[32rpx] bg-white p-[40rpx] shadow-[0_16rpx_48rpx_-28rpx_rgba(15,23,42,0.35)]">
+      <view class="border border-white/50 rounded-[28rpx] bg-white p-[40rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
         <view v-if="profileData?.statistics" class="grid grid-cols-3 divide-x divide-gray-100">
           <view class="text-center">
             <text class="block text-[36rpx] text-black font-semibold">
@@ -340,7 +340,7 @@ function handleLogout() {
     <!-- 主要功能列表 -->
     <view class="flex-1 px-[40rpx] space-y-[32rpx]">
       <!-- 我的服务 -->
-      <view class="border border-[#e5e7eb] rounded-[32rpx] bg-white shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]">
+      <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
         <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
           <text class="text-[32rpx] text-black font-semibold">
             我的服务
@@ -352,7 +352,7 @@ function handleLogout() {
           <view class="flex items-center justify-between" @tap="goToDocuments">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-badge text-[36rpx] text-[#8b5cf6]" />
+                <text class="i-solar:diploma-verified-bold text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -370,7 +370,7 @@ function handleLogout() {
               >
                 已认证
               </text>
-              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+              <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
             </view>
           </view>
 
@@ -378,7 +378,7 @@ function handleLogout() {
           <view class="flex items-center justify-between" @tap="goToWallet">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-wallet text-[36rpx] text-orange-600" />
+                <text class="i-solar:wallet-bold text-[36rpx] text-[#FF7A1A]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -396,7 +396,7 @@ function handleLogout() {
               >
                 {{ profileData.services.wallet.statusText }}
               </text>
-              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+              <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
             </view>
           </view>
 
@@ -424,7 +424,7 @@ function handleLogout() {
           <view class="flex items-center justify-between" @tap="goToInvoice">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-receipt-long text-[36rpx] text-blue-600" />
+                <text class="i-solar:bill-list-bold text-[36rpx] text-[#3B82F6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -436,7 +436,7 @@ function handleLogout() {
               </view>
             </view>
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+              <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
             </view>
           </view>
 
@@ -444,7 +444,7 @@ function handleLogout() {
           <view v-if="isOwnerOrManager()" class="flex items-center justify-between" @tap="goToOwnerCenter">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-directions-car text-[36rpx] text-[#8b5cf6]" />
+                <text class="i-solar:transmission-circle-bold text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -455,14 +455,14 @@ function handleLogout() {
                 </text>
               </view>
             </view>
-            <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+            <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
           </view>
 
           <!-- 车辆挂靠入口 -->
           <view class="flex items-center justify-between" @tap="goToOwnerCertification">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-verified-user text-[36rpx] text-green-600" />
+                <text class="i-solar:shield-check-bold text-[36rpx] text-[#10B981]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -479,7 +479,7 @@ function handleLogout() {
               >
                 {{ profileData?.services.certification.ownerCertification.statusText || '立即申请' }}
               </text>
-              <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+              <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
             </view>
           </view>
 
@@ -515,7 +515,7 @@ function handleLogout() {
       </view>
 
       <!-- 设置 -->
-      <view class="mb-[48rpx] border border-[#e5e7eb] rounded-[32rpx] bg-white shadow-[0_12rpx_36rpx_-24rpx_rgba(15,23,42,0.25)]">
+      <view class="mb-[48rpx] border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
         <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
           <text class="text-[32rpx] text-black font-semibold">
             设置
@@ -527,7 +527,7 @@ function handleLogout() {
           <view class="flex items-center justify-between" @tap="goToProfile">
             <view class="flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-person text-[36rpx] text-indigo-600" />
+                <text class="i-solar:user-circle-bold text-[36rpx] text-[#6366F1]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -538,7 +538,7 @@ function handleLogout() {
                 </text>
               </view>
             </view>
-            <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+            <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
           </view>
 
           <!-- 联系客服 -->
@@ -548,7 +548,7 @@ function handleLogout() {
             </button>
             <view class="relative z-1 flex items-center space-x-[24rpx]">
               <view class="h-[80rpx] w-[80rpx] flex items-center justify-center border border-gray-100 rounded-[24rpx] bg-white">
-                <text class="i-material-symbols-support-agent text-[36rpx] text-[#8b5cf6]" />
+                <text class="i-solar:headphones-round-sound-bold text-[36rpx] text-[#8b5cf6]" />
               </view>
               <view>
                 <text class="block text-[28rpx] text-black font-medium">
@@ -559,7 +559,7 @@ function handleLogout() {
                 </text>
               </view>
             </view>
-            <text class="i-material-symbols-chevron-right text-[32rpx] text-gray-400" />
+            <text class="i-solar:alt-arrow-right-bold text-[32rpx] text-gray-400" />
           </view>
 
           <!-- 关于我们 -->
@@ -585,7 +585,7 @@ function handleLogout() {
       <!-- 退出登录 -->
       <view v-if="profileData?.userInfo" class="pb-[48rpx]">
         <view
-          class="w-full border border-red-200 rounded-[24rpx] bg-red-50 py-[24rpx] text-center text-[28rpx] text-red-600 font-medium"
+          class="w-full border border-red-200 rounded-[28rpx] bg-red-50 py-[24rpx] text-center text-[28rpx] text-red-600 font-medium transition-all active:scale-98"
           @tap="handleLogout"
         >
           退出登录
