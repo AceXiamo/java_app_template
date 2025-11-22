@@ -510,7 +510,7 @@ function handleDateRangeConfirm(data: {
                   <text class="text-[22rpx] text-[#9CA3AF] line-through">
                     ¥{{ (vehicleDetail.dailyPrice * 30).toFixed(0) }}
                   </text>
-                  <view class="flex items-center rounded-full bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[12rpx] py-[3rpx]">
+                  <view class="flex items-center rounded-full bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] from-opacity-100 to-opacity-100 px-[12rpx] py-[3rpx]">
                     <text class="text-[20rpx] text-white font-bold">
                       月租{{ monthlyDiscount.discountPercent }}折
                     </text>

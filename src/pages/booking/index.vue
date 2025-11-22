@@ -195,7 +195,7 @@ const isDeliveryDistanceValid = computed(() => {
     return true
   }
 
-  const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+  const maxDistance = vehicleInfo.value.maxDeliveryDistance > 0 ? vehicleInfo.value.maxDeliveryDistance : 50
   return bookingInfo.value.deliveryDistance <= maxDistance && bookingInfo.value.deliveryDistance > 0
 })
 
@@ -618,6 +618,17 @@ function calculateCouponDiscount() {
 async function selectPickupMethod(method: 'self' | 'delivery') {
   bookingInfo.value.pickupMethod = method
   showPickupMethodDialog.value = false
+
+  if (method === 'delivery') {
+    // 如果选择了送车且没有地址，不自动计算价格，等待用户选择地址
+    // if (!bookingInfo.value.deliveryAddress) {
+    // 清空之前的计算结果中可能包含的送车费
+    // priceCalculation.value.deliveryFee = 0
+    // await calculatePrice()
+    return
+    // }
+  }
+
   await calculatePrice()
 }
 
@@ -730,7 +741,7 @@ async function submitBooking() {
 
   // 验证送车距离是否超限
   if (bookingInfo.value.pickupMethod === 'delivery') {
-    const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+    const maxDistance = vehicleInfo.value.maxDeliveryDistance > 0 ? vehicleInfo.value.maxDeliveryDistance : 50
     if (bookingInfo.value.deliveryDistance > maxDistance) {
       uni.showModal({
         title: '送车距离超限',
@@ -787,7 +798,7 @@ async function submitBooking() {
 
     if (response.code === 200 && response.data) {
       // 订单创建成功，调用统一支付接口
-      const { orderId, orderNo, payData } = response.data
+      const { orderNo } = response.data
 
       try {
         // 调用统一平台支付
@@ -943,12 +954,12 @@ async function calculateDeliveryDistance() {
     console.log('计算送车距离:', distance, 'km', '最大距离:', vehicleInfo.value.maxDeliveryDistance)
 
     // 检查是否超出最大送车距离
-    const maxDistance = vehicleInfo.value.maxDeliveryDistance || 50
+    const maxDistance = vehicleInfo.value.maxDeliveryDistance > 0 ? vehicleInfo.value.maxDeliveryDistance : 50
     if (distance > maxDistance) {
       // 超出最大距离，显示错误提示
       uni.showModal({
         title: '送车距离超限',
-        content: `选择的地址距离为 ${distance.toFixed(2)} km，超出了最大送车距离 ${maxDistance} km。请选择更近的地址或选择自提。`,
+        content: `当前距离 ${distance.toFixed(2)}km 超出最大送车范围 ${maxDistance}km，请重新选择地址或改为自提。`,
         showCancel: false,
         confirmText: '重新选择',
         success: () => {
@@ -961,7 +972,7 @@ async function calculateDeliveryDistance() {
           }
           bookingInfo.value.deliveryDistance = 0
           // 重新打开地址选择器
-          showLocationPicker.value = true
+          selectLocation()
         },
       })
       return
