@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
+import { onMounted } from 'vue'
 import { useProfileStore } from '@/store/profile'
 import { useUserStore } from '@/store/user'
 import { createDepositPayOrder } from '@/api/deposit-payment'
@@ -7,7 +8,22 @@ import { createDepositPayOrder } from '@/api/deposit-payment'
 // 使用 profile store
 const profileStore = useProfileStore()
 const { profileData } = storeToRefs(profileStore)
-const { openId } = storeToRefs(useUserStore())
+const userStore = useUserStore()
+const { openId } = storeToRefs(userStore)
+
+onMounted(async () => {
+  if (userStore.isLoggedIn) {
+    try {
+      await profileStore.loadProfileData()
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
+    }
+    catch (error) {
+      console.error('加载个人信息失败:', error)
+    }
+  }
+})
 
 // 导航方法
 function goToProfile() {
