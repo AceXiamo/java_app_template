@@ -349,7 +349,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <OwnerCertificationHead />
 
@@ -398,7 +398,7 @@ onMounted(async () => {
               <view class="flex items-center justify-between">
                 <view class="flex items-center space-x-[12rpx]">
                   <view
-                    class="h-[20rpx] w-[20rpx] flex items-center justify-center border-2 rounded-full"
+                    class="h-[20rpx] w-[20rpx] flex items-center justify-center border rounded-full"
                     :class="formData.operationMode === config.packageCode
                       ? 'border-purple-600'
                       : 'border-gray-300'"
@@ -558,7 +558,7 @@ onMounted(async () => {
               </view>
               <view class="flex items-center space-x-[16rpx]">
                 <view
-                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border-2 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
+                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
                   :class="formData.registrationCertFrontUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'"
                   @tap="uploadDocument('registrationCertFront')"
                 >
@@ -593,7 +593,7 @@ onMounted(async () => {
               </view>
               <view class="flex items-center space-x-[16rpx]">
                 <view
-                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border-2 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
+                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
                   :class="formData.registrationCertBackUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'"
                   @tap="uploadDocument('registrationCertBack')"
                 >
@@ -670,7 +670,7 @@ onMounted(async () => {
               </view>
               <view class="flex items-center space-x-[16rpx]">
                 <view
-                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border-2 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
+                  class="relative h-[120rpx] w-[120rpx] flex items-center justify-center border rounded-[12rpx] border-dashed transition-all duration-150 active:scale-98"
                   :class="formData.inspectionCertUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'"
                   @tap="uploadDocument('inspectionCert')"
                 >

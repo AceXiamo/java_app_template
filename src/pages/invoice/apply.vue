@@ -211,7 +211,7 @@ onMounted(() => {
       <view class="flex items-center justify-between px-[32rpx]">
         <view class="flex items-center space-x-[16rpx]">
           <text
-            class="i-material-symbols:arrow-back-ios text-[40rpx] text-black"
+            class="i-material-symbols:arrow-back-ios text-[28rpx] text-black"
             @tap="back"
           />
           <text class="text-[32rpx] text-black font-semibold">

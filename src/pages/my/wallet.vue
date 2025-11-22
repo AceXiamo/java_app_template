@@ -155,9 +155,9 @@ async function loadCouponStats() {
 // 加载优惠券列表
 async function loadCoupons() {
   try {
-    uni.showLoading({
-      title: '加载中...',
-    })
+    // uni.showLoading({
+    //   title: '加载中...',
+    // })
     const response = await getUserCoupons({
       status: activeTab.value,
       pageNum: 1,
@@ -175,7 +175,7 @@ async function loadCoupons() {
     })
   }
   finally {
-    uni.hideLoading()
+    // uni.hideLoading()
   }
 }
 
@@ -194,7 +194,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <WalletHead />
 
@@ -202,7 +202,7 @@ onMounted(() => {
     <view class="flex-1 overflow-y-auto">
       <view class="p-[32rpx] space-y-[32rpx]">
         <!-- 优惠券头部卡片 -->
-        <view class="rounded-[32rpx] from-orange-500 to-orange-600 bg-gradient-to-r p-[40rpx] text-white">
+        <view class="border border-white/30 rounded-[28rpx] from-[#FF7A1A] to-[#FF9A4A] bg-gradient-to-r p-[40rpx] text-white shadow-[0_20rpx_60rpx_-32rpx_rgba(255,122,26,0.5)]">
           <view class="mb-[24rpx] flex items-center justify-between">
             <view>
               <text class="mb-[8rpx] block text-[28rpx] text-white/90">
@@ -218,7 +218,7 @@ onMounted(() => {
 
             <view class="flex flex-col items-end space-y-[8rpx]">
               <view
-                class="border border-white/30 rounded-[16rpx] bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm"
+                class="border border-white/30 rounded-full bg-white/20 px-[24rpx] py-[12rpx] backdrop-blur-sm transition-all active:scale-95"
                 @tap="redeemCouponByCode"
               >
                 <text class="text-[24rpx] text-white font-medium">
@@ -233,24 +233,24 @@ onMounted(() => {
         </view>
 
         <!-- 优惠券概览 -->
-        <view class="rounded-[32rpx] bg-white p-[32rpx] shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols-confirmation-number text-[40rpx] text-orange-600" />
+            <text class="i-solar:ticket-bold text-[40rpx] text-[#FF7A1A]" />
             <text class="text-[32rpx] text-black font-semibold">
               优惠券
             </text>
           </view>
 
           <view class="grid grid-cols-3 gap-[24rpx]">
-            <view class="rounded-[16rpx] bg-orange-50 p-[24rpx] text-center">
-              <text class="mb-[8rpx] block text-[36rpx] text-orange-600 font-bold">
+            <view class="rounded-[20rpx] bg-orange-50 p-[24rpx] text-center">
+              <text class="mb-[8rpx] block text-[36rpx] text-[#FF7A1A] font-bold">
                 {{ couponStats.available }}
               </text>
               <text class="text-[24rpx] text-gray-600">
                 可使用
               </text>
             </view>
-            <view class="rounded-[16rpx] bg-gray-50 p-[24rpx] text-center">
+            <view class="rounded-[20rpx] bg-gray-50 p-[24rpx] text-center">
               <text class="mb-[8rpx] block text-[36rpx] text-gray-600 font-bold">
                 {{ couponStats.used }}
               </text>
@@ -258,8 +258,8 @@ onMounted(() => {
                 已使用
               </text>
             </view>
-            <view class="rounded-[16rpx] bg-red-50 p-[24rpx] text-center">
-              <text class="mb-[8rpx] block text-[36rpx] text-red-600 font-bold">
+            <view class="rounded-[20rpx] bg-red-50 p-[24rpx] text-center">
+              <text class="mb-[8rpx] block text-[36rpx] text-[#EF4444] font-bold">
                 {{ couponStats.expired }}
               </text>
               <text class="text-[24rpx] text-gray-600">
@@ -270,26 +270,26 @@ onMounted(() => {
         </view>
 
         <!-- 优惠券切换栏 -->
-        <view class="rounded-[32rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
-            <view class="flex rounded-xl bg-gray-100 p-[8rpx] space-x-[8rpx]">
+            <view class="flex rounded-full bg-gray-100 p-[8rpx] space-x-[8rpx]">
               <view
-                class="flex-1 rounded-lg px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
-                :class="activeTab === 'available' ? 'bg-orange-600 text-white' : 'text-gray-600'"
+                class="flex-1 rounded-full px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
+                :class="activeTab === 'available' ? 'bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] text-white shadow-sm' : 'text-gray-600'"
                 @tap="switchTab('available')"
               >
                 可使用
               </view>
               <view
-                class="flex-1 rounded-lg px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
-                :class="activeTab === 'used' ? 'bg-orange-600 text-white' : 'text-gray-600'"
+                class="flex-1 rounded-full px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
+                :class="activeTab === 'used' ? 'bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] text-white shadow-sm' : 'text-gray-600'"
                 @tap="switchTab('used')"
               >
                 已使用
               </view>
               <view
-                class="flex-1 rounded-lg px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
-                :class="activeTab === 'expired' ? 'bg-orange-600 text-white' : 'text-gray-600'"
+                class="flex-1 rounded-full px-[24rpx] py-[12rpx] text-center text-[26rpx] font-medium transition-all duration-200"
+                :class="activeTab === 'expired' ? 'bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] text-white shadow-sm' : 'text-gray-600'"
                 @tap="switchTab('expired')"
               >
                 已过期
@@ -300,7 +300,7 @@ onMounted(() => {
           <!-- 优惠券列表 -->
           <view class="p-[32rpx]">
             <view v-if="filteredCoupons.length === 0" class="flex flex-col items-center justify-center py-[80rpx]">
-              <text class="i-material-symbols-inbox mb-[16rpx] block text-[80rpx] text-gray-400" />
+              <text class="i-solar:inbox-out-bold mb-[16rpx] block text-[80rpx] text-gray-400" />
               <text class="text-[28rpx] text-gray-500">
                 暂无{{ activeTab === 'available' ? '可用' : activeTab === 'used' ? '已使用' : '过期' }}优惠券
               </text>
@@ -310,7 +310,7 @@ onMounted(() => {
               <view
                 v-for="coupon in filteredCoupons"
                 :key="coupon.userCouponId"
-                class="relative overflow-hidden border border-gray-100 rounded-[24rpx] shadow-sm"
+                class="relative overflow-hidden border border-white/80 rounded-[28rpx] shadow-[0_12rpx_40rpx_-20rpx_rgba(15,23,42,0.2)] transition-all active:scale-98"
                 @tap="viewCouponDetail(coupon)"
               >
                 <!-- 优惠券主体 -->
@@ -361,7 +361,7 @@ onMounted(() => {
                         <text>有效期至：{{ new Date(coupon.expireTime).toLocaleDateString() }}</text>
                         <view
                           v-if="coupon.status === 'available'"
-                          class="rounded-[12rpx] bg-orange-600 px-[16rpx] py-[8rpx] text-[20rpx] text-white"
+                          class="rounded-full bg-gradient-to-r from-[#FF7A1A] to-[#FF9A4A] px-[16rpx] py-[8rpx] text-[20rpx] text-white shadow-sm transition-all active:scale-95"
                           @tap.stop="useCoupon(coupon.userCouponId)"
                         >
                           立即使用
@@ -381,9 +381,9 @@ onMounted(() => {
         </view>
 
         <!-- 使用说明 -->
-        <view class="rounded-[32rpx] bg-white p-[32rpx] shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols-info text-[36rpx] text-blue-600" />
+            <text class="i-solar:info-circle-bold text-[36rpx] text-[#3B82F6]" />
             <text class="text-[32rpx] text-black font-semibold">
               使用说明
             </text>

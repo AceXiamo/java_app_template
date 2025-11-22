@@ -7,7 +7,7 @@ function back() {
 <template>
   <HeadBar bg-color="#2E2E2E">
     <view relative h-full flex items-center>
-      <view i-material-symbols:arrow-back-ios ml-[20rpx] text-white @tap="back" />
+      <view i-material-symbols:arrow-back-ios ml-[20rpx] text-[28rpx] text-white @tap="back" />
       <text pointer-events-none absolute left-0 right-0 text-center text-white>
         确认订单
       </text>

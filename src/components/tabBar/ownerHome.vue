@@ -265,7 +265,7 @@ async function changeVehicleStatus(status: string) {
       <view class="relative h-full flex items-center">
         <!-- 返回按钮 -->
         <view class="absolute left-[32rpx] z-10 h-full flex items-center justify-center" @tap="goBack">
-          <view class="h-[64rpx] w-[64rpx] flex items-center justify-center rounded-full bg-gray-50 transition-colors active:bg-gray-100">
+          <view class="flex items-center justify-center">
             <text class="i-material-symbols:arrow-back-ios text-[28rpx] text-gray-700" />
           </view>
         </view>

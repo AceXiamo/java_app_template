@@ -437,7 +437,7 @@ onUnmounted(() => {
       <view class="relative h-full flex items-center">
         <!-- 返回按钮 -->
         <view class="absolute left-0 z-10 h-full w-[80rpx] flex items-center justify-center" @tap="goBack">
-          <text class="i-material-symbols:arrow-back-ios text-[36rpx] text-black" />
+          <text class="i-material-symbols:arrow-back-ios text-[28rpx] text-black" />
         </view>
 
         <!-- 页面标题 -->

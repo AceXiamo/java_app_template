@@ -89,7 +89,7 @@ const canSubmitCertification = computed(() => {
   const hasIdCardBack = tempImages.value.idCardBack || userDocuments.value.idCardBackUrl
   const hasDrivingLicenseFront = tempImages.value.drivingLicenseFront || userDocuments.value.drivingLicenseFrontUrl
   const hasDrivingLicenseBack = tempImages.value.drivingLicenseBack || userDocuments.value.drivingLicenseBackUrl
-  
+
   const hasAllImages = hasIdCardFront && hasIdCardBack && hasDrivingLicenseFront && hasDrivingLicenseBack
 
   // 检查是否填写了真实姓名
@@ -185,7 +185,7 @@ function removeImage(documentType: 'idCard' | 'drivingLicense', imageType: 'fron
   // 清空临时图片
   const key = `${documentType}${imageType.charAt(0).toUpperCase() + imageType.slice(1)}` as keyof typeof tempImages.value
   tempImages.value[key] = ''
-  
+
   // 清空已保存的图片URL
   const urlKey = `${key}Url` as keyof typeof userDocuments.value
   if (userDocuments.value[urlKey]) {
@@ -453,7 +453,7 @@ onUnmounted(() => {
                 placeholder="请输入真实姓名"
                 maxlength="20"
                 :disabled="userDocuments.certificationStatus === 'certified'"
-              />
+              >
               <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
                 <text class="block text-[28rpx] text-black font-medium">
                   真实姓名
@@ -474,7 +474,7 @@ onUnmounted(() => {
                   已验证的手机号
                 </text>
               </view>
-              <view class="ml-auto flex items-center space-x-[16rpx] py-[20rpx]">
+              <view class="ml-auto flex items-center py-[20rpx] space-x-[16rpx]">
                 <text class="text-[26rpx] text-gray-700">
                   {{ userDocuments.phone || '未设置' }}
                 </text>
@@ -489,7 +489,7 @@ onUnmounted(() => {
                     未验证
                   </text>
                   <button
-                    class="m-0 rounded-full border-0 bg-[#8b5cf6] px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:scale-95"
+                    class="m-0 border-0 rounded-full bg-[#8b5cf6] px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:scale-95"
                     open-type="getPhoneNumber"
                     :disabled="gettingPhone"
                     @getphonenumber="onGetPhoneNumber"
@@ -537,7 +537,7 @@ onUnmounted(() => {
                 maxlength="18"
                 type="idcard"
                 :disabled="userDocuments.certificationStatus === 'certified'"
-              />
+              >
               <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
                 <text class="block text-[28rpx] text-black font-medium">
                   身份证号码
@@ -651,7 +651,7 @@ onUnmounted(() => {
                 placeholder="请输入驾驶证号码"
                 maxlength="20"
                 :disabled="userDocuments.certificationStatus === 'certified'"
-              />
+              >
               <view class="pointer-events-none absolute left-0 top-0 flex flex-col justify-center py-[16rpx]">
                 <text class="block text-[28rpx] text-black font-medium">
                   驾驶证号码
