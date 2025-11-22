@@ -34,7 +34,6 @@ const helpInfo = ref<CertificationHelp>({
     '提交证件后，系统将进行自动识别',
     '复杂情况下会转人工审核',
     '审核时间通常为1-3个工作日',
-    '审核结果将通过短信和小程序通知',
   ],
   privacyPolicy: [
     '您的证件信息仅用于身份验证',
@@ -85,11 +84,13 @@ const canSubmitCertification = computed(() => {
   if (userDocuments.value.certificationStatus === 'certified')
     return false
 
-  // 检查是否所有图片都已上传
-  const hasAllImages = tempImages.value.idCardFront
-    && tempImages.value.idCardBack
-    && tempImages.value.drivingLicenseFront
-    && tempImages.value.drivingLicenseBack
+  // 检查是否所有图片都已上传（临时图片或已保存的图片）
+  const hasIdCardFront = tempImages.value.idCardFront || userDocuments.value.idCardFrontUrl
+  const hasIdCardBack = tempImages.value.idCardBack || userDocuments.value.idCardBackUrl
+  const hasDrivingLicenseFront = tempImages.value.drivingLicenseFront || userDocuments.value.drivingLicenseFrontUrl
+  const hasDrivingLicenseBack = tempImages.value.drivingLicenseBack || userDocuments.value.drivingLicenseBackUrl
+  
+  const hasAllImages = hasIdCardFront && hasIdCardBack && hasDrivingLicenseFront && hasDrivingLicenseBack
 
   // 检查是否填写了真实姓名
   const hasRealName = realNameInput.value.trim().length > 0
@@ -177,6 +178,19 @@ function previewImage(imageUrl: string) {
     urls: [imageUrl],
     current: imageUrl,
   })
+}
+
+// 删除图片
+function removeImage(documentType: 'idCard' | 'drivingLicense', imageType: 'front' | 'back') {
+  // 清空临时图片
+  const key = `${documentType}${imageType.charAt(0).toUpperCase() + imageType.slice(1)}` as keyof typeof tempImages.value
+  tempImages.value[key] = ''
+  
+  // 清空已保存的图片URL
+  const urlKey = `${key}Url` as keyof typeof userDocuments.value
+  if (userDocuments.value[urlKey]) {
+    (userDocuments.value as any)[urlKey] = ''
+  }
 }
 
 // 处理获取手机号回调
@@ -339,7 +353,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <view class="relative h-full flex flex-col overflow-hidden bg-gray-50">
+  <view class="relative h-full flex flex-col overflow-hidden bg-[#F6F7FB]">
     <!-- 头部导航 -->
     <DocumentsHead />
 
@@ -347,22 +361,22 @@ onUnmounted(() => {
     <scroll-view scroll-y class="h-0 flex-1">
       <view class="p-[24rpx] space-y-[24rpx]">
         <!-- 认证状态概览 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="flex items-center space-x-[16rpx]">
             <text
-              class="i-material-symbols-verified-user text-[40rpx]"
+              class="text-[40rpx]"
               :class="{
-                'text-green-600': userDocuments.certificationStatus === 'certified',
-                'text-orange-600': userDocuments.certificationStatus === 'pending',
-                'text-red-600': userDocuments.certificationStatus === 'rejected',
-                'text-gray-500': userDocuments.certificationStatus === 'none',
+                'i-solar:verified-check-bold text-[#10B981]': userDocuments.certificationStatus === 'certified',
+                'i-solar:clock-circle-bold text-[#FF7A1A]': userDocuments.certificationStatus === 'pending',
+                'i-solar:close-circle-bold text-[#EF4444]': userDocuments.certificationStatus === 'rejected',
+                'i-solar:shield-user-bold text-[#6B7280]': userDocuments.certificationStatus === 'none',
               }"
             />
             <text class="text-[32rpx] text-gray-900 font-semibold">
               实名认证
             </text>
             <text
-              class="rounded-[8rpx] px-[12rpx] py-[4rpx] text-[22rpx] font-medium"
+              class="rounded-full px-[16rpx] py-[6rpx] text-[22rpx] font-medium"
               :class="certificationStatusStyle"
             >
               {{ userDocuments.certificationStatusText }}
@@ -406,9 +420,9 @@ onUnmounted(() => {
           </view>
 
           <!-- 拒绝原因 -->
-          <view v-if="userDocuments.certificationStatus === 'rejected' && userDocuments.certificationRejectReason" class="mt-[24rpx] rounded-[12rpx] bg-red-50 p-[16rpx]">
+          <view v-if="userDocuments.certificationStatus === 'rejected' && userDocuments.certificationRejectReason" class="mt-[24rpx] rounded-[16rpx] bg-red-50 p-[16rpx]">
             <view class="mb-[8rpx] flex items-center space-x-[8rpx]">
-              <text class="i-material-symbols-error text-[20rpx] text-red-600" />
+              <text class="i-solar:danger-circle-bold text-[20rpx] text-red-600" />
               <text class="text-[24rpx] text-red-600 font-medium">
                 审核未通过原因
               </text>
@@ -420,10 +434,10 @@ onUnmounted(() => {
         </view>
 
         <!-- 个人信息 -->
-        <view class="rounded-[24rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center space-x-[16rpx]">
-              <text class="i-material-symbols-person text-[40rpx] text-purple-600" />
+              <text class="i-solar:user-bold text-[40rpx] text-[#8b5cf6]" />
               <text class="text-[32rpx] text-gray-900 font-semibold">
                 个人信息
               </text>
@@ -475,13 +489,13 @@ onUnmounted(() => {
                     未验证
                   </text>
                   <button
-                    class="m-0 rounded-full border-0 bg-purple-600 px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:bg-purple-700"
+                    class="m-0 rounded-full border-0 bg-[#8b5cf6] px-[16rpx] py-[2rpx] text-[20rpx] text-white transition-all duration-150 active:scale-95"
                     open-type="getPhoneNumber"
                     :disabled="gettingPhone"
                     @getphonenumber="onGetPhoneNumber"
                   >
                     <text v-if="gettingPhone" class="flex items-center space-x-[4rpx]">
-                      <text class="i-material-symbols-sync animate-spin text-[16rpx]" />
+                      <text class="i-solar:refresh-bold animate-spin text-[16rpx]" />
                       <text>获取中</text>
                     </text>
                     <text v-else>
@@ -495,11 +509,11 @@ onUnmounted(() => {
         </view>
 
         <!-- 身份证管理 -->
-        <view class="rounded-[24rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center justify-between">
               <view class="flex items-center space-x-[16rpx]">
-                <text class="i-material-symbols-credit-card text-[36rpx] text-purple-600" />
+                <text class="i-solar:card-bold text-[36rpx] text-[#8b5cf6]" />
                 <text class="text-[32rpx] text-gray-900 font-semibold">
                   身份证
                 </text>
@@ -541,23 +555,33 @@ onUnmounted(() => {
                 <text class="mb-[12rpx] block text-[24rpx] text-gray-700">
                   身份证正面
                 </text>
-                <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
-                  :class="{ 'border-purple-300 bg-purple-50': getImageUrl('idCardFront') }"
-                  @tap="getImageUrl('idCardFront') ? previewImage(getImageUrl('idCardFront')) : uploadImage('idCard', 'front')"
-                >
-                  <image
-                    v-if="getImageUrl('idCardFront')"
-                    :src="getImageUrl('idCardFront')"
-                    class="h-full w-full rounded-[10rpx]"
-                    mode="aspectFill"
-                  />
-                  <template v-else>
-                    <text class="i-material-symbols-add-a-photo mb-[8rpx] text-[48rpx] text-gray-400" />
-                    <text class="text-[24rpx] text-gray-500">
-                      点击上传
-                    </text>
-                  </template>
+                <view class="relative">
+                  <view
+                    class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[16rpx] border-dashed transition-all duration-150 active:scale-95"
+                    :class="{ 'border-[#8b5cf6]/40 bg-[#8b5cf6]/5': getImageUrl('idCardFront') }"
+                    @tap="getImageUrl('idCardFront') ? previewImage(getImageUrl('idCardFront')) : uploadImage('idCard', 'front')"
+                  >
+                    <image
+                      v-if="getImageUrl('idCardFront')"
+                      :src="getImageUrl('idCardFront')"
+                      class="h-full w-full rounded-[14rpx]"
+                      mode="aspectFill"
+                    />
+                    <template v-else>
+                      <text class="i-solar:gallery-add-bold mb-[8rpx] text-[48rpx] text-gray-400" />
+                      <text class="text-[24rpx] text-gray-500">
+                        点击上传
+                      </text>
+                    </template>
+                  </view>
+                  <!-- 删除按钮 -->
+                  <view
+                    v-if="getImageUrl('idCardFront') && userDocuments.certificationStatus !== 'certified'"
+                    class="absolute right-[8rpx] top-[8rpx] flex transition-all active:scale-90"
+                    @tap.stop="removeImage('idCard', 'front')"
+                  >
+                    <text class="i-solar:close-circle-bold text-[32rpx] text-red-600" />
+                  </view>
                 </view>
               </view>
 
@@ -566,23 +590,33 @@ onUnmounted(() => {
                 <text class="mb-[12rpx] block text-[24rpx] text-gray-700">
                   身份证反面
                 </text>
-                <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
-                  :class="{ 'border-purple-300 bg-purple-50': getImageUrl('idCardBack') }"
-                  @tap="getImageUrl('idCardBack') ? previewImage(getImageUrl('idCardBack')) : uploadImage('idCard', 'back')"
-                >
-                  <image
-                    v-if="getImageUrl('idCardBack')"
-                    :src="getImageUrl('idCardBack')"
-                    class="h-full w-full rounded-[10rpx]"
-                    mode="aspectFill"
-                  />
-                  <template v-else>
-                    <text class="i-material-symbols-add-a-photo mb-[8rpx] text-[48rpx] text-gray-400" />
-                    <text class="text-[24rpx] text-gray-500">
-                      点击上传
-                    </text>
-                  </template>
+                <view class="relative">
+                  <view
+                    class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[16rpx] border-dashed transition-all duration-150 active:scale-95"
+                    :class="{ 'border-[#8b5cf6]/40 bg-[#8b5cf6]/5': getImageUrl('idCardBack') }"
+                    @tap="getImageUrl('idCardBack') ? previewImage(getImageUrl('idCardBack')) : uploadImage('idCard', 'back')"
+                  >
+                    <image
+                      v-if="getImageUrl('idCardBack')"
+                      :src="getImageUrl('idCardBack')"
+                      class="h-full w-full rounded-[14rpx]"
+                      mode="aspectFill"
+                    />
+                    <template v-else>
+                      <text class="i-solar:gallery-add-bold mb-[8rpx] text-[48rpx] text-gray-400" />
+                      <text class="text-[24rpx] text-gray-500">
+                        点击上传
+                      </text>
+                    </template>
+                  </view>
+                  <!-- 删除按钮 -->
+                  <view
+                    v-if="getImageUrl('idCardBack') && userDocuments.certificationStatus !== 'certified'"
+                    class="absolute right-[8rpx] top-[8rpx] flex transition-all active:scale-90"
+                    @tap.stop="removeImage('idCard', 'back')"
+                  >
+                    <text class="i-solar:close-circle-bold text-[32rpx] text-red-600" />
+                  </view>
                 </view>
               </view>
             </view>
@@ -590,11 +624,11 @@ onUnmounted(() => {
         </view>
 
         <!-- 驾驶证管理 -->
-        <view class="rounded-[24rpx] bg-white shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="border-b border-gray-100 px-[32rpx] py-[24rpx]">
             <view class="flex items-center justify-between">
               <view class="flex items-center space-x-[16rpx]">
-                <text class="i-material-symbols-badge text-[36rpx] text-purple-600" />
+                <text class="i-solar:diploma-verified-bold text-[36rpx] text-[#8b5cf6]" />
                 <text class="text-[32rpx] text-gray-900 font-semibold">
                   驾驶证
                 </text>
@@ -635,23 +669,33 @@ onUnmounted(() => {
                 <text class="mb-[12rpx] block text-[24rpx] text-gray-700">
                   驾驶证正面
                 </text>
-                <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
-                  :class="{ 'border-purple-300 bg-purple-50': getImageUrl('drivingLicenseFront') }"
-                  @tap="getImageUrl('drivingLicenseFront') ? previewImage(getImageUrl('drivingLicenseFront')) : uploadImage('drivingLicense', 'front')"
-                >
-                  <image
-                    v-if="getImageUrl('drivingLicenseFront')"
-                    :src="getImageUrl('drivingLicenseFront')"
-                    class="h-full w-full rounded-[10rpx]"
-                    mode="aspectFill"
-                  />
-                  <template v-else>
-                    <text class="i-material-symbols-add-a-photo mb-[8rpx] text-[48rpx] text-gray-400" />
-                    <text class="text-[24rpx] text-gray-500">
-                      点击上传
-                    </text>
-                  </template>
+                <view class="relative">
+                  <view
+                    class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[16rpx] border-dashed transition-all duration-150 active:scale-95"
+                    :class="{ 'border-[#8b5cf6]/40 bg-[#8b5cf6]/5': getImageUrl('drivingLicenseFront') }"
+                    @tap="getImageUrl('drivingLicenseFront') ? previewImage(getImageUrl('drivingLicenseFront')) : uploadImage('drivingLicense', 'front')"
+                  >
+                    <image
+                      v-if="getImageUrl('drivingLicenseFront')"
+                      :src="getImageUrl('drivingLicenseFront')"
+                      class="h-full w-full rounded-[14rpx]"
+                      mode="aspectFill"
+                    />
+                    <template v-else>
+                      <text class="i-solar:gallery-add-bold mb-[8rpx] text-[48rpx] text-gray-400" />
+                      <text class="text-[24rpx] text-gray-500">
+                        点击上传
+                      </text>
+                    </template>
+                  </view>
+                  <!-- 删除按钮 -->
+                  <view
+                    v-if="getImageUrl('drivingLicenseFront') && userDocuments.certificationStatus !== 'certified'"
+                    class="absolute right-[8rpx] top-[8rpx] flex transition-all active:scale-90"
+                    @tap.stop="removeImage('drivingLicense', 'front')"
+                  >
+                    <text class="i-solar:close-circle-bold text-[32rpx] text-red-600" />
+                  </view>
                 </view>
               </view>
 
@@ -660,23 +704,33 @@ onUnmounted(() => {
                 <text class="mb-[12rpx] block text-[24rpx] text-gray-700">
                   驾驶证副页
                 </text>
-                <view
-                  class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[12rpx] border-dashed transition-all duration-150 active:scale-95"
-                  :class="{ 'border-purple-300 bg-purple-50': getImageUrl('drivingLicenseBack') }"
-                  @tap="getImageUrl('drivingLicenseBack') ? previewImage(getImageUrl('drivingLicenseBack')) : uploadImage('drivingLicense', 'back')"
-                >
-                  <image
-                    v-if="getImageUrl('drivingLicenseBack')"
-                    :src="getImageUrl('drivingLicenseBack')"
-                    class="h-full w-full rounded-[10rpx]"
-                    mode="aspectFill"
-                  />
-                  <template v-else>
-                    <text class="i-material-symbols-add-a-photo mb-[8rpx] text-[48rpx] text-gray-400" />
-                    <text class="text-[24rpx] text-gray-500">
-                      点击上传
-                    </text>
-                  </template>
+                <view class="relative">
+                  <view
+                    class="h-[200rpx] w-full flex flex-col items-center justify-center border border-gray-300 rounded-[16rpx] border-dashed transition-all duration-150 active:scale-95"
+                    :class="{ 'border-[#8b5cf6]/40 bg-[#8b5cf6]/5': getImageUrl('drivingLicenseBack') }"
+                    @tap="getImageUrl('drivingLicenseBack') ? previewImage(getImageUrl('drivingLicenseBack')) : uploadImage('drivingLicense', 'back')"
+                  >
+                    <image
+                      v-if="getImageUrl('drivingLicenseBack')"
+                      :src="getImageUrl('drivingLicenseBack')"
+                      class="h-full w-full rounded-[14rpx]"
+                      mode="aspectFill"
+                    />
+                    <template v-else>
+                      <text class="i-solar:gallery-add-bold mb-[8rpx] text-[48rpx] text-gray-400" />
+                      <text class="text-[24rpx] text-gray-500">
+                        点击上传
+                      </text>
+                    </template>
+                  </view>
+                  <!-- 删除按钮 -->
+                  <view
+                    v-if="getImageUrl('drivingLicenseBack') && userDocuments.certificationStatus !== 'certified'"
+                    class="absolute right-[8rpx] top-[8rpx] flex transition-all active:scale-90"
+                    @tap.stop="removeImage('drivingLicense', 'back')"
+                  >
+                    <text class="i-solar:close-circle-bold text-[32rpx] text-red-600" />
+                  </view>
                 </view>
               </view>
             </view>
@@ -686,19 +740,19 @@ onUnmounted(() => {
         <!-- 提交认证按钮 -->
         <view
           v-if="userDocuments.certificationStatus !== 'certified' && userDocuments.certificationStatus !== 'pending'"
-          class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm"
+          class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]"
         >
           <view
             class="w-full rounded-[20rpx] py-[24rpx] text-center text-[28rpx] font-semibold transition-all duration-150 active:scale-95"
             :class="[
               canSubmitCertification && !submitting
-                ? 'bg-purple-600 text-white active:bg-purple-700'
+                ? 'bg-gradient-to-r from-[#8b5cf6] to-[#A78BFA] text-white shadow-[0_8rpx_24rpx_-4rpx_rgba(139,92,246,0.4)]'
                 : 'bg-gray-200 text-gray-500',
             ]"
             @tap="canSubmitCertification && !submitting ? submitCertification() : null"
           >
             <text v-if="submitting" class="flex items-center justify-center space-x-[8rpx]">
-              <text class="i-material-symbols-sync animate-spin text-[24rpx]" />
+              <text class="i-solar:refresh-bold animate-spin text-[24rpx]" />
               <text>{{ userDocuments.certificationStatus === 'rejected' ? '重新提交中...' : '提交认证中...' }}</text>
             </text>
             <text v-else>
@@ -712,9 +766,9 @@ onUnmounted(() => {
         </view>
 
         <!-- 认证须知 -->
-        <view class="rounded-[24rpx] bg-white p-[32rpx] shadow-sm">
+        <view class="border border-white/50 rounded-[28rpx] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)]">
           <view class="mb-[24rpx] flex items-center space-x-[16rpx]">
-            <text class="i-material-symbols-info text-[36rpx] text-orange-600" />
+            <text class="i-solar:info-circle-bold text-[36rpx] text-[#FF7A1A]" />
             <text class="text-[32rpx] text-gray-900 font-semibold">
               认证须知
             </text>
@@ -775,8 +829,8 @@ onUnmounted(() => {
     </scroll-view>
 
     <!-- 加载状态 -->
-    <view v-if="loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/90">
-      <text class="i-material-symbols-sync mb-[16rpx] animate-spin text-[48rpx] text-purple-600" />
+    <view v-if="loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+      <text class="i-solar:refresh-bold mb-[16rpx] animate-spin text-[48rpx] text-[#8b5cf6]" />
       <text class="text-[28rpx] text-gray-700">
         正在加载...
       </text>
