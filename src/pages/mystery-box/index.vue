@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
 import {
   type CarTypeOption,
@@ -14,6 +16,27 @@ import {
 import { queryPaymentStatus } from '@/api/booking'
 import { requestMysteryBoxPayment } from '@/api/mysteryBox'
 import DateTimePicker from '@/components/DateTimePicker.vue'
+import { useUserStore } from '@/store/user'
+import { useProfileStore } from '@/store/profile'
+
+const userStore = useUserStore()
+const profileStore = useProfileStore()
+const { profileData } = storeToRefs(profileStore)
+
+// 页面显示时更新用户信息
+onShow(async () => {
+  if (userStore.isLoggedIn) {
+    try {
+      await profileStore.loadProfileData()
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
+    }
+    catch (error) {
+      console.error('更新用户信息失败:', error)
+    }
+  }
+})
 
 // 页面状态
 const loading = ref(false)
@@ -179,6 +202,11 @@ async function loadPricing() {
 
 // 购买盲盒
 async function purchaseMysteryBox() {
+  // 检查用户状态
+  if (!userStore.checkUserStatus()) {
+    return
+  }
+
   if (!canPurchase.value || orderLoading.value)
     return
 

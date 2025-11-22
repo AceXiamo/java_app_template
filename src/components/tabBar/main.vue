@@ -298,7 +298,7 @@ onUnmounted(() => {
       </view>
 
       <!-- 取还车信息卡 -->
-      <view class="relative z-10 px-[32rpx] pb-[40rpx] -mt-[180rpx]">
+      <view class="relative z-10 px-[32rpx] pb-[40rpx] -mt-[40rpx]">
         <view class="rounded-[28rpx] border border-[#e5e7eb] bg-white p-[32rpx] shadow-[0_20rpx_60rpx_-32rpx_rgba(15,23,42,0.25)] space-y-[26rpx]">
           <view class="flex items-start justify-between">
             <view>

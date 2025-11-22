@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { storeToRefs } from 'pinia'
 import dayjs from 'dayjs'
 // import BottomDrawer from '@/components/BottomDrawer.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
@@ -8,6 +9,27 @@ import { getSimilarVehicles, getVehicleDetail, getVehicleReviews } from '@/api/v
 import type { VehicleDetail } from '@/api/vehicle'
 import { getJumpData, setJumpData } from '@/utils/index'
 import PageVehicleHead from '@/components/page/vehicle/Head.vue'
+import { useUserStore } from '@/store/user'
+import { useProfileStore } from '@/store/profile'
+
+const userStore = useUserStore()
+const profileStore = useProfileStore()
+const { profileData } = storeToRefs(profileStore)
+
+// 页面显示时更新用户信息
+onShow(async () => {
+  if (userStore.isLoggedIn) {
+    try {
+      await profileStore.loadProfileData()
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
+    }
+    catch (error) {
+      console.error('更新用户信息失败:', error)
+    }
+  }
+})
 
 // 页面参数
 const vehicleId = ref('')
@@ -248,6 +270,11 @@ function shareVehicle() {
 
 // 立即预订
 function bookNow() {
+  // 检查用户状态
+  if (!userStore.checkUserStatus()) {
+    return
+  }
+
   if (!bookingParams.value.startTime || !bookingParams.value.endTime) {
     showDatePicker.value = true
     return
@@ -426,11 +453,15 @@ function handleDateRangeConfirm(data: {
                   <text class="i-lets-icons:bolt-duotone mr-[4rpx] text-[16rpx] text-[#10B981]" />
                   <text class="text-[20rpx] text-[#6B7280]">{{ vehicleDetail.energyType }}</text>
                 </view>
+                <view v-if="vehicleDetail.year" class="flex items-center rounded-full bg-[#F3F4F6] px-[12rpx] py-[4rpx]">
+                  <text class="i-lets-icons:calendar-duotone mr-[4rpx] text-[16rpx] text-[#6B7280]" />
+                  <text class="text-[20rpx] text-[#6B7280]">{{ vehicleDetail.year }}款</text>
+                </view>
               </view>
             </view>
 
             <!-- 价格信息 - 优化版 -->
-            <view class="rounded-[20rpx] bg-gradient-to-br from-[#8B5CF6]/5 to-[#A78BFA]/5 p-[20rpx]">
+            <view class="rounded-[20rpx] bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] from-opacity-5 to-opacity-5 p-[20rpx]">
               <!-- 超值月租车辆 - 优先展示月租价格 -->
               <template v-if="vehicleDetail.isMonthlyRental && vehicleDetail.monthlyPrice">
                 <view class="flex items-baseline">
@@ -541,7 +572,7 @@ function handleDateRangeConfirm(data: {
 
             <view class="flex items-center justify-between">
               <view class="flex items-center flex-1">
-                <view class="flex h-[72rpx] w-[72rpx] items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6]/10 to-[#A78BFA]/10">
+                <view class="flex h-[72rpx] w-[72rpx] items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] from-opacity-10 to-opacity-10">
                   <text class="i-solar:buildings-3-bold-duotone text-[36rpx] text-[#8B5CF6]" />
                 </view>
                 <view class="ml-[20rpx] flex-1">

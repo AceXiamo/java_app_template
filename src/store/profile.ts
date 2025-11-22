@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import type { ProfileData } from '@/api/profile'
 import { contactService, getUserProfile, logout, updateUserProfile } from '@/api/profile'
+import { useUserStore } from '@/store/user'
 
 export const useProfileStore = defineStore('profile', () => {
   // 个人中心数据
   const profileData = ref<ProfileData | null>(null)
   const loading = ref(false)
-
+  const userStore = useUserStore()
   // 加载个人中心数据
   const loadProfileData = async (reload = false) => {
     if (loading.value && !reload)
@@ -16,6 +17,11 @@ export const useProfileStore = defineStore('profile', () => {
       loading.value = true
       const response = await getUserProfile()
       profileData.value = response.data
+
+      // 更新用户信息
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
     }
     catch (error) {
       console.error('获取个人中心数据失败:', error)

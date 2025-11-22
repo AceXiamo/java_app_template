@@ -1,11 +1,33 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { storeToRefs } from 'pinia'
 import PageSearchHead from '@/components/page/search/Head.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import { getAllChildCategories, getVehicleFilters, searchVehicles } from '@/api/vehicle'
 import type { Vehicle, VehicleCategory, VehicleFilterOptions, VehicleSearchParams } from '@/api/vehicle'
+import { useUserStore } from '@/store/user'
+import { useProfileStore } from '@/store/profile'
+
+const userStore = useUserStore()
+const profileStore = useProfileStore()
+const { profileData } = storeToRefs(profileStore)
+
+// 页面显示时更新用户信息
+onShow(async () => {
+  if (userStore.isLoggedIn) {
+    try {
+      await profileStore.loadProfileData()
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
+    }
+    catch (error) {
+      console.error('更新用户信息失败:', error)
+    }
+  }
+})
 
 // 搜索参数
 const searchParams = ref<VehicleSearchParams>({
@@ -349,6 +371,11 @@ function getMonthlyDiscount(dailyPrice: number, monthlyPrice?: number) {
 
 // 快速预订
 function quickBook(vehicleId: number) {
+  // 检查用户状态
+  if (!userStore.checkUserStatus()) {
+    return
+  }
+
   // 使用 setJumpData 传递预订参数
   const bookingData = {
     vehicleId: vehicleId.toString(),

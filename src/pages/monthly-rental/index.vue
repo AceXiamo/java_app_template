@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { storeToRefs } from 'pinia'
 import {
   type LocationInfo,
   type MonthlyRentalActivity,
@@ -9,6 +11,27 @@ import {
 import { getCurrentLocation } from '@/api/home'
 import MapAddressPicker from '@/components/MapAddressPicker.vue'
 import BottomDrawer from '@/components/BottomDrawer.vue'
+import { useUserStore } from '@/store/user'
+import { useProfileStore } from '@/store/profile'
+
+const userStore = useUserStore()
+const profileStore = useProfileStore()
+const { profileData } = storeToRefs(profileStore)
+
+// 页面显示时更新用户信息
+onShow(async () => {
+  if (userStore.isLoggedIn) {
+    try {
+      await profileStore.loadProfileData()
+      if (profileData.value?.userInfo) {
+        userStore.updateUserInfo(profileData.value.userInfo)
+      }
+    }
+    catch (error) {
+      console.error('更新用户信息失败:', error)
+    }
+  }
+})
 
 // 页面数据状态
 const loading = ref(false)
@@ -239,6 +262,11 @@ function selectVehicle(vehicle: any) {
 
 // 快速预订 - 直接跳转到预订页面
 function quickBook(vehicleId: number) {
+  // 检查用户状态
+  if (!userStore.checkUserStatus()) {
+    return
+  }
+
   // 生成默认时间参数
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)

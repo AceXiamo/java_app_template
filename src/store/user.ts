@@ -147,6 +147,50 @@ export const useUserStore = defineStore('user', () => {
     return userInfo.value?.openId || ''
   }
 
+  // 检查用户状态（登录、手机号、实名认证）
+  function checkUserStatus(): boolean {
+    if (!isLoggedIn.value) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none',
+        duration: 2000,
+      })
+      return false
+    }
+
+    // 检查手机号
+    if (!userInfo.value?.phoneVerified) {
+      uni.showModal({
+        title: '提示',
+        content: '为了您的用车安全，请先绑定手机号',
+        confirmText: '去绑定',
+        success: (res) => {
+          if (res.confirm) {
+            uni.navigateTo({ url: '/pages/my/profile' })
+          }
+        },
+      })
+      return false
+    }
+
+    // 检查实名认证
+    if (userInfo.value?.certificationStatus !== 'certified') {
+      uni.showModal({
+        title: '提示',
+        content: '您尚未完成实名认证，请先认证',
+        confirmText: '去认证',
+        success: (res) => {
+          if (res.confirm) {
+            uni.navigateTo({ url: '/pages/my/documents' })
+          }
+        },
+      })
+      return false
+    }
+
+    return true
+  }
+
   return {
     userInfo: readonly(userInfo),
     user: readonly(user),
@@ -163,5 +207,6 @@ export const useUserStore = defineStore('user', () => {
     restoreUserInfo,
     getUserOpenId,
     getUserPlatformId,
+    checkUserStatus,
   }
 })
