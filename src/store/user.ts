@@ -174,19 +174,19 @@ export const useUserStore = defineStore('user', () => {
     }
 
     // 检查实名认证
-    if (userInfo.value?.certificationStatus !== 'certified') {
-      uni.showModal({
-        title: '提示',
-        content: '您尚未完成实名认证，请先认证',
-        confirmText: '去认证',
-        success: (res) => {
-          if (res.confirm) {
-            uni.navigateTo({ url: '/pages/my/documents' })
-          }
-        },
-      })
-      return false
-    }
+    // if (userInfo.value?.certificationStatus !== 'certified') {
+    //   uni.showModal({
+    //     title: '提示',
+    //     content: '您尚未完成实名认证，请先认证',
+    //     confirmText: '去认证',
+    //     success: (res) => {
+    //       if (res.confirm) {
+    //         uni.navigateTo({ url: '/pages/my/documents' })
+    //       }
+    //     },
+    //   })
+    //   return false
+    // }
 
     return true
   }
